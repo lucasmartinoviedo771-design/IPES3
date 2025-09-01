@@ -1,3 +1,6 @@
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "testserver"]
+
+
 from pathlib import Path
 import os
 from django.core.exceptions import ImproperlyConfigured

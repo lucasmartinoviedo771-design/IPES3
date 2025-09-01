@@ -48,6 +48,5 @@
   const API_HPROF   = "{% url 'ui:api_horario_profesorado' %}";
 </script>
 <link rel="stylesheet" href="{% static 'ui/css/horarios.css' %}">
-<script src="{% static 'ui/js/horarios_common.js' %}"></script>
-<script src="{% static 'ui/js/horarios_profesorado.js' %}"></script>
+<script type="module" src="{% static 'ui/js/horarios_profesorado.js' %}"></script>
 {% endblock %}

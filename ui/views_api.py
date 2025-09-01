@@ -1,7 +1,7 @@
 # ui/views_api.py
 
-from django.db.models import Value, F
-from django.db.models.functions import Concat
+from django.db.models import Value, F, CharField
+from django.db.models.functions import Concat, Coalesce
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_http_methods
 import logging
@@ -16,9 +16,12 @@ logger = logging.getLogger(__name__)
 
 @require_GET
 def api_carreras(request):
-    qs = Profesorado.objects.all().values('id', 'nombre')
-    logger.info("api_carreras -> %s items", len(qs))
-    return JsonResponse({'results': list(qs)}, status=200)
+    qs = (
+        Profesorado.objects.order_by("nombre").values("id", "nombre")
+    )
+    results = list(qs)
+    logger.info("api_carreras -> %s items", len(results))
+    return JsonResponse({"results": results}, status=200)
 
 @require_GET
 def api_planes(request):
@@ -58,25 +61,46 @@ def api_materias(request):
 
 @require_GET
 def api_docentes(request):
-    carrera_id = request.GET.get('carrera') or request.GET.get('carrera_id')
-    materia_id = request.GET.get('materia')
+    """
+    GET /api/docentes
+    Parámetros opcionales:
+      - carrera / carrera_id
+      - materia            (id de EspacioCurricular)
+    Respuesta:
+      {"results":[{"id":..., "nombre":"Apellido, Nombre"}, ...]}
+    """
+    params = request.GET.dict()
+    carrera_id = params.get("carrera") or params.get("carrera_id")
+    materia_id = params.get("materia")
+
     qs = Docente.objects.all()
 
+    # Filtro correcto según tus modelos:
+    # Docente --(asignaciones)-> DocenteEspacio --(espacio)-> EspacioCurricular --(plan)-> PlanEstudios --(profesorado_id)
     if carrera_id and materia_id:
-        # Ajustá el related name 'espacios' si en tu modelo es distinto
-        qs = qs.filter(espacios__id=materia_id, espacios__plan__profesorado_id=carrera_id)
+        qs = qs.filter(
+            asignaciones__espacio_id=materia_id,
+            asignaciones__espacio__plan__profesorado_id=carrera_id,
+        )
 
-    try:
-        qs = (qs.distinct()
-                .annotate(nombre=Concat(F('apellido'), Value(', '), F('nombre')))
-                .order_by('apellido', 'nombre')        # ordenar ANTES de values()
-                .values('id', 'nombre'))               # seleccionar campos para el combo
-        results = list(qs)
-        logger.info("api_docentes params=%s -> %s items", request.GET.dict(), len(results))
-        return JsonResponse({'results': results}, status=200)
-    except Exception as e:
-        logger.error("api_docentes error: %s", e, exc_info=True)
-        return JsonResponse({'results': [], 'error': str(e)}, status=500)
+    # Armar "Apellido, Nombre" tolerante a nulos
+    qs = (
+        qs.distinct()
+          .annotate(
+              nombre=Concat(
+                  Coalesce(F("apellido"), Value(""), output_field=CharField()),
+                  Value(", "),
+                  Coalesce(F("nombre"), Value(""), output_field=CharField()),
+                  output_field=CharField(),
+              )
+          )
+          .order_by("apellido", "nombre")
+          .values("id", "nombre")
+    )
+
+    data = list(qs)
+    logger.info("api_docentes params=%s -> %s items", params, len(data))
+    return JsonResponse({"results": data}, status=200)
 
 @require_GET
 def api_turnos(request):
