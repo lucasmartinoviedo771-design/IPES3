@@ -1,0 +1,47 @@
+[
+{
+  "model": "academia_horarios.docente",
+  "pk": 101,
+  "fields": {
+    "apellido_nombre": "María Pérez",
+    "dedicacion": "simple",
+    "email": "maria.perez@example.com"
+  }
+},
+{
+  "model": "academia_horarios.docente",
+  "pk": 102,
+  "fields": {
+    "apellido_nombre": "Juan Gómez",
+    "dedicacion": "simple",
+    "email": "juan.gomez@example.com"
+  }
+},
+{
+  "model": "academia_horarios.docente",
+  "pk": 103,
+  "fields": {
+    "apellido_nombre": "Carla López",
+    "dedicacion": "exclusiva",
+    "email": "carla.lopez@example.com"
+  }
+},
+{
+  "model": "academia_horarios.docente",
+  "pk": 104,
+  "fields": {
+    "apellido_nombre": "Diego Fernández",
+    "dedicacion": "semi",
+    "email": "diego.fernandez@example.com"
+  }
+},
+{
+  "model": "academia_horarios.docente",
+  "pk": 105,
+  "fields": {
+    "apellido_nombre": "Lucía Torres",
+    "dedicacion": "simple",
+    "email": "lucia.torres@example.com"
+  }
+}
+]

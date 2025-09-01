@@ -1,0 +1,163 @@
+{% extends "ui/base.html" %}
+{% load static %}
+
+{% block title %}Inscribir a Carrera{% endblock %}
+
+{% block content %}
+<div class="p-4">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-semibold">Inscribir a Carrera</h1>
+    <button onclick="history.back()" class="px-3 py-2 rounded border">Volver</button>
+  </div>
+
+  <div class="rounded-2xl border bg-white p-4 md:p-6">
+    <form method="post"
+      data-planes-url="{% url 'ui:api_planes' %}"
+      data-prefill-est="{{ request.GET.est|default:'' }}">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">Estudiante</label>
+          {{ form.estudiante }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Profesorado / Carrera</label>
+          {{ form.profesorado }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Plan</label>
+          {{ form.plan }}
+          <p id="plan-error" class="mt-1 text-sm text-red-600 hidden"></p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Cohorte</label>
+          {{ form.cohorte }}
+        </div>
+      </div>
+
+      <div class="mt-6 rounded-xl border p-4">
+        <h2 class="font-semibold mb-3">Requisitos de Ingreso</h2>
+
+        {# Requisitos comunes a todas las carreras #}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+          <label class="flex items-center gap-2">{{ form.req_dni }} <span>{{ form.req_dni.label }}</span></label>
+          <label class="flex items-center gap-2">{{ form.req_cert_med }} <span>{{ form.req_cert_med.label }}</span></label>
+          <label class="flex items-center gap-2">{{ form.req_fotos }} <span>{{ form.req_fotos.label }}</span></label>
+          <label class="flex items-center gap-2">{{ form.req_folios }} <span>{{ form.req_folios.label }}</span></label>
+        </div>
+
+        {# Bloque de Título Secundario (se oculta para Cert. Docente) #}
+        <div id="id_grupo_titulo_secundario" class="mt-4">
+          <h3 class="font-medium text-sm text-slate-600 border-t pt-3 mt-3">Documentación de Nivel Secundario</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 mt-2">
+              <label class="flex items-center gap-2">{{ form.req_titulo_sec }} <span>{{ form.req_titulo_sec.label }}</span></label>
+              <label class="flex items-center gap-2">{{ form.req_titulo_tramite }} <span>{{ form.req_titulo_tramite.label }}</span></label>
+              <label class="flex items-center gap-2">{{ form.req_adeuda }} <span>{{ form.req_adeuda.label }}</span></label>
+          </div>
+        </div>
+
+        {# Detalles si adeuda materias (oculto por defecto) #}
+        <div id="id_grupo_adeuda_materias" class="mt-3 hidden">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">{{ form.req_adeuda_mats.label }}</label>
+              {{ form.req_adeuda_mats }}
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">{{ form.req_adeuda_inst.label }}</label>
+              {{ form.req_adeuda_inst }}
+            </div>
+          </div>
+        </div>
+
+        {# Bloque específico Certificación Docente (oculto por defecto) #}
+        <div id="id_grupo_titulo_superior" class="hidden mt-4">
+            <h3 class="font-medium text-sm text-slate-600 border-t pt-3 mt-3">Documentación de Nivel Superior</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 mt-2">
+                <label class="flex items-center gap-2">{{ form.req_titulo_sup }} <span>{{ form.req_titulo_sup.label }}</span></label>
+                <label class="flex items-center gap-2">{{ form.req_incumbencias }} <span>{{ form.req_incumbencias.label }}</span></label>
+            </div>
+        </div>
+
+        <!-- nuevo checkbox 'Condición' (cuenta para ser REGULAR) -->
+        <div class="mt-4 border-t pt-4">
+          <label class="flex items-center gap-2">{{ form.req_condicion }} <span>{{ form.req_condicion.label }}</span></label>
+        </div>
+      </div>
+
+      {# Estado administrativo #}
+      <div class="mt-4 flex items-center gap-3">
+        <span id="pill-regular" class="hidden px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-sm">Alumno Regular Administrativamente</span>
+        <span id="pill-cond" class="hidden px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-sm">Alumno Condicional</span>
+        <label id="ddjj-wrap" class="hidden items-center gap-2">
+          {{ form.ddjj_compromiso }} <span>{{ form.ddjj_compromiso.label }}</span>
+        </label>
+      </div>
+
+      <div class="mt-6 flex gap-2">
+        <button class="px-4 py-2 rounded bg-slate-800 text-white">Inscribir</button>
+        <button type="button" onclick="history.back()" class="px-4 py-2 rounded border">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+window.CERT_DOCENTE_LABEL = "{{ CERT_DOCENTE_LABEL|default:'Certificación Docente para la Educación Secundaria' }}";
+</script>
+<script src="{% static 'ui/js/inscripcion_carrera.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('form[data-planes-url]');
+    if (!form) return;
+
+    const regularPill = document.getElementById('pill-regular');
+    const condPill = document.getElementById('pill-cond');
+    const apiUrl = "{% url 'ui:api_calcular_estado_administrativo' %}";
+    const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    async function updateStatus() {
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        // Convert checkbox values to boolean
+        form.querySelectorAll('input[type=checkbox]').forEach(checkbox => {
+            data[checkbox.name] = checkbox.checked;
+        });
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                console.error('Error updating status:', response.statusText);
+                return;
+            }
+
+            const result = await response.json();
+
+            regularPill.classList.toggle('hidden', result.estado !== 'REGULAR');
+            condPill.classList.toggle('hidden', result.estado !== 'CONDICIONAL');
+
+        } catch (error) {
+            console.error('Error updating status:', error);
+        }
+    }
+
+    // Initial status check
+    updateStatus();
+
+    // Listen for changes on all relevant form elements
+    form.addEventListener('change', updateStatus);
+});
+</script>
+{% endblock %}

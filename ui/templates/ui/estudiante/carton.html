@@ -1,0 +1,18 @@
+{% extends "ui/base.html" %}
+{% block content %}
+<div class="mb-4">
+  <h1 class="text-xl font-semibold">Cartón del Estudiante</h1>
+  <p class="text-slate-500 text-sm">Resumen de trayectoria: aprobadas, finales, regularidades, libres, etc.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
+    <h2 class="font-semibold mb-2">Aprobadas</h2>
+    <p class="text-sm text-slate-500">Aquí listaremos espacios, fechas y calificaciones.</p>
+  </div>
+  <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
+    <h2 class="font-semibold mb-2">Finales rendidos</h2>
+    <p class="text-sm text-slate-500">Intentos, notas y actas.</p>
+  </div>
+</div>
+{% endblock %}

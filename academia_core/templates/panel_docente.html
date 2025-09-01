@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Panel Docente{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Panel del Docente: {{ docente.apellido }}, {{ docente.nombre }}</h1>
+
+    {% for item in espacios_con_alumnos %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="mb-0">{{ item.espacio.nombre }}</h4>
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Alumnos inscriptos</h5>
+            {% if item.alumnos %}
+            <ul class="list-group">
+                {% for alumno in item.alumnos %}
+                <li class="list-group-item">{{ alumno.apellido }}, {{ alumno.nombre }} (DNI: {{ alumno.dni }})</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted">No hay alumnos inscriptos en esta materia.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="alert alert-info">
+        No tiene materias asignadas.
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

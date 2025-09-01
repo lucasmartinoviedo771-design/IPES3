@@ -1,0 +1,14 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+# Reglas útiles y sin ser molestos
+select = ["E", "F", "I", "UP", "B"]  # pycodestyle, pyflakes, isort, pyupgrade, bugbear
+ignore = ["E501"]                    # no romper por líneas largas (lo activamos más adelante)
+
+# Ignorar migraciones y cachés
+exclude = [
+  "*/migrations/*",
+  ".venv",
+  "__pycache__",
+]

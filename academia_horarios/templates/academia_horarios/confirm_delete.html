@@ -1,0 +1,24 @@
+{% extends "ui/base.html" %}
+
+{% block title %}Confirmar borrado · IPES{% endblock %}
+{% block nav_horario %}active{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <h1>Confirmar borrado</h1>
+
+  <p class="muted" style="margin-top:8px">
+    ¿Estás seguro que querés eliminar
+    <strong>{{ object }}</strong>?
+    Esta acción no puede deshacerse.
+  </p>
+
+  <form method="post" style="margin-top:12px">
+    {% csrf_token %}
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">Sí, borrar</button>
+      <a class="btn btn-ghost" href="{{ cancel_url|default:request.META.HTTP_REFERER }}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

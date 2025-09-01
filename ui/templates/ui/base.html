@@ -1,0 +1,145 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}IPES Paulo Freire{% endblock %}</title>
+  {% block extra_head %}{% endblock %}
+  <link rel="stylesheet" href="{% static 'academia_core/tema-ipes.css' %}?v=12">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Topbar VERDE, ancho completo -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <img src="{% static 'academia_core/escudo.png' %}" alt="Escudo IPES" class="brand-img">
+        <span class="brand-title">IPES Paulo Freire</span>
+      </div>
+      <div class="account">
+        Usuario: {{ request.user|default:'—' }} &nbsp;•&nbsp;
+        <a href="{% url 'logout' %}">Cerrar sesión</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Cuerpo: sidebar + contenido -->
+  <div class="app">
+    <aside class="sidebar">
+  <div class="sidebar-title">Panel de Gestión</div>
+
+  <nav class="nav">
+    <!-- 1) Panel -->
+    <a href="{% url 'ui:dashboard' %}" class="{% block nav_dashboard %}{% endblock %}">Panel</a>
+
+    <!-- 2) Estudiantes (con submenú) -->
+    <div class="nav-item has-children">
+      <a href="#" class="nav-parent">Estudiantes</a>
+      <div class="subnav">
+        <a href="{% url 'ui:estudiantes_list' %}" class="{% block nav_estudiantes_list %}{% endblock %}">Listado</a>
+        <a href="{% url 'ui:estudiante_nuevo' %}" class="{% block nav_estudiantes_new %}{% endblock %}">Nuevo Estudiante</a>
+        <a href="{% url 'ui:carton_estudiante' %}" class="{% block nav_estudiantes_carton %}{% endblock %}">Cartón</a>
+        <a href="#" class="{% block nav_estudiantes_corr %}{% endblock %}">Correlatividad</a>
+        <a href="{% url 'ui:historico_estudiante' %}" class="{% block nav_estudiantes_hist %}{% endblock %}">Histórico</a>
+        <a href="#" class="{% block nav_estudiantes_docs %}{% endblock %}">Documentos importantes</a>
+      </div>
+    </div>
+
+    <!-- 3) Inscripciones (a Carrera/Materia/Mesa) -->
+    <div class="nav-item has-children">
+      <a href="#" class="nav-parent">Inscripciones</a>
+      <div class="subnav">
+        <a href="{% url 'insc_carrera_new' %}" class="{% block nav_insc_carrera %}{% endblock %}">a Carrera</a>
+        <a href="{% url 'insc_materia_new' %}" class="{% block nav_insc_materia %}{% endblock %}">a Materia</a>
+        <a href="{% url 'insc_mesa_new' %}" class="{% block nav_insc_mesa %}{% endblock %}">a Mesa</a>
+      </div>
+    </div>
+
+    <!-- 4) Regularidad -->
+    <a href="#" class="{% block nav_regularidad %}{% endblock %}">Regularidad</a>
+
+    <!-- 5) Final -->
+    <a href="#" class="{% block nav_final %}{% endblock %}">Final</a>
+
+    <!-- Horarios -->
+    <div class="nav-item has-children">
+      <a href="#" class="nav-parent">Horarios</a>
+      <div class="subnav">
+        <a href="{% url 'ui:horarios_docente' %}">Por docente</a>
+        <a href="{% url 'ui:horarios_profesorado' %}">Por profesorado</a>
+      </div>
+    </div>
+
+    <!-- 7) Administración (nombre sugerido para lo “operativo”) -->
+    <div class="nav-item has-children">
+      <a href="#" class="nav-parent">Administración</a>
+      <div class="subnav">
+        <a href="#" class="{% block nav_admin_hab %}{% endblock %}">Habilitaciones</a>
+        <a href="{% url 'ui:docente_nuevo' %}" class="{% block nav_admin_docente %}{% endblock %}">Cargar docente</a>
+        <a href="#" class="{% block nav_admin_carrera %}{% endblock %}">Cargar carrera</a>
+        <a href="#" class="{% block nav_admin_plan %}{% endblock %}">Cargar plan</a>
+        <a href="#" class="{% block nav_admin_materia %}{% endblock %}">Cargar materias</a>
+        <a href="{% url 'ui:correlatividades' %}" class="{% block nav_admin_corr %}{% endblock %}">Cargar correlatividades</a>
+        <a href="{% url 'academia_horarios:cargar_horario' %}" class="{% block nav_horario %}{% endblock %}">Cargar horarios</a>
+      </div>
+    </div>
+  </nav>
+</aside>
+
+    <main class="main">
+      <div class="container">
+        {% if messages %}
+          <ul class="messages">
+            {% for message in messages %}
+              <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+<script>
+(function () {
+  const items = document.querySelectorAll('.nav-item.has-children');
+
+  // Cierra todos y abre el clickeado (acordeón)
+  function openOnly(item) {
+    items.forEach(i => i.classList.toggle('open', i === item));
+  }
+
+  // Toggle al hacer click en el padre
+  items.forEach(item => {
+    const parent = item.querySelector('.nav-parent');
+    parent.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isOpen = item.classList.contains('open');
+      items.forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    });
+  });
+
+  // Si hay un hijo activo en esta página, que arranque abierto
+  items.forEach(item => {
+    if (item.querySelector('.subnav a.active')) {
+      item.classList.add('open');
+    }
+  });
+})();
+</script>
+<script>
+  // Aplica clases del tema si faltan (select/input/textarea) en cualquier formulario
+  (function(){
+    document.querySelectorAll('.panel input, .panel select, .panel textarea').forEach(el=>{
+      if (el.type === 'checkbox' || el.type === 'radio' || el.type === 'file') return;
+      const hasClass = ['input','select','textarea'].some(c=>el.classList.contains(c));
+      if (hasClass) return;
+      el.classList.add(el.tagName === 'SELECT' ? 'select' : (el.tagName === 'TEXTAREA' ? 'textarea' : 'input'));
+    });
+  })();
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

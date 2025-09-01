@@ -1,0 +1,43 @@
+{# ui/templates/ui/personas/docente_form.html #}
+{% extends "ui/base.html" %}
+
+{% block title %}Nuevo Docente{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-5">
+  <div>
+    <h1 class="text-xl md:text-2xl font-semibold tracking-tight">Nuevo Docente</h1>
+    <p class="text-sm text-slate-500">Completá los datos y guardá.</p>
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="space-y-6">
+  {% csrf_token %}
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {% for field in form %}
+      <div>
+        <label class="block text-sm font-medium mb-1" for="{{ field.id_for_label }}">
+          {{ field.label }}
+        </label>
+        {{ field }}
+        {% if field.help_text %}
+          <p class="text-xs text-slate-500 mt-1">{{ field.help_text }}</p>
+        {% endif %}
+        {% if field.errors %}
+          <p class="text-xs text-red-600 mt-1">{{ field.errors|striptags }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="flex items-center justify-end gap-2">
+    <a href="javascript:history.back()" class="px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50">
+      Cancelar
+    </a>
+    <button type="submit" class="px-4 py-2 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 shadow-soft">
+      Guardar
+    </button>
+  </div>
+</form>
+{% endblock %}

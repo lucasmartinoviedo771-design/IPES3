@@ -1,0 +1,89 @@
+{% extends "ui/base.html" %}
+{% load static form_extras %}
+
+{% block title %}Nuevo Estudiante · IPES{% endblock %}
+{% block nav_estudiantes_new %}active{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <h1>Nuevo Estudiante</h1>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div class="form-grid-2">
+      <div>
+        <label for="{{ form.dni.id_for_label }}">DNI</label>
+        {{ form.dni|addclass:"input" }}
+      </div>
+
+      <div>
+        <label for="{{ form.apellido.id_for_label }}">Apellido</label>
+        {{ form.apellido|addclass:"input" }}
+      </div>
+
+      <div>
+        <label for="{{ form.nombre.id_for_label }}">Nombre</label>
+        {{ form.nombre|addclass:"input" }}
+      </div>
+
+      <div>
+        <label for="{{ form.fecha_nacimiento.id_for_label }}">Fecha de nacimiento</label>
+        {{ form.fecha_nacimiento|addclass:"input" }}
+      </div>
+
+      <div>
+        <label for="{{ form.lugar_nacimiento.id_for_label }}">Lugar de nacimiento</label>
+        {{ form.lugar_nacimiento|addclass:"input" }}
+      </div>
+
+      <div>
+        <label for="{{ form.email.id_for_label }}">Correo electrónico</label>
+        {{ form.email|addclass:"input" }}
+      </div>
+
+      <div>
+        <label for="{{ form.telefono.id_for_label }}">Teléfono</label>
+        {{ form.telefono|addclass:"input" }}
+      </div>
+
+      <div>
+        <label for="{{ form.localidad.id_for_label }}">Localidad</label>
+        {{ form.localidad|addclass:"input" }}
+      </div>
+
+      {# Activo ocupa las 2 columnas #}
+      <label class="checkbox grid-span-2" style="margin-top:6px">
+        {{ form.activo }} <span>Activo</span>
+      </label>
+
+      {# Foto ocupa las 2 columnas #}
+      <div class="grid-span-2">
+        <label for="{{ form.foto.id_for_label }}">Foto</label>
+        {{ form.foto }}
+      </div>
+
+      {# opcionales, si existen en tu form #}
+      {% if form.tel_emergencia %}
+      <div>
+        <label for="{{ form.tel_emergencia.id_for_label }}">Tel. de emergencia</label>
+        {{ form.tel_emergencia|addclass:"input" }}
+      </div>
+      {% endif %}
+
+      {% if form.parentesco_emergencia %}
+      <div>
+        <label for="{{ form.parentesco_emergencia.id_for_label }}">Parentesco (emergencia)</label>
+        {{ form.parentesco_emergencia|addclass:"input" }}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">Guardar Estudiante</button>
+      <a class="btn btn-ghost" href="{% url 'ui:estudiantes_list' %}">Volver al listado</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "ui/base.html" %}
+{% load form_extras %}
+
+{% block title %}Comisión · IPES{% endblock %}
+{% block nav_horario %}active{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <div class="row" style="align-items:center; gap:12px">
+    <h1 style="margin:0">Comisión {{ comision }}</h1>
+    {# TODO: Link a volver a la oferta o listado de comisiones #}
+    <a class="btn btn-ghost" href="{% url 'academia_horarios:panel_oferta' %}">Volver</a>
+  </div>
+
+  {# Datos de cabecera de la comisión #}
+  <div class="form-grid-2" style="margin-top:14px">
+    <div>
+      <div class="muted">Carrera / Profesorado</div>
+      <div>{{ comision.carrera|default:"-" }}</div>
+    </div>
+    <div>
+      <div class="muted">Plan</div>
+      <div>{{ comision.plan|default:"-" }}</div>
+    </div>
+    <div>
+      <div class="muted">Materia</div>
+      <div>{{ comision.materia|default:"-" }}</div>
+    </div>
+    <div>
+      <div class="muted">Curso</div>
+      <div>{{ comision.curso|default:"-" }}</div>
+    </div>
+  </div>
+
+  {# Horarios de la comisión #}
+  <h2 style="margin-top:18px">Horarios</h2>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Docente</th>
+          <th>Día</th>
+          <th>Inicio</th>
+          <th>Fin</th>
+          <th>Aula</th>
+          <th style="width:1%"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in horarios %}
+        <tr>
+          <td>{{ h.docente }}</td>
+          <td>{{ h.get_dia_display|default:h.dia }}</td>
+          <td>{{ h.hora_inicio|time:"H:i" }}</td>
+          <td>{{ h.hora_fin|time:"H:i" }}</td>
+          <td>{{ h.aula|default:h.espacio }}</td>
+          <td style="white-space:nowrap">
+            <a class="btn btn-ghost" href="{% url 'academia_horarios:horario_edit' h.pk %}">Editar</a>
+            <a class="btn btn-ghost" href="{% url 'academia_horarios:horario_delete' h.pk %}">Borrar</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="muted">Esta comisión aún no tiene horarios.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# Alta de horario dentro del detalle #}
+  <h2 style="margin-top:18px">Agregar horario</h2>
+  <form method="post" class="form-grid-2">
+    {% csrf_token %}
+    {{ form_horario.non_field_errors }}
+
+    <div>
+      <label for="{{ form_horario.docente.id_for_label }}">Docente</label>
+      {{ form_horario.docente|addclass:"select" }}
+    </div>
+    <div>
+      <label for="{{ form_horario.dia.id_for_label }}">Día</label>
+      {{ form_horario.dia|addclass:"select" }}
+    </div>
+    <div>
+      <label for="{{ form_horario.hora_inicio.id_for_label }}">Hora inicio</label>
+      {{ form_horario.hora_inicio|addclass:"input" }}
+    </div>
+    <div>
+      <label for="{{ form_horario.hora_fin.id_for_label }}">Hora fin</label>
+      {{ form_horario.hora_fin|addclass:"input" }}
+    </div>
+    <div>
+      <label for="{{ form_horario.aula.id_for_label }}">Aula</label>
+      {{ form_horario.aula|addclass:"select" }}
+    </div>
+    <div>
+      <label for="{{ form_horario.activo.id_for_label }}">Activo</label>
+      <label class="checkbox">{{ form_horario.activo }} <span>Activo</span></label>
+    </div>
+
+    <div class="grid-span-2">
+      <label for="{{ form_horario.observaciones.id_for_label }}">Observaciones</label>
+      {{ form_horario.observaciones|addclass:"input" }}
+    </div>
+
+    <div class="grid-span-2 actions">
+      <button class="btn btn-primary">Guardar Horario</button>
+      <a class="btn btn-ghost" href="{% url 'academia_horarios:panel_oferta' %}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

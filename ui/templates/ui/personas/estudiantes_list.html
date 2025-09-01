@@ -1,0 +1,30 @@
+{% extends "ui/base.html" %}
+{% block content %}
+<div class="p-4">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-xl font-semibold">Estudiantes</h1>
+    <a href="{% url 'ui:estudiante_nuevo' %}" class="px-3 py-2 rounded bg-emerald-600 text-white">Estudiante nuevo</a>
+  </div>
+
+  <form method="get" class="mb-4">
+    <input type="text" name="q" value="{{ q|default:'' }}" placeholder="Buscar por apellido, nombre, DNI o email"
+           class="w-full md:w-1/2 border rounded px-3 py-2">
+  </form>
+
+  {% if items %}
+    <ul class="divide-y rounded border bg-white">
+      {% for obj in items %}
+        <li class="p-3 flex items-center justify-between">
+          <div>
+            <div class="font-medium">{{ obj.apellido }}, {{ obj.nombre }}</div>
+            <div class="text-sm text-slate-500">DNI: {{ obj.dni }} · {{ obj.email }}</div>
+          </div>
+          <a class="text-slate-700 underline" href="{% url 'ui:estudiantes_detail' obj.pk %}">Ver</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-slate-600">No se encontraron estudiantes.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "ui/base.html" %}
+{% load ui_extras %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h2 class="text-lg font-semibold">{{ view|classname|cut:"View" }}</h2>
+  </div>
+  <div class="card-body">
+    {% if form is None %}
+      <div class="text-sm text-slate-500">Pendiente de definir modelo/campos.</div>
+    {% else %}
+      <form method="post">
+        {% csrf_token %}
+        <div class="space-y-3">
+          {{ form.as_p }}
+        </div>
+        <div class="mt-4">
+          <button class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

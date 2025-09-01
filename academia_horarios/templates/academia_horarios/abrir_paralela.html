@@ -1,0 +1,27 @@
+{% extends "ui/base.html" %}
+{% block title %}Abrir paralela · IPES{% endblock %}
+{% block nav_horario %}active{% endblock %}
+{% block content %}
+<div class="panel">
+  <h1>Abrir comisión paralela</h1>
+  <form method="post" class="form-grid-2">
+    {% csrf_token %}
+    <div>
+      <label>Sección nueva</label>
+      <select name="seccion" class="select">
+        <option value="B">B</option><option value="C">C</option>
+      </select>
+    </div>
+    <label class="checkbox grid-span-2">
+      <input type="checkbox" name="copiar_horarios" value="1"> Copiar horarios
+    </label>
+    <label class="checkbox grid-span-2">
+      <input type="checkbox" name="mantener_docentes" value="1"> Mantener docentes (si chocan, sin designar)
+    </label>
+    <div class="actions grid-span-2">
+      <button class="btn btn-primary">Crear</button>
+      <a href="{% url 'academia_horarios:cargar_horario' %}" class="btn btn-ghost">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

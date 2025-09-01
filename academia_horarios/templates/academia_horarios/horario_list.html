@@ -1,0 +1,35 @@
+{% extends 'academia_horarios/base_panel.html' %}
+{% block title %}Horarios{% endblock %}
+{% block content %}
+<form method="get">
+  <input name="q" placeholder="Buscar (profesorado/materia)" value="{{ request.GET.q }}"/>
+  <select name="periodo">
+    <option value="">Todos los períodos</option>
+    {% for p in periodos %}
+      <option value="{{ p.id }}" {% if request.GET.periodo == p.id|stringformat:'s' %}selected{% endif %}>{{ p }}</option>
+    {% endfor %}
+  </select>
+  <button>Filtrar</button>
+  <a href="{% url 'panel_horario_new' %}" role="button">+ Nuevo</a>
+</form>
+<table>
+  <thead><tr><th>Comisión</th><th>Día</th><th>Inicio</th><th>Fin</th><th>Docentes</th><th></th></tr></thead>
+  <tbody>
+  {% for h in object_list %}
+    <tr>
+      <td>{{ h.comision }}</td>
+      <td>{{ h.timeslot.dia_semana }}</td>
+      <td>{{ h.timeslot.inicio }}</td>
+      <td>{{ h.timeslot.fin }}</td>
+      <td>{% for d in h.docentes.all %}{{ d }}{% if not forloop.last %}, {% endif %}{% empty %}<em>Sin docente</em>{% endfor %}</td>
+      <td>
+        <a href="{% url 'panel_horario_edit' h.pk %}">Editar</a>
+        <a href="{% url 'panel_horario_del' h.pk %}">Borrar</a>
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="6">No hay horarios.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

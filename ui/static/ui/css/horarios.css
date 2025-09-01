@@ -1,0 +1,57 @@
+/* static/ui/css/horarios.css */
+
+.horario-grid { margin-top: 1rem; overflow: auto; }
+
+.grid-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.95rem;
+  background: #fff;
+  border:1px solid #e6e2dc;
+}
+.grid-table th, .grid-table td {
+  border:1px solid #eee5dc;
+  padding:.35rem .45rem;
+  vertical-align: top;
+}
+
+.grid-table thead th {
+  background: #faf7f2;
+  font-weight:600;
+  text-align: center;
+}
+
+.col-time { width: 8.5rem; white-space: nowrap; font-variant-numeric: tabular-nums; background:#fdfaf6; }
+.col-slot { position: relative; min-height: 3rem; }
+
+.is-break {
+  background: #f4f1ed;
+  color:#7c6a57;
+  text-align:center;
+  font-style: italic;
+}
+
+.chip { margin:.15rem 0; }
+.chip-line{
+  background:#f6f1ea;
+  border:1px solid #e9dfd2;
+  border-radius:.5rem;
+  padding:.35rem .45rem;
+  line-height:1.15;
+}
+.chip-line strong { display:block; color:#4a3a28; }
+.chip-sub { display:block; color:#7a6b59; font-size:.85em; }
+
+/* “Diagonal” para materias cuatrimestrales */
+.chip-diag{
+  background:
+    linear-gradient(135deg, transparent 49%, rgba(0,0,0,.06) 49%, rgba(0,0,0,.06) 51%, transparent 51%) #f6f1ea;
+}
+
+/* Print limpio */
+@media print {
+  .btn, .hp-toolbar, .form-grid-2, .form-grid-3 { display:none !important; }
+  .panel { box-shadow:none; }
+  .grid-table th, .grid-table td { border-color:#ccc; }
+}

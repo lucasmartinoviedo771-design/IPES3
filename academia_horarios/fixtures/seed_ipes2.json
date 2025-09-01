@@ -1,0 +1,80 @@
+[
+  {
+    "model": "academia_horarios.periodo",
+    "pk": 1,
+    "fields": {
+      "ciclo_lectivo": 2025,
+      "cuatrimestre": 2
+    }
+  },
+  {
+    "model": "academia_horarios.plan",
+    "pk": 1,
+    "fields": {
+      "nombre": "Prof. Biología",
+      "codigo": "BIO-2025"
+    }
+  },
+  {
+    "model": "academia_horarios.materia",
+    "pk": 1,
+    "fields": {
+      "codigo": "BIO101",
+      "nombre": "Introducción a la Biología"
+    }
+  },
+  {
+    "model": "academia_horarios.materia",
+    "pk": 2,
+    "fields": {
+      "codigo": "BIO102",
+      "nombre": "Didáctica I"
+    }
+  },
+  {
+    "model": "academia_horarios.materiaenplan",
+    "pk": 1,
+    "fields": {
+      "plan": 1,
+      "materia": 1,
+      "anio": 1,
+      "tipo_dictado": "CUATRIMESTRAL",
+      "horas_catedra_semana_1c": 2,
+      "horas_catedra_semana_2c": 2
+    }
+  },
+  {
+    "model": "academia_horarios.materiaenplan",
+    "pk": 2,
+    "fields": {
+      "plan": 1,
+      "materia": 2,
+      "anio": 1,
+      "tipo_dictado": "ANUAL",
+      "horas_catedra_semana_1c": 2,
+      "horas_catedra_semana_2c": 2
+    }
+  },
+  {
+    "model": "academia_horarios.comision",
+    "pk": 1,
+    "fields": {
+      "materia_en_plan": 1,
+      "periodo": 1,
+      "turno": "vespertino",
+      "nombre": "Única",
+      "cupo": 30
+    }
+  },
+  {
+    "model": "academia_horarios.comision",
+    "pk": 2,
+    "fields": {
+      "materia_en_plan": 2,
+      "periodo": 1,
+      "turno": "vespertino",
+      "nombre": "Única",
+      "cupo": 30
+    }
+  }
+]

@@ -1,0 +1,20 @@
+<form method="get" class="ui-form ui-grid" style="grid-template-columns: 1fr auto auto auto; align-items: end;">
+  <div class="ui-field">
+    <label for="{{ form.plan.id_for_label }}">Plan</label>
+    {{ form.plan }}
+  </div>
+
+  <div class="ui-field">
+    <label for="{{ form.anio.id_for_label }}">Año</label>
+    {{ form.anio }}
+  </div>
+
+  <div class="ui-field">
+    <label for="{{ form.periodo.id_for_label }}">Período</label>
+    {{ form.periodo }}
+  </div>
+
+  <div class="ui-actions">
+    <button class="ui-btn ui-btn--primary" type="submit">Filtrar</button>
+  </div>
+</form>

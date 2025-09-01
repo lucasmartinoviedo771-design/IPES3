@@ -1,0 +1,28 @@
+{% extends 'academia_horarios/base_panel.html' %}
+{% load static %}
+{% block title %}{{ view.object|default:'Nuevo horario' }}{% endblock %}
+{% block content %}
+<form method="post" novalidate>{% csrf_token %}
+  <input type="hidden" name="next"
+         value="{{ request.GET.next|default:request.META.HTTP_REFERER }}">
+
+  {% if form.non_field_errors %}
+    <div class="error">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  {% for field in form %}
+    {% if field.name == "comision" %}
+      {{ field.as_hidden }}
+    {% else %}
+      <div class="field">
+        {{ field.label_tag }} {{ field }}
+        {% if field.errors %}
+          <div class="error">{{ field.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endfor %}
+
+  <button type="submit">Guardar</button>
+</form>
+{% endblock %}

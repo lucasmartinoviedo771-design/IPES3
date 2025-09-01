@@ -1,0 +1,1290 @@
+[
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Aguirre Cejas, Juan Pablo",
+      "dni": "29825234"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Algañaraz, Natalia Veronica",
+      "dni": "30176163"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Altamirano, Alejandra Beatriz",
+      "dni": "29421445"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ameri, Nestor Jorge",
+      "dni": "22697793"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Andres, Daiana Elizabeth",
+      "dni": "40688808"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Anton, Alejandro Daniel",
+      "dni": "33192749"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Aparici, Ines",
+      "dni": "11683729"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Aquino, Pascuala",
+      "dni": "12005545"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Argañaraz, Raul Eduardo",
+      "dni": "37961918"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Arias, Nelly Evelina",
+      "dni": "14353026"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Arrabe, Andrea Marina",
+      "dni": "28207723"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Artigues, Andrea",
+      "dni": "32937663"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Asin, Claudia",
+      "dni": "17480841"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Barreto, Thomas Ezequiel",
+      "dni": "44577267"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Barrientos, Graciela Estela",
+      "dni": "21965598"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Barrientos, Leonor Itati",
+      "dni": "24218224"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Bejarano, Rocio Carolina",
+      "dni": "40639784"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Beron, Irene Beatriz",
+      "dni": "29673091"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Bertossi, Virginia Susana",
+      "dni": "25774953"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Bifano, Rocio Yanina",
+      "dni": "32764096"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Blanco, Liliana Beatriz",
+      "dni": "21351739"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Bojorque, Daniel Federico",
+      "dni": "23323406"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Borda, Ana Laura",
+      "dni": "34900989"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Buchieri, Alejandro Carlos",
+      "dni": "31904832"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Bustos, Fabricio Ivan",
+      "dni": "20643637"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Cabrera, Raul Ricardo",
+      "dni": "19016574"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Cardozo, Marianella Katherina",
+      "dni": "35591170"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Carrazan, Miguel Ariel",
+      "dni": "30999268"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Carrazan, Mónica Beatriz",
+      "dni": "33484126"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Carrion Canton, Eugenia Ines",
+      "dni": "23217998"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Cayetano, Nancy Elizabeth",
+      "dni": "32593183"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Cazon, Nestor Enrique",
+      "dni": "21180737"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Cespedes, Gabriela Cecilia",
+      "dni": "27038914"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Chaile, Maria Celeste",
+      "dni": "26417980"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Clement Arencibia, Viviana Sofia",
+      "dni": "36073314"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Colque, Carlos Sebastian",
+      "dni": "32607561"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Coronel, Joaquin Nicolas",
+      "dni": "41322243"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Coronel, María del Carmen",
+      "dni": "34597812"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Corvo, Rodrigo Emiliano",
+      "dni": "33407724"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Cruz, Maria Fernanda",
+      "dni": "34696516"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "De los Santos, Maria Valentina",
+      "dni": "34484281"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "De Marziani, Paulina Maria",
+      "dni": "34779190"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Doldan Pereira, Carla",
+      "dni": "18818419"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Dominguez, Silvana Graciela",
+      "dni": "26697574"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Dumrauf, Olga Beatriz",
+      "dni": "24653955"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Esparza Esparza, Ana Teresa",
+      "dni": "36733949"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Fernandez, Andrea Karina",
+      "dni": "30665913"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Fernandez, Leandro Ariel",
+      "dni": "35356846"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Fernandez, Melisa Natalia",
+      "dni": "33732749"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ferreyra, Ana Paula de los Angeles",
+      "dni": "36225721"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ferreyra, Graciela Analia",
+      "dni": "30665828"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ferro, Cynthia Alejandra",
+      "dni": "29595478"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ferro, Luciana Graciela",
+      "dni": "28454700"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Flores, Cinthya Veronica",
+      "dni": "31579233"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Flores, Marianela",
+      "dni": "35986871"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Flores, Rodrigo Nicolas",
+      "dni": "34978063"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Fracalossi Folonier, Yanina Margarita Iara",
+      "dni": "26173170"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Franck, Alejandra Elena",
+      "dni": "16969381"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Gabriel, Mariela De Los Angeles",
+      "dni": "22409129"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Gallardo Araya, Jorge Ariel",
+      "dni": "34483817"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Gallegos Navarro, Maria Antonia",
+      "dni": "18798564"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Garay Gimenez, Cintia Soledad",
+      "dni": "32768849"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Garcia, Ana Carla",
+      "dni": "36551947"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Garcia, Anibal Alberto",
+      "dni": "27017107"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Garnier, Maria Veronica",
+      "dni": "25712692"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Gassner, Mariana Paola",
+      "dni": "40844397"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Gigena, Lorena Graciela",
+      "dni": "26532631"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Gomez, Horacio Daniel",
+      "dni": "23070009"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Gomez, Josue Daniel",
+      "dni": "37173756"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Gonza, Valeria Nancy",
+      "dni": "33173344"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Gonzalez, Diego Martin",
+      "dni": "29549411"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "González, Rocio Elizabeth",
+      "dni": "36862162"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Graciani, Alejandra Susana",
+      "dni": "23880306"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Griguol, Oscar Federico",
+      "dni": "31636796"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Guardabassi, Francisco Jose",
+      "dni": "36733691"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Guastalli, Karina Marion",
+      "dni": "25250831"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Gutierrez, Dionisia Liliana",
+      "dni": "23827300"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Herrera, Amalia Virginia",
+      "dni": "21634357"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Hidalgo, Claudia Silvana",
+      "dni": "26970441"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ibañez, Hebe Marianne",
+      "dni": "37501315"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ibarra, Leila Carolina",
+      "dni": "32130968"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Iglesias, Victor Hugo",
+      "dni": "16828259"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Iribarne, Sabrina Rocio",
+      "dni": "27797523"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Juarez, Mirta Angelica",
+      "dni": "20919524"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Knaup, Adriana Graciela",
+      "dni": "24213074"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Kuti, Laura Ines",
+      "dni": "29251939"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "La Cruz, Maria de los Angeles",
+      "dni": "35356787"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ledesma, Bianca Agustina Itati",
+      "dni": "40700915"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ledesma, Cristian German",
+      "dni": "33691408"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ledesma, Virginia Noemi",
+      "dni": "30069876"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Leite, Ailen",
+      "dni": "33991611"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Lokvicic, Maria Victoria",
+      "dni": "31706768"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Lopez, Julieta Cristina",
+      "dni": "30666708"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Lorenzo Gonzalez, Mauro Ruben",
+      "dni": "38591072"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Loverde, Maria Agustina",
+      "dni": "34828882"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Maciel, Angel Enrique",
+      "dni": "28093831"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Maciel, Daiana Belén",
+      "dni": "33991929"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Maciel, Marianela Paola",
+      "dni": "32473016"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Maida, Maximiliano",
+      "dni": "32600931"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Maina Mirolo, Viviana",
+      "dni": "21904943"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Maldonado, Gabriela Fernanda",
+      "dni": "31931976"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Marasco, Andrea Viviana",
+      "dni": "20567666"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Marchevsky, Ezequiel Hugo",
+      "dni": "26456407"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Martinengo, Ana Azul",
+      "dni": "42011401"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Martinez, Daniela Alejandra",
+      "dni": "30882375"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Martínez, Federico Ernesto",
+      "dni": "40081976"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Martinez, Jorge Alberto",
+      "dni": "16744979"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Massera, Carlos Antonio",
+      "dni": "17500989"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Mendoza, Lis Patricia",
+      "dni": "32366097"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Molinari, Ana Clara",
+      "dni": "35609636"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Monsalves, Luis Omar",
+      "dni": "24682712"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Montero, Mariana Valeria",
+      "dni": "30489948"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Montiel, Claudia Andrea",
+      "dni": "21559224"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Muñoz, Ariel Sebastián",
+      "dni": "29293627"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ocampo, Sergio",
+      "dni": "29417833"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Oldenburg, Carlos Dario",
+      "dni": "26339188"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Olguin, Alicia Mabel",
+      "dni": "23584942"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Olmedo, Facundo Mariano",
+      "dni": "36708717"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Orona, Mara Lorena",
+      "dni": "25931529"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Orona, Maria Del Lourdes",
+      "dni": "21460039"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ortiz, Diego Alexis",
+      "dni": "37536074"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ortiz, Guadalupe Elizabet",
+      "dni": "38561499"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ortiz, Guillermo Matias",
+      "dni": "28008062"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Pagella, Luciana",
+      "dni": "41127070"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Parra, Matias Emmanuel",
+      "dni": "36551750"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Peña, Emili",
+      "dni": "36733406"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Peralta, Abby Anna Victoria",
+      "dni": "35638683"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Pereyra Oliveros, Nahuel Alexis",
+      "dni": "35232076"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Perez Guzman, Tatiana Gisel",
+      "dni": "36034965"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Perez Riquelme, Franco Nicolás",
+      "dni": "38785826"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Pérez, Gabriela Vanesa",
+      "dni": "41922571"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Quiroga, Guillermo Dante",
+      "dni": "14297899"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ramirez, Laura Eugenia",
+      "dni": "31909645"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ramos, Pablo Damian",
+      "dni": "32768488"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ramos, Veronica Sara Elvira",
+      "dni": "24695293"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Raña, Agustina Emilce",
+      "dni": "37173506"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Rastelli, Romina Belen",
+      "dni": "33988995"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Rios Stern, Dante Mauricio",
+      "dni": "34375826"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Rios, Fernando Gabriel",
+      "dni": "35477297"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Rios, Valeria Malvina",
+      "dni": "29404333"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Rocha, Alexiana Delmira",
+      "dni": "34665327"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Roda, Lorena Mariangeles",
+      "dni": "29934097"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Rodriguez, Esteban Mauricio",
+      "dni": "28496377"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Rodriguez, Gloria Lorena",
+      "dni": "24488050"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Rojas Matas, Adolfo Cesar",
+      "dni": "28811267"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Rojas Matas, Noelia Veronica",
+      "dni": "27358456"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Rojo Menendez, Devora Julieta",
+      "dni": "37909053"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Rolin Alvarado, Maximiliano Adrian",
+      "dni": "34375819"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Romero, Jorge Ariel",
+      "dni": "26161454"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Rubio, Marcos Alejandro Gabriel",
+      "dni": "22671475"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Ruiz Peralta, Pamela",
+      "dni": "30069763"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Salinas Chinchilla, Marianela Alejandra",
+      "dni": "34375510"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Sanchez Molina, Maria Macarena",
+      "dni": "37011645"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Sanchez Negrette, Beatriz Elizabeth",
+      "dni": "20381551"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Sanchez Rueda, Maria Jose",
+      "dni": "22062427"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Sanchez, Barbara Belen",
+      "dni": "33227269"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Sander, Cecilia Maria",
+      "dni": "23059648"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Schab, Maria Andrea",
+      "dni": "28959216"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Sena, Maria Soledad",
+      "dni": "29212437"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Soto Vidal, Javier Alejandro",
+      "dni": "19029164"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Tomas, Maricel Lourdes",
+      "dni": "35873207"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Urdapilleta, Melisa Anahi",
+      "dni": "28604588"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Vaca, Florencia Daniela",
+      "dni": "37836250"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Valania, Martha Andrea",
+      "dni": "21828465"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Valderrama Otey, Margarita Del Carmen",
+      "dni": "18843959"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Valenzuela Biñones, Camila Viviana",
+      "dni": "37053946"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Valiente, Carina Elizabeth",
+      "dni": "27456547"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Valius, Adriana Mercedes",
+      "dni": "17160926"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Vargas Nitor, Jorge Marcelo",
+      "dni": "38088452"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Vargas, Cecilia Isabel",
+      "dni": "24831927"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Vega, Natali Del Valle",
+      "dni": "30517009"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Velazquez, Ana Laura",
+      "dni": "35307450"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Veliz, Mariana Gabriela",
+      "dni": "35931705"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Venturini, Santiago",
+      "dni": "33175501"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Vera Pardo, Mariana Viviana",
+      "dni": "26217003"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Vildoza, Exequiel Alejandro",
+      "dni": "35743845"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Vittorangeli, Erica Ana",
+      "dni": "17066988"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Zalazar, Claudia Alejandra",
+      "dni": "30110108"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Zborowski, Miguel Angel",
+      "dni": "32985151"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Zelarayan, Edgardo Fernando",
+      "dni": "33817104"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Zelaya, Jose Nicolas",
+      "dni": "41374317"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Cancino Rita Veronica",
+      "dni": "29295468"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Romero, Joaquín Fernando",
+      "dni": "31173767"
+    }
+  },
+  {
+    "model": "academia_horarios.docente",
+    "fields": {
+      "apellido_nombre": "Bollar, Pablo",
+      "dni": "35996012"
+    }
+  }
+]

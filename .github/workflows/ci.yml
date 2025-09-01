@@ -1,0 +1,90 @@
+name: CI (Lint, Check & Tests)
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+
+jobs:
+  test_and_lint:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    # Variables de entorno para el job. TIME_ZONE se aplicará a todos los pasos.
+    env:
+      DJANGO_SETTINGS_MODULE: academia_project.settings
+      USE_SQLITE_FOR_TESTS: "1"
+      DJANGO_DEBUG: "1"
+      TIME_ZONE: "UTC"
+
+    steps:
+      - name: Checkout (Revisar código) 🛎️
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }} 🐍
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache de dependencias de Pip ⚡
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Instalar paquetes del sistema (mysqlclient) 🧰
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmysqlclient-dev || echo "mysqlclient-dev no disponible, continuando..."
+
+      - name: Instalar dependencias de Python 📦
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          # Aquí se instalan las dependencias de testing y tzdata
+          python -m pip install pytest pytest-django ruff tzdata
+
+      - name: Lint con Ruff (no bloqueante) 🎨
+        run: ruff check . || true
+
+      - name: Detectar ruta de manage.py 🔍
+        id: managepy
+        run: |
+          if [ -f manage.py ]; then
+            echo "path=manage.py" >> $GITHUB_OUTPUT
+          elif [ -f academia_project/manage.py ]; then
+            echo "path=academia_project/manage.py" >> $GITHUB_OUTPUT
+          else
+            echo "ERROR: No se encontró manage.py" >&2
+            exit 1
+          fi
+
+      - name: Django Check (configuración básica) ✅
+        run: python ${{ steps.managepy.outputs.path }} check
+
+      - name: Django Check --deploy (bloqueante) 🔒
+        env:
+          DJANGO_DEBUG: "0"
+          # Usa un secret de GitHub para la clave, en lugar de un valor fijo
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          DJANGO_ALLOWED_HOSTS: "example.com"
+          DJANGO_CSRF_TRUSTED_ORIGINS: "https://example.com"
+          SECURE_SSL_REDIRECT: "1"
+          USE_PROXY_SSL_HEADER: "1"
+        run: python ${{ steps.managepy.outputs.path }} check --deploy --fail-level WARNING
+
+      - name: Verificar que no falten migraciones 📜
+        run: python ${{ steps.managepy.outputs.path }} makemigrations --check --dry-run
+
+      - name: Aplicar migraciones en SQLite 🛠️
+        run: python ${{ steps.managepy.outputs.path }} migrate --noinput
+
+      - name: Ejecutar tests con Pytest 🧪
+        env:
+          RUN_STRICT_HORARIOS_TESTS: "0"
+        run: pytest -q

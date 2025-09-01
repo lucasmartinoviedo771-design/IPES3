@@ -1,0 +1,149 @@
+{% extends "ui/base.html" %}
+{% load static form_extras %}
+
+{% block title %}Armar Horarios de Cátedra{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <h1>Armar Horarios de Cátedra</h1>
+  <p>Seleccioná una materia y un turno para definir los bloques horarios que ocupará la cátedra.</p>
+
+  <form id="frm-horario" method="post" action="{{ request.path }}">
+    {% csrf_token %}
+
+    <div class="form-grid-2">
+      <!-- Carrera, Plan, Materia -->
+      <div>
+        <label for="id_carrera">Profesorado / Carrera</label>
+        <select id="id_carrera" name="carrera" class="select">
+          <option value="">---------</option>
+          {% for c in carreras %}
+          <option value="{{ c.id }}" {% if c.id|stringformat:"s" == selected_carrera_id %}selected{% endif %}>{{ c.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="id_plan">Plan</label>
+        <select id="id_plan" name="plan" class="select" disabled>
+            <option value="">---------</option>
+            {% if selected_plan_id %}
+            <option value="{{ selected_plan_id }}" selected></option>
+            {% endif %}
+        </select>
+      </div>
+      <div>
+        <label for="id_materia">Materia</label>
+        <select id="id_materia" name="materia" class="select" disabled>
+            <option value="">---------</option>
+            {% if selected_materia_id %}
+            <option value="{{ selected_materia_id }}" selected></option>
+            {% endif %}
+        </select>
+      </div>
+
+      <!-- Selector de Turno -->
+      <div>
+        <label for="id_turno">Turno</label>
+        <select id="id_turno" name="turno" class="select">
+            <option value="">---------</option>
+            <!-- Se completa SIEMPRE por JS -->
+        </select>
+      </div>
+
+      <div class="grid-span-2" id="grid-auto-anchor">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin:1rem 0 .5rem">Grilla de Horarios</h2>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <div id="block-counter" style="font-size:.9rem; color:#6b7280;"></div>
+              <div id="save-indicator" style="min-height:1.2rem; font-size:.9rem; color:#6b7280;"></div>
+            </div>
+          </div>
+          <div id="ah-grid"></div>
+        </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">Guardar Malla Horaria</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{# Carga de combos en cascada #}
+<script>
+(function() {
+    const selCarrera = document.getElementById('id_carrera');
+    const selPlan = document.getElementById('id_plan');
+    const selMateria = document.getElementById('id_materia');
+
+    const API_PLANES = "{% url 'ui:api_planes' %}";
+    const API_MATERIAS = "{% url 'ui:api_materias' %}";
+    const absURL = (path) => new URL(path, window.location.origin);
+
+    async function fetchJSON(url) {
+        const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+    }
+    function toArray(data) {
+        if (!data) return [];
+        if (Array.isArray(data)) return data; 
+        return data.results || data.items || [];
+    }
+    function setOptions($select, data, valueKey='id', labelKey='nombre') {
+        const list = toArray(data);
+        $select.innerHTML = '<option value="">--------</option>';
+        list.forEach(it => $select.add(new Option(it[labelKey], it[valueKey])));
+        $select.disabled = list.length === 0;
+    }
+    function clearAndDisable(selects) {
+        selects.forEach(s => { s.innerHTML = '<option value="">--------</option>'; s.disabled = true; });
+    }
+
+    async function updatePlanes() {
+        const carreraId = selCarrera.value;
+        clearAndDisable([selPlan, selMateria]);
+        if (!carreraId) return;
+        const u = absURL(API_PLANES); u.searchParams.set('carrera', carreraId);
+        const data = await fetchJSON(u);
+        setOptions(selPlan, data);
+        selPlan.disabled = false;
+    }
+
+    async function updateMaterias() {
+        const planId = selPlan.value;
+        clearAndDisable([selMateria]);
+        if (!planId) return;
+        const u = absURL(API_MATERIAS); u.searchParams.set('plan_id', planId);
+        const data = await fetchJSON(u);
+        setOptions(selMateria, data);
+        selMateria.disabled = false;
+    }
+
+    selCarrera.addEventListener('change', updatePlanes);
+    selPlan.addEventListener('change', updateMaterias);
+
+    if (selCarrera.value) {
+        updatePlanes().then(() => {
+            if (selPlan.value) updateMaterias();
+        });
+    }
+})();
+</script>
+
+<script>
+    // Valores iniciales pasados desde Django
+    const initialSelectedCarreraId = "{{ selected_carrera_id|default:'' }}";
+    const initialSelectedPlanId = "{{ selected_plan_id|default:'' }}";
+    const initialSelectedMateriaId = "{{ selected_materia_id|default:'' }}";
+    const initialSelectedTurnoValue = "{{ selected_turno_value|default:'' }}";
+
+    // Endpoints para la grilla de horarios
+    window.API_GRID = "{% url 'ui:api_horario_grid' %}";
+    window.API_TOGGLE = "{% url 'ui:api_horario_toggle' %}";
+</script>
+
+{# Carga de la grilla de horarios #}
+<script src="{% static 'ui/js/armar_horarios.js' %}"></script>
+{% endblock %}

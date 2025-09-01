@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Inscripción de Estudiantes · IPES{% endblock %}
+{% block nav_insc %}active{% endblock %}
+
+{% block content %}
+  <div class="panel">
+    <h1>Formulario de Inscripción</h1>
+
+    <form method="post" class="form">
+      {% csrf_token %}
+
+      <div class="form-grid">
+        <div>
+          <label for="nombre">Nombre</label>
+          <input id="nombre" name="nombre" type="text" class="input" placeholder="Nombre del estudiante">
+        </div>
+
+        <div>
+          <label for="apellido">Apellido</label>
+          <input id="apellido" name="apellido" type="text" class="input" placeholder="Apellido del estudiante">
+        </div>
+
+        <div>
+          <label for="documento">Documento</label>
+          <input id="documento" name="documento" type="text" class="input" placeholder="DNI / Pasaporte">
+        </div>
+
+        <div>
+          <label for="carrera">Carrera</label>
+          <select id="carrera" name="carrera" class="select">
+            <option>Profesorado de Lengua</option>
+            <option>Profesorado de Matemática</option>
+            <option>Profesorado de Historia</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="cohorte">Cohorte</label>
+          <select id="cohorte" name="cohorte" class="select">
+            <option>2025</option><option>2024</option><option>2023</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="turno">Turno</label>
+          <select id="turno" name="turno" class="select">
+            <option>Mañana</option><option>Tarde</option><option>Noche</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="sede">Sede</label>
+          <select id="sede" name="sede" class="select">
+            <option>Central</option><option>Anexo Norte</option><option>Anexo Sur</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="email">Correo electrónico</label>
+          <input id="email" name="email" type="email" class="input" placeholder="nombre@correo.com">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" type="submit">Enviar inscripción</button>
+        <a class="btn btn-ghost" href="{% url 'ui:dashboard' %}">Cancelar</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

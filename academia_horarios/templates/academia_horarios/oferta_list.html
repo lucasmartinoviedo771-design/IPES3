@@ -1,0 +1,92 @@
+{% extends "ui/base.html" %}
+{% load form_extras %}
+
+{% block title %}Oferta de Materias · IPES{% endblock %}
+{% block nav_horario %}active{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <h1>Oferta de Materias</h1>
+
+  {# Filtros #}
+  <form method="get" class="form-grid-2" style="margin-top:10px; gap:12px">
+    {# TODO: Ajustar los campos reales del form de filtros #}
+    <div>
+      <label for="{{ form_filtro.carrera.id_for_label }}">Carrera / Profesorado</label>
+      {{ form_filtro.carrera|addclass:"select" }}
+    </div>
+    <div>
+      <label for="{{ form_filtro.plan.id_for_label }}">Plan</label>
+      {{ form_filtro.plan|addclass:"select" }}
+    </div>
+    <div>
+      <label for="{{ form_filtro.materia.id_for_label }}">Materia</label>
+      {{ form_filtro.materia|addclass:"select" }}
+    </div>
+    <div>
+      <label for="{{ form_filtro.docente.id_for_label }}">Docente</label>
+      {{ form_filtro.docente|addclass:"select" }}
+    </div>
+    <div>
+      <label for="{{ form_filtro.dia.id_for_label }}">Día</label>
+      {{ form_filtro.dia|addclass:"select" }}
+    </div>
+    <div>
+      <label for="{{ form_filtro.turno.id_for_label }}">Turno</label>
+      {{ form_filtro.turno|addclass:"select" }}
+    </div>
+    <div>
+      <label for="{{ form_filtro.curso.id_for_label }}">Curso</label>
+      {{ form_filtro.curso|addclass:"select" }}
+    </div>
+    <div>
+      <label for="{{ form_filtro.comision.id_for_label }}">Comisión</label>
+      {{ form_filtro.comision|addclass:"select" }}
+    </div>
+
+    <div class="grid-span-2 actions">
+      <button class="btn btn-primary">Filtrar</button>
+      <a class="btn btn-ghost" href="{% url 'academia_horarios:panel_oferta' %}">Limpiar</a>
+    </div>
+  </form>
+
+  {# Resultados #}
+  <div class="table-wrap" style="margin-top:12px">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Materia</th>
+          <th>Comisión</th>
+          <th>Docente</th>
+          <th>Día</th>
+          <th>Inicio</th>
+          <th>Fin</th>
+          <th>Aula</th>
+          <th style="width:1%"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {# TODO: 'oferta' puede ser page_obj/object_list según tu vista #}
+        {% for h in oferta %}
+        <tr>
+          <td>{{ h.materia }}</td>
+          <td><a href="{% url 'academia_horarios:comision_detail' h.comision.pk %}">{{ h.comision }}</a></td>
+          <td>{{ h.docente }}</td>
+          <td>{{ h.get_dia_display|default:h.dia }}</td>
+          <td>{{ h.hora_inicio|time:"H:i" }}</td>
+          <td>{{ h.hora_fin|time:"H:i" }}</td>
+          <td>{{ h.aula|default:h.espacio }}</td>
+          <td style="white-space:nowrap">
+            <a class="btn btn-ghost" href="{% url 'academia_horarios:comision_detail' h.comision.pk %}">Ver</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="muted">Sin resultados para los filtros seleccionados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# TODO: Si usás paginación, renderizala aquí #}
+</div>
+{% endblock %}

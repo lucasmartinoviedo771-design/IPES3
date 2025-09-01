@@ -1,0 +1,8 @@
+/* utilidades básicas */
+.hidden{ display:none !important; } /* emula Tailwind hidden */
+.sr-only{ position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0 }
+
+/* checkbox con color del tema */
+.checkbox input[type="checkbox"]{
+  width:18px; height:18px; accent-color: var(--accent);
+}

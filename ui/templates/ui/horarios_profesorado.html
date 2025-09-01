@@ -1,0 +1,53 @@
+{% extends "ui/base.html" %}
+{% load static %}
+
+{% block title %}Horarios por Profesorado{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <h1>Horarios por Profesorado</h1>
+  <p>Elegí profesorados/planes y un turno para ver la grilla completa (Lunes a Sábado, bloques de 40’ y recreos).</p>
+
+  <div class="form-grid-3">
+    <div>
+      <label for="hp_carrera">Profesorado / Carrera</label>
+      <select id="hp_carrera" class="select">
+        <option value="">---------</option>
+      </select>
+    </div>
+    <div>
+      <label for="hp_plan">Plan</label>
+      <select id="hp_plan" class="select" disabled>
+        <option value="">---------</option>
+      </select>
+    </div>
+    <div>
+      <label for="hp_turno">Turno</label>
+      <select id="hp_turno" class="select">
+        <option value="">---------</option>
+        <option value="m">Mañana</option>
+        <option value="t">Tarde</option>
+        <option value="v">Vespertino</option>
+        <option value="s">Sábado (Mañana)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="hp-toolbar">
+    <button id="hp_btn_imprimir" class="btn btn-secondary">Imprimir</button>
+  </div>
+
+  <div id="hp_grid" class="horario-grid"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const API_CARRERAS = "{% url 'ui:api_carreras' %}";
+  const API_PLANES  = "{% url 'ui:api_planes' %}";
+  const API_HPROF   = "{% url 'ui:api_horario_profesorado' %}";
+</script>
+<link rel="stylesheet" href="{% static 'ui/css/horarios.css' %}">
+<script src="{% static 'ui/js/horarios_common.js' %}"></script>
+<script src="{% static 'ui/js/horarios_profesorado.js' %}"></script>
+{% endblock %}

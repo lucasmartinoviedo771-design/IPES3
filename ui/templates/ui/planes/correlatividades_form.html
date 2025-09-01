@@ -1,0 +1,59 @@
+{% extends "ui/base.html" %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'ui/css/correlatividades.css' %}">
+
+{% block title %}Correlatividades{% endblock %}
+
+{% block content %}
+<div class="p-4">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-semibold">Correlatividades</h1>
+    <button onclick="history.back()" class="px-3 py-2 rounded border">Volver</button>
+  </div>
+
+  <div class="rounded-2xl border bg-white p-4 md:p-6">
+    <form method="post" id="correl-form"
+          data-planes-url="{% url 'ui:api_planes' %}"
+          data-materias-url="{% url 'ui:api_materias_por_plan' %}"
+          data-corrs-url="{% url 'ui:api_correlatividades_por_espacio' %}">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">{{ form.profesorado.label }}</label>
+          {{ form.profesorado }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">{{ form.plan.label }}</label>
+          {{ form.plan }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">{{ form.espacio.label }}</label>
+          {{ form.espacio }}
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <h2 class="font-semibold mb-3">Requiere REGULAR</h2>
+        <div id="corr-regular-grid"></div>
+        <!-- field original oculto (no usar en UI) -->
+        <div class="hidden">{{ form.correlativas_regular }}</div>
+      </div>
+
+      <div class="pt-5 mt-5 border-t">
+        <h2 class="font-semibold mb-3">Requiere APROBADA</h2>
+        <div id="corr-aprobada-grid"></div>
+        <div class="hidden">{{ form.correlativas_aprobada }}</div>
+      </div>
+
+      <div class="mt-6 flex gap-2">
+        <button class="px-4 py-2 rounded bg-slate-800 text-white">Guardar</button>
+        <button type="button" onclick="history.back()" class="px-4 py-2 rounded border">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="{% static 'ui/js/correlatividades.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "ui/base.html" %}
+{% load static %}
+
+{# Heredá de este en los otros templates si te resulta cómodo #}
+
+{% block title %}{% block panel_title %}Horarios{% endblock %} · IPES{% endblock %}
+{% block nav_horario %}active{% endblock %}
+
+{% block content %}
+<div class="panel">
+  {% block panel_header %}{% endblock %}
+  {% block panel_body %}{% endblock %}
+</div>
+{% endblock %}
