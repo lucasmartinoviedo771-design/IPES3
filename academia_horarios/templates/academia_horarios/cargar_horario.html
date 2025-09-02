@@ -58,7 +58,10 @@
               <div id="save-indicator" style="min-height:1.2rem; font-size:.9rem; color:#6b7280;"></div>
             </div>
           </div>
-          <div id="ah-grid"></div>
+          <div class="grilla-wrap-catedra">
+            <div id="ah-grid" class="horario-grid"></div>
+            <aside id="ah_sabados_info" class="sab-right-legend" aria-label="Horarios de Sábados"></aside>
+          </div>
         </div>
     </div>
 
@@ -67,6 +70,10 @@
     </div>
   </form>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'ui/css/horarios.css' %}?v=22">
 {% endblock %}
 
 {% block extra_js %}
@@ -145,5 +152,5 @@
 </script>
 
 {# Carga de la grilla de horarios #}
-<script src="{% static 'ui/js/armar_horarios.js' %}"></script>
+<script src="{% static 'ui/js/armar_horarios.js' %}?v=22"></script>
 {% endblock %}

@@ -49,9 +49,75 @@
     linear-gradient(135deg, transparent 49%, rgba(0,0,0,.06) 49%, rgba(0,0,0,.06) 51%, transparent 51%) #f6f1ea;
 }
 
-/* Print limpio */
+/* --- Pantalla --- */
+.print-only { display: none !important; }   /* items solo para imprimir, ocultos en pantalla */
+.print-hide { display: initial !important; } /* items que NO deben imprimirse */
+
+/* === Ancho extra solo para la página de Horarios por Docente === */
+.page-hdoc .main .container{
+  /* antes seguro tenías ~960–1040px; subimos ~15–20% */
+  max-width: clamp(1100px, 88vw, 1280px);
+}
+
+/* por las dudas, que el panel use todo el ancho disponible */
+.page-hdoc .panel{ max-width: 100%; }
+
+/* --- Impresión --- */
 @media print {
-  .btn, .hp-toolbar, .form-grid-2, .form-grid-3 { display:none !important; }
-  .panel { box-shadow:none; }
-  .grid-table th, .grid-table td { border-color:#ccc; }
+  /* Ocultar chrome/controles */
+  header.topbar, aside.sidebar, .hp-toolbar, label,
+  .btn, .input, .select, .textarea, #hd_docente { display: none !important; }
+
+  /* NO imprimir la grilla completa de Sábados */
+  .print-hide, #hd_grid_s { display: none !important; }
+
+  /* Mostrar los asides de sábados y maquetar a 2 columnas por turno */
+  .print-only { display: block !important; }
+  .grilla-wrap { display: grid; grid-template-columns: 1fr 28mm; gap: 6mm; align-items: start; }
+
+  .grid-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 11px; }
+  .grid-table th, .grid-table td { border: 1px solid #555; padding: 3px 4px; vertical-align: top; }
+  .col-time { width: 22mm; white-space: nowrap; }
+  .sat-times th { background: #f0f0f0; }
+
+  .chip { border: 1px solid #333; background: transparent !important; box-shadow: none !important; }
+
+  @page { size: A4 landscape; margin: 10mm; }
+  body { background: #fff !important; }
+}
+
+/* Grilla + columna de Sábados a la derecha (fijo) */
+.grilla-wrap-catedra{
+  display: grid;
+  grid-template-columns: 1fr 180px; /* ancho de la columna lateral */
+  gap: 16px;
+  align-items: start;
+}
+.sab-right-legend{
+  width: 180px;
+}
+
+.sat-times-legend{
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 12px;
+}
+.sat-times-legend th,
+.sat-times-legend td{
+  border: 1px solid #ccc;
+  padding: 4px 6px;
+}
+.sat-times-legend th{ background: #f6f6f6; text-align: left; }
+
+/* Solo colapsa a una columna en móviles chicos */
+ @media (max-width: 820px){
+  .grilla-wrap-catedra{ grid-template-columns: 1fr; }
+  .sab-right-legend{ width: auto; }
+}
+
+/* Impresión (hereda tu estilo), mantiene dos columnas */
+ @media print{
+  .grilla-wrap-catedra{ grid-template-columns: 1fr 28mm; gap: 6mm; }
+  .sat-times-legend th, .sat-times-legend td{ border: 1px solid #555; }
 }

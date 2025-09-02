@@ -18,6 +18,30 @@
     sabado: { label: "Sábado (Mañana)", start: "09:00", end: "14:00", breaks: [["10:20","10:30"], ["11:50","12:00"]], },
   };
 
+  function renderSabadosLegend(targetId = "ah_sabados_info") {
+    const box = document.getElementById(targetId);
+    if (!box) return;
+    const g = GRILLAS.sabado; // Sábado (mañana)
+    if (!g) { console.error("GRILLAS.sabado not found"); return; }
+    const table = document.createElement("table");
+    table.className = "grid-table sat-times-legend";
+    table.innerHTML = "<thead><tr><th>Sábados</th></tr></thead><tbody></tbody>";
+    const tb = table.querySelector("tbody");
+    const slots = buildSlots(g);
+    slots.forEach(slot => {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.textContent = `${fmt(slot.from)} – ${fmt(slot.to)}`;
+        if (slot.isBreak) {
+            td.style.fontStyle = "italic";
+            td.style.opacity = "0.7";
+        }
+        tr.appendChild(td);
+        tb.appendChild(tr);
+    });
+    box.replaceChildren(table);
+  }
+
   const BLOCK_MIN = 40;
   const DAYS = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
 
@@ -261,7 +285,9 @@
       sel.innerHTML = "";
       sel.add(new Option("---------", ""));
       for (const [key, cfg] of Object.entries(GRILLAS)) {
-        sel.add(new Option(cfg.label, key));
+        if (key !== 'sabado') {
+            sel.add(new Option(cfg.label, key));
+        }
       }
     }
     return sel;
@@ -293,7 +319,10 @@
 
     if (selTurno && selTurno.value) {
         const key0 = turnoKeyFromSelectValue(selTurno.value);
-        if (key0) renderGrid(key0);
+        if (key0) {
+          renderGrid(key0);
+          renderSabadosLegend();
+        }
     }
 
     selTurno.addEventListener("change", (e) => {
@@ -305,6 +334,7 @@
         return;
       }
       renderGrid(key);
+      renderSabadosLegend();
     });
 
     // Polling for auto-refresh

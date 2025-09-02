@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Nuevo Docente</title>
+  <link rel="stylesheet" href="/static/academia_core/tema-ipes.css?v=12">
+  <link rel="stylesheet" href="/static/ui/css/horarios.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <img src="/static/academia_core/escudo.png" alt="Escudo IPES" class="brand-img">
+        <span class="brand-title">IPES Paulo Freire</span>
+      </div>
+      <div class="account">
+        <a href="/horarios/docente/">⟵ Volver a Horarios por Docente</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-title">Panel de Gestión</div>
+      <nav class="nav">
+        <a href="/dashboard">Panel</a>
+        {% url 'ui:docente_nuevo' as url_docente_nuevo %}
+        <div class="nav-item has-children">
+          <a href="#" class="nav-parent">Administración</a>
+          <div class="subnav">
+            <a href="{{ url_docente_nuevo }}"
+               class="{% if url_docente_nuevo in request.path %}active{% endif %}">
+               Cargar docente
+            </a>
+            <!-- otros ítems... -->
+          </div>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="container">
+        <div class="panel">
+          <h1>Nuevo Docente</h1>
+          {% if messages %}
+            <ul class="messages">
+              {% for m in messages %}
+                <li class="msg {{ m.tags }}">{{ m }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+
+          <form method="post" class="form">
+            {% csrf_token %}
+            <div class="grid grid-2">
+              <div>
+                <label>Apellido</label>
+                {{ form.apellido }}
+                {% for e in form.apellido.errors %}<div class="error">{{ e }}</div>{% endfor %}
+              </div>
+              <div>
+                <label>Nombre</label>
+                {{ form.nombre }}
+                {% for e in form.nombre.errors %}<div class="error">{{ e }}</div>{% endfor %}
+              </div>
+              <div>
+                <label>DNI</label>
+                {{ form.dni }}
+                {% for e in form.dni.errors %}<div class="error">{{ e }}</div>{% endfor %}
+              </div>
+              <div>
+                <label>Email</label>
+                {{ form.email }}
+                {% for e in form.email.errors %}<div class="error">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="full">
+                <label class="checkbox">
+                  {{ form.activo }} Activo
+                </label>
+                {% for e in form.activo.errors %}<div class="error">{{ e }}</div>{% endfor %}
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <button type="submit" class="btn btn-primary">Guardar</button>
+              <a class="btn btn-secondary" href="/horarios/docente/">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <style>
+    .grid{display:grid;gap:12px}
+    .grid-2{grid-template-columns:1fr 1fr}
+    .full{grid-column:1/-1}
+    .error{color:#b22;margin-top:4px;font-size:.9em}
+    .messages{list-style:none;padding:0;margin:0 0 12px}
+    .messages .msg{padding:8px 10px;border-radius:8px;background:#eef}
+    .messages .success{background:#e7f7ea}
+  </style>
+</body>
+</html>

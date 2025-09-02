@@ -8,27 +8,37 @@
   <h1>Horarios por Docente</h1>
   <p>Elegí un docente para ver su semana de clases completa.</p>
 
-  <div>
+  <div class="no-print">
     <label for="hd_docente">Docente</label>
     <select id="hd_docente" class="select">
       <option value="">---------</option>
     </select>
   </div>
 
-  <div class="hp-toolbar">
+  <div class="hp-toolbar no-print">
     <button id="hd_btn_imprimir" class="btn btn-secondary">Imprimir</button>
   </div>
 
   <hr>
 
   <h2>Turno Mañana</h2>
+<div class="grilla-wrap">
   <div id="hd_grid_m" class="horario-grid"></div>
+  <aside id="hd_print_sab_m" class="sab-right print-only"></aside>
+</div>
   <h2 class="mt-4">Turno Tarde</h2>
+<div class="grilla-wrap">
   <div id="hd_grid_t" class="horario-grid"></div>
+  <aside id="hd_print_sab_t" class="sab-right print-only"></aside>
+</div>
   <h2 class="mt-4">Turno Vespertino</h2>
+<div class="grilla-wrap">
   <div id="hd_grid_v" class="horario-grid"></div>
-  <h2 class="mt-4">Sábados</h2>
-  <div id="hd_grid_s" class="horario-grid"></div>
+  <aside id="hd_print_sab_v" class="sab-right print-only"></aside>
+</div>
+  <!-- Este bloque NO se imprime -->
+<h2 class="mt-4 print-hide">Sábados</h2>
+<div id="hd_grid_s" class="horario-grid print-hide"></div>
 </div>
 {% endblock %}
 
@@ -54,7 +64,7 @@
     select.innerHTML = "";
     const opt0 = document.createElement("option");
     opt0.value = "";
-    opt0.textContent = "---------";
+    opt0.textContent = "---------"
     select.appendChild(opt0);
     for (const item of items) {
       const opt = document.createElement("option");
@@ -62,7 +72,7 @@
       opt.textContent = item[labelKey];
       select.appendChild(opt);
     }
-    select.disabled = items.length === 0;
+    select.disabled = false; // ← siempre habilitado (útil para testear UI)
   }
 
   async function fetchJSON(url, params = {}) {
@@ -83,6 +93,27 @@
     };
     const DAYS = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
     const DAY_KEYS = ["lu","ma","mi","ju","vi","sa"];
+
+function renderSabadoPrintListInto(targetId){
+  const box = document.getElementById(targetId);
+  if (!box) return;
+  const g = GRILLAS.s; // usamos los bloques del sábado (mañana)
+  const table = document.createElement("table");
+  table.className = "grid-table sat-times";
+  table.innerHTML = "<thead><tr><th>Sábados</th></tr></thead><tbody></tbody>";
+  const tb = table.querySelector("tbody");
+  g.blocks.forEach(([ini,fin])=>{
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.textContent = `${ini} – ${fin}`;
+    if (g.breaks.some(([b1,b2])=>b1===ini && b2===fin)){ td.style.fontStyle="italic"; td.style.opacity="0.7"; }
+    tr.appendChild(td); tb.appendChild(tr);
+  });
+  box.replaceChildren(table);
+}
+
+// Generar una vez; en pantalla queda oculto por CSS, en print se ve
+["m","t","v"].forEach(k => renderSabadoPrintListInto(`hd_print_sab_${k}`));
 
     function buildGrid(container, turnoKey) {
       container.innerHTML = "";
@@ -145,8 +176,18 @@
   }
 
   // Render grids when a docente is selected
+  const $h1 = document.querySelector(".panel h1"); // Get reference to the h1 element
+
   $doc.addEventListener("change", async () => {
     const docenteId = $doc.value;
+    const docenteName = $doc.options[$doc.selectedIndex].textContent; // Get selected teacher's name
+
+    if (docenteId) {
+      $h1.textContent = `Horarios por ${docenteName}`;
+    } else {
+      $h1.textContent = `Horarios por Docente`;
+    }
+
     for (const turno in grids) {
         const gridContainer = grids[turno];
         gridContainer.innerHTML = "";

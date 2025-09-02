@@ -15,6 +15,8 @@ from . import views_panel
 
 app_name = "ui"
 
+from . import views_docentes
+
 urlpatterns = [
     path("dashboard", DashboardView.as_view(), name="dashboard"),
 
@@ -23,7 +25,7 @@ urlpatterns = [
     path("estudiantes/<int:pk>", EstudianteDetailView.as_view(), name="estudiantes_detail"),
     path("personas/estudiantes/nuevo", NuevoEstudianteView.as_view(), name="estudiante_nuevo"),
     path("docentes", DocenteListView.as_view(), name="docentes_list"),
-    path("personas/docentes/nuevo", NuevoDocenteView.as_view(), name="docente_nuevo"),
+    path("personas/docentes/nuevo/", views_docentes.docente_nuevo, name="docente_nuevo"),
 
     # Inscripciones
     path("inscripciones/carrera", InscripcionProfesoradoView.as_view(), name="inscribir_carrera"),

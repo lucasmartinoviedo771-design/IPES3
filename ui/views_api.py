@@ -1,6 +1,6 @@
 # ui/views_api.py
 
-from django.db.models import Value, F, CharField
+from django.db.models import Value, F, CharField, Q
 from django.db.models.functions import Concat, Coalesce
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_http_methods
@@ -62,12 +62,8 @@ def api_materias(request):
 @require_GET
 def api_docentes(request):
     """
-    GET /api/docentes
-    Parámetros opcionales:
-      - carrera / carrera_id
-      - materia            (id de EspacioCurricular)
-    Respuesta:
-      {"results":[{"id":..., "nombre":"Apellido, Nombre"}, ...]}
+    GET /api/docentes/?carrera=<id>&materia=<id>
+    Devuelve: {"results":[{"id":..., "nombre":"Apellido, Nombre"}, ...]}
     """
     params = request.GET.dict()
     carrera_id = params.get("carrera") or params.get("carrera_id")
@@ -75,50 +71,58 @@ def api_docentes(request):
 
     qs = Docente.objects.all()
 
-    # Filtro correcto según tus modelos:
-    # Docente --(asignaciones)-> DocenteEspacio --(espacio)-> EspacioCurricular --(plan)-> PlanEstudios --(profesorado_id)
-    if carrera_id and materia_id:
-        qs = qs.filter(
-            asignaciones__espacio_id=materia_id,
-            asignaciones__espacio__plan__profesorado_id=carrera_id,
-        )
+    # Filtros: funciona con tu through 'asignaciones'; si tenés M2M 'espacios', también lo contempla.
+    cond = Q()
+    if materia_id:
+        cond &= (Q(asignaciones__espacio_id=materia_id) | Q(espacios__id=materia_id))
+    if carrera_id:
+        cond &= (Q(asignaciones__espacio__plan__profesorado_id=carrera_id) |
+                 Q(espacios__plan__profesorado_id=carrera_id))
+    if cond.children:
+        qs = qs.filter(cond)
 
-    # Armar "Apellido, Nombre" tolerante a nulos
+    # ¡OJO! No usar 'nombre' como alias porque existe el campo Docente.nombre.
     qs = (
         qs.distinct()
           .annotate(
-              nombre=Concat(
-                  Coalesce(F("apellido"), Value(""), output_field=CharField()),
-                  Value(", "),
-                  Coalesce(F("nombre"), Value(""), output_field=CharField()),
-                  output_field=CharField(),
-              )
+              ap=Coalesce(F("apellido"), Value(""), output_field=CharField()),
+              no=Coalesce(F("nombre"),   Value(""), output_field=CharField()),
+          )
+          .annotate(
+              nombre_completo=Concat(F("ap"), Value(", "), F("no"), output_field=CharField())
           )
           .order_by("apellido", "nombre")
-          .values("id", "nombre")
+          .values("id", "nombre_completo")
     )
 
-    data = list(qs)
-    logger.info("api_docentes params=%s -> %s items", params, len(data))
+    # Mapear la anotación al nombre que espera el front
+    data = [{"id": row["id"], "nombre": row["nombre_completo"]} for row in qs]
     return JsonResponse({"results": data}, status=200)
 
 @require_GET
 def api_turnos(request):
-    data = {
-        "turnos": [
-            {"value": "manana",     "label": "Mañana"},
-            {"value": "tarde",      "label": "Tarde"},
-            {"value": "vespertino", "label": "Vespertino"},
-            {"value": "sabado",     "label": "Sábado (Mañana)"},
-        ]
-    }
-    logger.info("api_turnos -> %s opciones", len(data["turnos"]))
-    return JsonResponse(data)
+    """
+    GET /ui/api/turnos
+    - Por defecto: solo Mañana / Tarde / Vespertino (sin "Sábado").
+    - Compatibilidad: si ?include_sabado=1 se agrega "Sábado (Mañana)".
+    """
+    include_sab = str(request.GET.get("include_sabado", "")).lower() in ("1", "true", "yes")
+    turnos = [
+        {"value": "manana", "label": "Mañana"},
+        {"value": "tarde", "label": "Tarde"},
+        {"value": "vespertino", "label": "Vespertino"},
+    ]
+    if include_sab:
+        turnos.append({"value": "sabado", "label": "Sábado (Mañana)"})
+    return JsonResponse({"turnos": turnos}, status=200)
 
 @require_GET
 def api_horarios_ocupados(request):
     # params: turno, docente?, aula?
-    turno_slug = request.GET.get('turno') # El JS actual manda el slug
+    turno_slug = (request.GET.get('turno') or '').lower()
+    if turno_slug == 'sabado':
+        turno_slug = 'manana'
+
     docente_id = request.GET.get('docente') or None
     aula_id    = request.GET.get('aula') or None
 
@@ -169,7 +173,10 @@ def api_horario_grid(request):
     carrera = request.GET.get("carrera", "")
     plan    = request.GET.get("plan", "")
     materia = request.GET.get("materia", "")
-    turno   = request.GET.get("turno", "")
+    turno   = request.GET.get("turno", "").lower()
+    if turno == "sabado":
+        turno = "manana"
+
 
     key = _combo_key(carrera, plan, materia, turno)
     drafts = _get_drafts_store(request)
@@ -200,7 +207,9 @@ def api_horario_toggle(request):
     carrera = data.get("carrera", "")
     plan    = data.get("plan", "")
     materia = data.get("materia", "")
-    turno   = data.get("turno", "")
+    turno   = data.get("turno", "").lower()
+    if turno == "sabado":
+        turno = "manana"
     selected = bool(data.get("selected", True))
     day, hhmm = _parse_slot_from_request(data)
 
@@ -237,6 +246,9 @@ def api_horario_toggle(request):
 @require_GET
 def api_horario_profesorado(request):
     # Espera: carrera (id), plan_id, turno (m|t|v|s)
+    turno = (request.GET.get('turno') or '').lower()
+    if turno == 'sabado':
+        turno = 'manana'
     # TODO: reemplazar por consulta real a tu modelo de horarios
     data = []
     return JsonResponse({"items": data})
@@ -244,6 +256,9 @@ def api_horario_profesorado(request):
 @require_GET
 def api_horario_docente(request):
     # Espera: docente_id, turno (m|t|v|s)
+    turno = (request.GET.get('turno') or '').lower()
+    if turno == 'sabado':
+        turno = 'manana'
     # TODO: reemplazar por consulta real a tu modelo de horarios
     data = []
     return JsonResponse({"items": data})
