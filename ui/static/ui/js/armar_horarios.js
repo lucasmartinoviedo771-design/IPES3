@@ -12,156 +12,14 @@
 
   // --- Configuración de turnos y recreos (formato HH:MM) ---
   const GRILLAS = {
-    manana: {
-      label: "Mañana",
-      blocks: [
-        ["07:45","08:25"], ["08:25","09:05"], ["09:05","09:15"], ["09:15","09:55"],
-        ["09:55","10:35"], ["10:35","10:45"], ["10:45","11:25"], ["11:25","12:05"], ["12:05","12:45"]
-      ],
-      breaks: [["09:05","09:15"], ["10:35","10:45"]]
-    },
-    tarde: {
-      label: "Tarde",
-      blocks: [
-        ["13:00","13:40"], ["13:40","14:20"], ["14:20","14:30"], ["14:30","15:10"],
-        ["15:10","15:50"], ["15:50","16:00"], ["16:00","16:40"], ["16:40","17:20"], ["16:40","18:00"]
-      ],
-      breaks: [["14:20","14:30"], ["15:50","16:00"]]
-    },
-    vespertino: {
-      label: "Vespertino",
-      blocks: [
-        ["18:10","18:50"], ["18:50","19:30"], ["19:30","19:40"], ["19:40","20:10"],
-        ["20:10","20:50"], ["20:50","21:00"], ["21:00","21:30"], ["21:30","22:10"], ["22:10","22:50"]
-      ],
-      breaks: [["19:30","19:40"], ["20:50","21:00"]]
-    },
-    sabado: {
-      label: "Sábado",
-      blocks: [
-        ["09:00","09:40"], ["09:40","10:20"], ["10:20","10:30"], ["10:30","11:10"],
-        ["11:10","11:50"], ["11:50","12:00"], ["12:00","12:40"], ["12:40","13:20"], ["13:20","14:00"]
-      ],
-      breaks: [["10:20","10:30"], ["11:50","12:00"]]
-    }
+    manana: { label: "Mañana", start: "07:45", end: "12:45", breaks: [["09:05","09:15"], ["10:35","10:45"]], },
+    tarde: { label: "Tarde", start: "13:00", end: "18:00", breaks: [["14:20","14:30"], ["15:50","16:00"]], },
+    vespertino: { label: "Vespertino", start: "18:10", end: "23:10", breaks: [["19:30","19:40"], ["21:00","21:10"]], },
+    sabado: { label: "Sábado (Mañana)", start: "09:00", end: "14:00", breaks: [["10:20","10:30"], ["11:50","12:00"]], },
   };
 
-  // ====== Helpers de tiempo (base 5 minutos) ====== 
-  const STEP_MIN = 5;
-  function parseHM(hm){ const [h,m]=hm.split(':').map(Number); return h*60+m; }
-  function fmtHM(min){ const h=Math.floor(min/60), m=min%60; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; }
-  function toStep(min){ return Math.round(min/STEP_MIN); } // redondeo por seguridad
-
-  // Une límites (inicios/fines) de dos grillas (ej: mañana + sábados)
-  function collectBoundaries(patternA, patternB){
-    const set = new Set();
-    const push = (blocks)=>blocks.forEach(([a,b])=>{ set.add(parseHM(a)); set.add(parseHM(b)); });
-    push(patternA.blocks);
-    push(patternB.blocks);
-    // Asegura incluir todo el rango visible
-    const min = Math.min(...[...set]);
-    const max = Math.max(...[...set]);
-    return {bounds: [...set].sort((a,b)=>a-b), min, max};
-  }
-
-  // Dibuja una grilla unificada (L..V usan turnoKey, Sábado usa "sabado")
-  function buildUnifiedGrid(container, turnoKey){
-    const DAYS = ['lu','ma','mi','ju','vi','sa'];
-    const LABELS = ['Hora','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-
-    const pWeek = GRILLAS[turnoKey];     // bloques L..V
-    const pSat  = GRILLAS.sabado;        // bloques Sábado
-    if(!pWeek || !pSat){ console.warn('Faltan patrones de grilla'); return; }
-
-    // 1) Límites
-    const {bounds, min, max} = collectBoundaries(pWeek, pSat);
-    const startStep = toStep(min);
-    const endStep   = toStep(max);
-    const totalSteps = endStep - startStep;
-
-    // 2) DOM base
-    container.innerHTML = '';
-    container.style.setProperty('--rows', totalSteps); // para grid-template-rows
-
-    // Encabezados
-    for (let c=0; c<LABELS.length; c++){
-      const h = document.createElement('div');
-      h.className='hcell';
-      h.textContent = LABELS[c];
-      h.style.gridColumn = (c+1)+' / '+(c+2);
-      h.style.gridRow = '1 / 2';
-      container.appendChild(h);
-    }
-
-    // Mapeo de bloques a set de segmentos [from,to] (en minutos) por día
-    const mapBlocks = (blocks)=>blocks.map(([a,b])=>[parseHM(a), parseHM(b)]);
-    const weekMap = mapBlocks(pWeek.blocks);
-    const weekBreaks = new Set(pWeek.breaks?.map(([a,b])=>`${a}-${b}`) || []);
-    const satMap  = mapBlocks(pSat.blocks);
-    const satBreaks = new Set(pSat.breaks?.map(([a,b])=>`${a}-${b}`) || []);
-
-    // Utilidades para consulta rápida
-    function slotInfoFor(range, day){
-      // range: [from, to] en minutos
-      const [from, to] = range;
-      const blocks = (day==='sa') ? satMap : weekMap;
-      const isBreakList = (day==='sa') ? satBreaks : weekBreaks;
-      // es un bloque válido si está exactamente definido así
-      const key = `${fmtHM(from)}-${fmtHM(to)}`;
-      const isBreak = isBreakList.has(key);
-      const isBlock = blocks.some(([a,b]) => a===from && b===to) && !isBreak;
-      return {isBlock, isBreak};
-    }
-
-    // 3) Pintar filas (un segmento por par de límites consecutivos)
-    for (let i=0; i<bounds.length-1; i++){
-      const fromM = bounds[i], toM = bounds[i+1];
-      const rStart = (toStep(fromM)-startStep)+2; // +2 por la fila de encabezado
-      const rEnd   = (toStep(toM)-startStep)+2;
-
-      // Columna 1: Hora (solo si es un bloque real del patrón de la semana)
-      const isMajor = pWeek.blocks.some(([a,b])=>parseHM(a)===fromM && parseHM(b)===toM) ||
-                      pSat.blocks.some(([a,b])=>parseHM(a)===fromM && parseHM(b)===toM);
-      if (isMajor){
-        const tcell = document.createElement('div');
-        tcell.className = 'time-slot';
-        tcell.style.gridColumn = '1 / 2';
-        tcell.style.gridRow = `${rStart} / ${rEnd}`;
-        tcell.textContent = `${fmtHM(fromM)} – ${fmtHM(toM)}`;
-        container.appendChild(tcell);
-      }
-
-      // Columnas 2..7: L..V y Sábado
-      for (let d=0; d<DAYS.length; d++){
-        const dayKey = DAYS[d];
-        const info = slotInfoFor([fromM,toM], dayKey);
-        const cell = document.createElement('div');
-        cell.className = 'cell' + (info.isBreak ? ' is-break' : (info.isBlock ? ' is-selectable' : ''));
-        cell.style.gridColumn = (d+2)+' / '+(d+3);
-        cell.style.gridRow = `${rStart} / ${rEnd}`;
-        if (info.isBreak) cell.textContent = 'Recreo';
-
-        if (info.isBlock){
-          cell.dataset.day = dayKey;
-          cell.dataset.from = fmtHM(fromM);
-          cell.dataset.to = fmtHM(toM);
-          cell.addEventListener('click', () => {
-            cell.classList.toggle('is-selected');
-            updateBlockCounter();
-          });
-        }
-
-        container.appendChild(cell);
-      }
-    }
-  }
-
-  // contador de bloques seleccionados
-  function updateBlockCounter(){
-    const n = document.querySelectorAll('#ah-grid-unificado .cell.is-selected').length;
-    const el = document.querySelector('[data-role="blocks-counter"]');
-    if (el) el.textContent = String(n);
-  }
+  const BLOCK_MIN = 40;
+  const DAYS = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
 
   // --- Endpoints y Helpers ---
   const API_GRID   = window.API_GRID;
@@ -181,6 +39,165 @@
     };
   }
 
+  const toMinutes = (hhmm) => { const [h, m] = hhmm.split(":").map(Number); return h*60 + m; };
+  const fmt = (min) => { const h = Math.floor(min/60); const m = min % 60; return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`; };
+
+  function buildSlots(turnoCfg) {
+    if (!turnoCfg || !turnoCfg.start || !turnoCfg.end) return [];
+    const start = toMinutes(turnoCfg.start), end = toMinutes(turnoCfg.end);
+    const breaks = (turnoCfg.breaks || []).map(([a,b]) => [toMinutes(a), toMinutes(b)]).sort((x,y)=>x[0]-y[0]);
+    const slots = [];
+    let cur = start;
+    for (const [bStart, bEnd] of breaks) {
+      while (cur + BLOCK_MIN <= bStart) { slots.push({from: cur, to: cur + BLOCK_MIN, isBreak: false}); cur += BLOCK_MIN; }
+      if (cur < bStart) cur = bStart;
+      slots.push({from: bStart, to: bEnd, isBreak: true});
+      cur = bEnd;
+    }
+    while (cur + BLOCK_MIN <= end) { slots.push({from: cur, to: cur + BLOCK_MIN, isBreak: false}); cur += BLOCK_MIN; }
+    return slots;
+  }
+
+  // --- DUAL-GRID RENDERING ---
+
+  function makeTable(containerId, headers, tableId) {
+    const host = document.getElementById(containerId);
+    if (!host) return { table: null, tbody: null };
+    host.innerHTML = "";
+
+    const tbl = document.createElement("table");
+    tbl.className = "grid-table";
+    if (tableId) tbl.id = tableId;
+
+    const thead = document.createElement("thead");
+    const trh = document.createElement("tr");
+    headers.forEach((h, i) => {
+      const th = document.createElement("th");
+      th.textContent = h;
+      if (i === 0) th.className = "col-time";
+      trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+
+    const tbody = document.createElement("tbody");
+    tbl.appendChild(thead);
+    tbl.appendChild(tbody);
+
+    host.appendChild(tbl);
+    return { table: tbl, tbody };
+  }
+
+  function drawLV(turnoKey) {
+    const week = GRILLAS[turnoKey] || GRILLAS.manana;
+    week.blocks = buildSlots(week).map(s => [fmt(s.from), fmt(s.to)]);
+    const breaks = new Set((week.breaks || []).map(([a,b]) => `${a}-${b}`));
+    const { tbody } = makeTable("ah-grid-left",
+      ["Hora","Lunes","Martes","Miércoles","Jueves","Viernes"],
+      "ah-grid-lv");
+
+    if (!tbody) return;
+
+    (week.blocks || []).forEach(([from, to]) => {
+      const key = `${from}-${to}`;
+      const tr  = document.createElement("tr");
+
+      const tdTime = document.createElement("td");
+      tdTime.className = "col-time";
+      tdTime.textContent = `${from} – ${to}`;
+      tr.appendChild(tdTime);
+
+      for (let d = 1; d <= 5; d++) {
+        const td = document.createElement("td");
+        if (breaks.has(key)) {
+          td.textContent = "Recreo";
+          td.className = "ah-break";
+        } else {
+          td.className = "ah-cell ah-clickable";
+          td.dataset.day = String(d);
+          td.dataset.hhmm = from;
+          td.dataset.hasta = to;
+        }
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    });
+  }
+
+  function drawSabado() {
+    const sat = GRILLAS.sabado || {};
+    sat.blocks = buildSlots(sat).map(s => [fmt(s.from), fmt(s.to)]);
+    const blocks = sat.blocks || [];
+    const breaks = new Set((sat.breaks || []).map(([a,b]) => `${a}-${b}`));
+
+    const { tbody } = makeTable("ah-grid-right", ["Hora (Sábado)","Sábado"], "ah-grid-sab");
+    if (!tbody) return;
+
+    blocks.forEach(([from, to]) => {
+      const key = `${from}-${to}`;
+      const tr  = document.createElement("tr");
+
+      const tdTime = document.createElement("td");
+      tdTime.className = "col-time";
+      tdTime.textContent = `${from} – ${to}`;
+      tr.appendChild(tdTime);
+
+      const td = document.createElement("td");
+      if (breaks.has(key)) {
+        td.textContent = "Recreo";
+        td.className = "ah-break";
+      } else {
+        td.className = "ah-cell ah-clickable";
+        td.dataset.day  = "6";
+        td.dataset.hhmm = from;
+        td.dataset.hasta = to;
+      }
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderGridDual(turnoKey) {
+    drawLV(turnoKey);
+    drawSabado();
+
+    const total = document.querySelectorAll('#ah-grid .ah-clickable').length;
+    const on = document.querySelectorAll('#ah-grid .ah-cell.on').length;
+    if (typeof updateCount === "function") updateCount(on, total);
+    
+    syncFromServer({silent:true});
+  }
+
+  // --- CELL & STATE HELPERS ---
+
+  function findCell(day, hhmm) {
+    return document.querySelector(`#ah-grid td[data-day='${day}'][data-hhmm='${hhmm}']`);
+  }
+
+  function selectCell(cell, selected, {skipSave = false} = {}) {
+      if (!cell) return;
+      cell.classList.toggle("on", selected);
+      // Use general classes instead of direct styling for easier maintenance
+  }
+
+  function clearAllSelected() {
+    document.querySelectorAll("#ah-grid .ah-cell.on").forEach(td => {
+      selectCell(td, false, {skipSave: true});
+    });
+  }
+
+  function updateCount(count, max) {
+    const countEl = document.getElementById("block-counter");
+    if (!countEl) return;
+    
+    let total = max;
+    if (total === undefined) {
+        const currentText = countEl.textContent || "";
+        const maxMatch = currentText.match(/\/ (\d+)/);
+        total = maxMatch ? maxMatch[1] : '?';
+    }
+    countEl.textContent = `Bloques: ${count} / ${total}`;
+  }
+
   async function syncFromServer({silent=false}={}) {
     const combo = currentCombo();
     if (!combo.carrera || !combo.plan || !combo.materia || !combo.turno) return;
@@ -196,13 +213,13 @@
       if (!res.ok) throw new Error("HTTP " + res.status);
       const json = await res.json();
 
-      // clearAllSelected(); // No longer needed with unified grid
-      // json.slots.forEach(({d, hhmm}) => {
-      //   const td = findCell(d, hhmm);
-      //   td && selectCell(td, true, {skipSave:true});
-      // });
+      clearAllSelected();
+      json.slots.forEach(({d, hhmm}) => {
+        const td = findCell(d, hhmm);
+        if (td) selectCell(td, true, {skipSave:true});
+      });
 
-      // updateCount(json.count); // No longer needed with unified grid
+      updateCount(json.count);
       if (!silent) showSavedBadge("Sincronizado");
     } catch (e) {
       console.error("Sync failed", e);
@@ -229,18 +246,30 @@
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Error de guardado");
 
-      // updateCount(json.count); // No longer needed with unified grid
+      updateCount(json.count);
       showSavedBadge("Guardado");
     } catch (e) {
       console.error("Persist failed", e);
-      // const td = findCell(day, hhmm); // No longer needed with unified grid
-      // td && selectCell(td, !selected, {skipSave:true}); // Revert
+      const td = findCell(day, hhmm);
+      if (td) selectCell(td, !selected, {skipSave:true}); // Revert
       const errorMessage = e instanceof Error ? e.message : "Error al guardar";
       showSavedBadge(errorMessage, true);
     }
   }
   
-  // function onCellClick(ev) { ... } // Replaced by event listener in buildUnifiedGrid
+  function onCellClick(ev) {
+    const cell = ev.target.closest("td.ah-clickable");
+    if (!cell) return;
+    
+    const day  = cell.dataset.day;
+    const hhmm = cell.dataset.hhmm;
+    const willBeSelected = !cell.classList.contains("on");
+
+    selectCell(cell, willBeSelected, {skipSave:true});
+    const currentSelected = document.querySelectorAll("#ah-grid .ah-cell.on").length;
+    updateCount(currentSelected);
+    persistToggle(parseInt(day,10), hhmm, willBeSelected);
+  }
 
   let saveTimer;
   function showSavingBadge() {
@@ -262,16 +291,17 @@
   function seedTurnoOptions() {
     const sel = document.getElementById("id_turno");
     if (!sel) return null;
-    const hasRealOptions = Array.from(sel.options).some(o => o.value && o.textContent && o.textContent.trim() !== "");
-    if (!hasRealOptions) {
+
+    const hasReal = Array.from(sel.options).some(o => o.value && o.textContent.trim());
+    if (!hasReal) {
       sel.innerHTML = "";
       sel.add(new Option("---------", ""));
       for (const [key, cfg] of Object.entries(GRILLAS)) {
-        if (key !== 'sabado') {
-            sel.add(new Option(cfg.label, key));
-        }
+        sel.add(new Option(cfg.label, key));
       }
     }
+
+    if (!sel.value) sel.value = "manana";
     return sel;
   }
 
@@ -282,51 +312,25 @@
     return entry ? entry[0] : null;
   }
 
+  // --- INITIALIZATION ---
   document.addEventListener("DOMContentLoaded", () => {
-    const selCarrera = document.getElementById('id_carrera');
-    const selPlan = document.getElementById('id_plan');
-    const selMateria = document.getElementById('id_materia');
-    const selTurno = document.getElementById('id_turno');
+    const selTurno = seedTurnoOptions();
+    const key0 = turnoKeyFromSelectValue(selTurno?.value);
+    if (key0) renderGridDual(key0);
 
-    if (selCarrera && typeof initialSelectedCarreraId !== 'undefined' && initialSelectedCarreraId) { selCarrera.value = initialSelectedCarreraId; }
-    if (selPlan && typeof initialSelectedPlanId !== 'undefined' && initialSelectedPlanId) { selPlan.value = initialSelectedPlanId; }
-    if (selMateria && typeof initialSelectedMateriaId !== 'undefined' && initialSelectedMateriaId) { selMateria.value = initialSelectedMateriaId; }
-    if (selTurno && typeof initialSelectedTurnoValue !== 'undefined' && initialSelectedTurnoValue) { selTurno.value = initialSelectedTurnoValue; }
-
-    if (selCarrera && selCarrera.value) {
-        selCarrera.dispatchEvent(new Event('change'));
-    }
-
-    seedTurnoOptions();
-
-    if (selTurno && selTurno.value) {
-        const key0 = turnoKeyFromSelectValue(selTurno.value);
-        if (key0) {
-          const host = document.getElementById("ah-grid-unificado");
-          buildUnifiedGrid(host, key0);
-          updateBlockCounter();
-        }
-    }
-
-    selTurno.addEventListener("change", (e) => {
-      const key = turnoKeyFromSelectValue(e.target.value);
-      const host = document.getElementById("ah-grid-unificado");
-      if (!key) {
-        host.innerHTML = ''; // Clear grid
-        updateBlockCounter();
-        return;
-      }
-      buildUnifiedGrid(host, key);
-      updateBlockCounter();
+    selTurno?.addEventListener("change", (e) => {
+      const k = turnoKeyFromSelectValue(e.target.value);
+      renderGridDual(k);
     });
 
-    // Polling for auto-refresh
-    setInterval(() => { 
-        // Solo sincroniza si hay una selección válida
-        const combo = currentCombo();
-        if (combo.carrera && combo.plan && combo.materia && combo.turno) {
-            syncFromServer({silent:true}); 
-        }
+    document.getElementById('ah-grid')?.addEventListener('click', onCellClick);
+
+    setInterval(() => {
+      const combo = currentCombo();
+      if (combo.carrera && combo.plan && combo.materia && combo.turno) {
+        syncFromServer({silent:true});
+      }
     }, 10000);
   });
+
 })();

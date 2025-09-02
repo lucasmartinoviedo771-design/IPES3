@@ -6,202 +6,27 @@
 {% block content %}
 <div class="panel">
   <h1>Horarios por Docente</h1>
-  <p>Elegí un docente para ver su semana de clases completa.</p>
-
-  <div class="no-print">
+  <div class="filters">
     <label for="hd_docente">Docente</label>
-    <select id="hd_docente" class="select">
-      <option value="">---------</option>
-    </select>
+    <select id="hd_docente" class="select"><option value="">---------</option></select>
   </div>
 
-  <div class="hp-toolbar no-print">
+  <div id="hd_sections"></div>
+
+  <div class="hp-toolbar">
     <button id="hd_btn_imprimir" class="btn btn-secondary">Imprimir</button>
   </div>
-
-  <hr>
-
-  <h2>Turno Mañana</h2>
-<div class="grilla-wrap">
-  <div id="hd_grid_m" class="horario-grid"></div>
-  <aside id="hd_print_sab_m" class="sab-right print-only"></aside>
-</div>
-  <h2 class="mt-4">Turno Tarde</h2>
-<div class="grilla-wrap">
-  <div id="hd_grid_t" class="horario-grid"></div>
-  <aside id="hd_print_sab_t" class="sab-right print-only"></aside>
-</div>
-  <h2 class="mt-4">Turno Vespertino</h2>
-<div class="grilla-wrap">
-  <div id="hd_grid_v" class="horario-grid"></div>
-  <aside id="hd_print_sab_v" class="sab-right print-only"></aside>
-</div>
-  <!-- Este bloque NO se imprime -->
-<h2 class="mt-4 print-hide">Sábados</h2>
-<div id="hd_grid_s" class="horario-grid print-hide"></div>
 </div>
 {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'ui/css/horarios.css' %}?v=16">
+{% endblock %}
+
 {% block extra_js %}
-<link rel="stylesheet" href="{% static 'ui/css/horarios.css' %}">
 <script>
-(async function () {
-  const API_DOCENTES = "{% url 'ui:api_docentes' %}";
-  const API_HDOC     = "{% url 'ui:api_horario_docente' %}";
-
-  const $doc = document.getElementById("hd_docente");
-  const grids = {
-    m: document.getElementById("hd_grid_m"),
-    t: document.getElementById("hd_grid_t"),
-    v: document.getElementById("hd_grid_v"),
-    s: document.getElementById("hd_grid_s"),
-  };
-
-  document.getElementById("hd_btn_imprimir").addEventListener("click", () => window.print());
-
-  // --- Helper functions ---
-  function setOptions(select, items, valueKey="id", labelKey="nombre") {
-    select.innerHTML = "";
-    const opt0 = document.createElement("option");
-    opt0.value = "";
-    opt0.textContent = "---------"
-    select.appendChild(opt0);
-    for (const item of items) {
-      const opt = document.createElement("option");
-      opt.value = item[valueKey];
-      opt.textContent = item[labelKey];
-      select.appendChild(opt);
-    }
-    select.disabled = false; // ← siempre habilitado (útil para testear UI)
-  }
-
-  async function fetchJSON(url, params = {}) {
-    const qs = new URLSearchParams(params).toString();
-    const fullUrl = qs ? `${url}?${qs}` : url;
-    const response = await fetch(fullUrl, { headers: { "Accept": "application/json" } });
-    if (!response.ok) {
-      throw new Error(`HTTP error ${response.status} for ${fullUrl}`);
-    }
-    return response.json();
-  }
-
-    const GRILLAS = {
-      m: { label: "Mañana", blocks: [["07:45","08:25"], ["08:25","09:05"], ["09:05","09:15"], ["09:15","09:55"], ["09:55","10:35"], ["10:35","10:45"], ["10:45","11:25"], ["11:25","12:05"], ["12:05","12:45"]], breaks: [["09:05","09:15"],["10:35","10:45"]] },
-      t: { label: "Tarde", blocks: [["13:00","13:40"], ["13:40","14:20"], ["14:20","14:30"], ["14:30","15:10"], ["15:10","15:50"], ["15:50","16:00"], ["16:00","16:40"], ["16:40","17:20"], ["17:20","17:40"]], breaks: [["14:20","14:30"],["15:50","16:00"]] },
-      v: { label: "Vespertino", blocks: [["18:10","18:50"], ["18:50","19:30"], ["19:30","19:40"], ["19:40","20:10"], ["20:10","20:50"], ["20:50","21:00"], ["21:00","21:30"], ["21:30","22:10"], ["22:10","22:50"]], breaks: [["19:30","19:40"],["20:50","21:00"]] },
-      s: { label: "Sábado (Mañana)", blocks: [["09:00","09:40"], ["09:40","10:20"], ["10:20","10:30"], ["10:30","11:10"], ["11:10","11:50"], ["11:50","12:00"], ["12:00","12:40"], ["12:40","13:40"]], breaks: [["10:20","10:30"],["11:50","12:00"]] }
-    };
-    const DAYS = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
-    const DAY_KEYS = ["lu","ma","mi","ju","vi","sa"];
-
-function renderSabadoPrintListInto(targetId){
-  const box = document.getElementById(targetId);
-  if (!box) return;
-  const g = GRILLAS.s; // usamos los bloques del sábado (mañana)
-  const table = document.createElement("table");
-  table.className = "grid-table sat-times";
-  table.innerHTML = "<thead><tr><th>Sábados</th></tr></thead><tbody></tbody>";
-  const tb = table.querySelector("tbody");
-  g.blocks.forEach(([ini,fin])=>{
-    const tr = document.createElement("tr");
-    const td = document.createElement("td");
-    td.textContent = `${ini} – ${fin}`;
-    if (g.breaks.some(([b1,b2])=>b1===ini && b2===fin)){ td.style.fontStyle="italic"; td.style.opacity="0.7"; }
-    tr.appendChild(td); tb.appendChild(tr);
-  });
-  box.replaceChildren(table);
-}
-
-// Generar una vez; en pantalla queda oculto por CSS, en print se ve
-["m","t","v"].forEach(k => renderSabadoPrintListInto(`hd_print_sab_${k}`));
-
-    function buildGrid(container, turnoKey) {
-      container.innerHTML = "";
-      const g = GRILLAS[turnoKey];
-      if (!g) return;
-      const table = document.createElement("table");
-      table.className = "grid-table";
-      const thead = document.createElement("thead");
-      const trh = document.createElement("tr");
-      trh.appendChild(th("Hora"));
-      DAYS.forEach(d => trh.appendChild(th(d)));
-      thead.appendChild(trh);
-      table.appendChild(thead);
-      const tbody = document.createElement("tbody");
-      g.blocks.forEach(([ini, fin]) => {
-        const tr = document.createElement("tr");
-        tr.appendChild(td(`${ini} – ${fin}`, "col-time"));
-        DAYS.forEach((_d, idx) => {
-          const cell = td("", "col-slot");
-          if (g.breaks.some(([b1,b2]) => b1===ini && b2===fin)) {
-            cell.classList.add("is-break");
-            cell.textContent = "Recreo";
-          } else {
-            cell.dataset.time = `${ini}-${fin}`;
-            cell.dataset.day = DAY_KEYS[idx];
-          }
-          tr.appendChild(cell);
-        });
-        tbody.appendChild(tr);
-      });
-      table.appendChild(tbody);
-      container.appendChild(table);
-    }
-    function th(t){ const e=document.createElement("th"); e.textContent=t; return e; }
-    function td(t,c){ const e=document.createElement("td"); if(c) e.className=c; e.textContent=t; return e; }
-    function paintItem(container, item) {
-      const selector = `td.col-slot[data-day="${item.dia}"][data-time="${item.inicio}-${item.fin}"]`;
-      const cell = container.querySelector(selector);
-      if (!cell) return;
-      const chip = document.createElement("div");
-      chip.className = "chip";
-      chip.innerHTML = `
-        <div class="chip-line ${item.cuatrimestral ? "chip-diag": ""}">
-          <strong>${item.materia}</strong>
-          <span class="chip-sub">${item.docente || ""}</span>
-          <span class="chip-sub">${item.anio || ""}${item.comision?(" · "+item.comision):""}${item.aula?(" · Aula "+item.aula):""}</span>
-        </div>
-      `;
-      cell.appendChild(chip);
-    }
-
-  // --- Main logic ---
-
-  // Load docentes on page load
-  try {
-    const data = await fetchJSON(API_DOCENTES);
-    setOptions($doc, data.results || []);
-  } catch (e) {
-    console.warn("Error loading docentes:", e);
-  }
-
-  // Render grids when a docente is selected
-  const $h1 = document.querySelector(".panel h1"); // Get reference to the h1 element
-
-  $doc.addEventListener("change", async () => {
-    const docenteId = $doc.value;
-    const docenteName = $doc.options[$doc.selectedIndex].textContent; // Get selected teacher's name
-
-    if (docenteId) {
-      $h1.textContent = `Horarios por ${docenteName}`;
-    } else {
-      $h1.textContent = `Horarios por Docente`;
-    }
-
-    for (const turno in grids) {
-        const gridContainer = grids[turno];
-        gridContainer.innerHTML = "";
-        if (docenteId) {
-            buildGrid(gridContainer, turno);
-            try {
-                const data = await fetchJSON(API_HDOC, { docente_id: docenteId, turno: turno });
-                (data.items || []).forEach(item => paintItem(gridContainer, item));
-            } catch (e) {
-                console.warn(`Error loading schedule for turno ${turno}:`, e);
-            }
-        }
-    }
-  });
-})();
+  const API_DOCENTES_LIST = "{% url 'ui:api_docentes' %}";
+  const API_HORARIO_DOC   = "{% url 'ui:api_horario_docente' %}";
 </script>
+<script src="{% static 'ui/js/horarios_docente.js' %}?v=5"></script>
 {% endblock %}

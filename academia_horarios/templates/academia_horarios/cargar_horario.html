@@ -53,8 +53,17 @@
       </div>
 
       <div class="grid-span-2" id="grid-auto-anchor">
-          <h2 style="margin:1rem 0 .5rem">Grilla de Horarios</h2>
-          <div id="ah-grid-unificado" class="gridu"></div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin:1rem 0 .5rem">Grilla de Horarios</h2>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <div id="block-counter" style="font-size:.9rem; color:#6b7280;"></div>
+              <div id="save-indicator" style="min-height:1.2rem; font-size:.9rem; color:#6b7280;"></div>
+            </div>
+          </div>
+          <div class="grid-dual" id="ah-grid">
+            <div class="grid-dual-left"  id="ah-grid-left"></div>
+            <div class="grid-dual-right" id="ah-grid-right"></div>
+          </div>
         </div>
     </div>
 
@@ -66,7 +75,7 @@
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'ui/css/horarios.css' %}?v=28">
+<link rel="stylesheet" href="{% static 'ui/css/horarios.css' %}?v=15">
 {% endblock %}
 
 {% block extra_js %}
@@ -145,5 +154,5 @@
 </script>
 
 {# Carga de la grilla de horarios #}
-<script src="{% static 'ui/js/armar_horarios.js' %}?v=28"></script>
+<script src="{% static 'ui/js/armar_horarios.js' %}?v=5"></script></script>
 {% endblock %}

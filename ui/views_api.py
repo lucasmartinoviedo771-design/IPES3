@@ -59,45 +59,40 @@ def api_materias(request):
         logger.error("api_materias error: %s", e, exc_info=True)
         return JsonResponse({'results': [], 'error': str(e)}, status=500)
 
+def _get(request, *names):
+    for n in names:
+        v = request.GET.get(n)
+        if v not in (None, ''):
+            return v
+    return None
+
 @require_GET
 def api_docentes(request):
-    """
-    GET /api/docentes/?carrera=<id>&materia=<id>
-    Devuelve: {"results":[{"id":..., "nombre":"Apellido, Nombre"}, ...]}
-    """
-    params = request.GET.dict()
-    carrera_id = params.get("carrera") or params.get("carrera_id")
-    materia_id = params.get("materia")
+    carrera_id = _get(request, 'carrera', 'carrera_id')
+    materia_id = _get(request, 'materia')
 
     qs = Docente.objects.all()
 
-    # Filtros: funciona con tu through 'asignaciones'; si tenés M2M 'espacios', también lo contempla.
-    cond = Q()
-    if materia_id:
-        cond &= (Q(asignaciones__espacio_id=materia_id) | Q(espacios__id=materia_id))
-    if carrera_id:
-        cond &= (Q(asignaciones__espacio__plan__profesorado_id=carrera_id) |
-                 Q(espacios__plan__profesorado_id=carrera_id))
-    if cond.children:
-        qs = qs.filter(cond)
+    # Si querés filtrar opcionalmente por carrera + materia (cuando te lo pidan)
+    # ATENCIÓN: ajustá related_name según tu modelo real (ej: 'asignaciones')
+    if carrera_id and materia_id:
+        qs = qs.filter(
+            asignaciones__espacio_id=materia_id,
+            asignaciones__espacio__plan__profesorado_id=carrera_id
+        )
 
-    # ¡OJO! No usar 'nombre' como alias porque existe el campo Docente.nombre.
-    qs = (
-        qs.distinct()
-          .annotate(
-              ap=Coalesce(F("apellido"), Value(""), output_field=CharField()),
-              no=Coalesce(F("nombre"),   Value(""), output_field=CharField()),
-          )
-          .annotate(
-              nombre_completo=Concat(F("ap"), Value(", "), F("no"), output_field=CharField())
-          )
-          .order_by("apellido", "nombre")
-          .values("id", "nombre_completo")
-    )
+    qs = (qs.distinct()
+            .annotate(
+                ap=Coalesce(F('apellido'), Value(''), output_field=CharField()),
+                no=Coalesce(F('nombre'),   Value(''), output_field=CharField()),
+            )
+            .annotate(display=Concat(F('ap'), Value(', '), F('no'), output_field=CharField()))
+            .order_by('apellido', 'nombre')
+            .values('id', 'display')
+         )
 
-    # Mapear la anotación al nombre que espera el front
-    data = [{"id": row["id"], "nombre": row["nombre_completo"]} for row in qs]
-    return JsonResponse({"results": data}, status=200)
+    data = [{'id': d['id'], 'nombre': d['display']} for d in qs]
+    return JsonResponse({'results': data}, status=200)
 
 @require_GET
 def api_turnos(request):

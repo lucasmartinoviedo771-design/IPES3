@@ -1,61 +1,133 @@
 /* static/ui/css/horarios.css */
 
-/* ===== Grilla unificada (fix filas) ===== */
-.gridu{
-  --col-time: 110px;        /* ancho de la columna "Hora" */
-  --cols: 6;                /* Lunes..Sábado */
-  --unit: 6px;              /* ALTURA de 5 minutos; ajústalo a gusto */
+.horario-grid { margin-top: 1rem; overflow: auto; }
 
+.grid-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.95rem;
+  background: #fff;
+  border:1px solid #e6e2dc;
+}
+.grid-table th, .grid-table td {
+  border:1px solid #eee5dc;
+  padding:.35rem .45rem;
+  vertical-align: top;
+}
+
+.grid-table thead th {
+  background: #faf7f2;
+  font-weight:600;
+  text-align: center;
+}
+
+.col-time { width: 8.5rem; white-space: nowrap; font-variant-numeric: tabular-nums; background:#fdfaf6; }
+.col-slot { position: relative; min-height: 3rem; }
+
+.is-break {
+  background: #f4f1ed;
+  color:#7c6a57;
+  text-align:center;
+  font-style: italic;
+}
+
+.chip { margin:.15rem 0; }
+.chip-line{
+  background:#f6f1ea;
+  border:1px solid #e9dfd2;
+  border-radius:.5rem;
+  padding:.35rem .45rem;
+  line-height:1.15;
+}
+.chip-line strong { display:block; color:#4a3a28; }
+.chip-sub { display:block; color:#7a6b59; font-size:.85em; }
+
+/* “Diagonal” para materias cuatrimestrales */
+.chip-diag{
+  background:
+    linear-gradient(135deg, transparent 49%, rgba(0,0,0,.06) 49%, rgba(0,0,0,.06) 51%, transparent 51%) #f6f1ea;
+}
+
+/* --- Pantalla --- */
+.print-only { display: none !important; }   /* items solo para imprimir, ocultos en pantalla */
+.print-hide { display: initial !important; } /* items que NO deben imprimirse */
+
+/* === Ancho extra solo para la página de Horarios por Docente === */
+.page-hdoc .main .container{
+  /* antes seguro tenías ~960–1040px; subimos ~15–20% */
+  max-width: clamp(1100px, 88vw, 1280px);
+}
+
+/* por las dudas, que el panel use todo el ancho disponible */
+.page-hdoc .panel{ max-width: 100%; }
+
+/* --- Impresión --- */
+@media print {
+  /* Ocultar chrome/controles */
+  header.topbar, aside.sidebar, .hp-toolbar, label,
+  .btn, .input, .select, .textarea, #hd_docente { display: none !important; }
+
+  /* NO imprimir la grilla completa de Sábados */
+  .print-hide, #hd_grid_s { display: none !important; }
+
+  /* Mostrar los asides de sábados y maquetar a 2 columnas por turno */
+  .print-only { display: block !important; }
+  .grilla-wrap { display: grid; grid-template-columns: 1fr 28mm; gap: 6mm; align-items: start; }
+
+  .grid-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 11px; }
+  .grid-table th, .grid-table td { border: 1px solid #555; padding: 3px 4px; vertical-align: top; }
+  .col-time { width: 22mm; white-space: nowrap; }
+  .sat-times th { background: #f0f0f0; }
+
+  .chip { border: 1px solid #333; background: transparent !important; box-shadow: none !important; }
+
+  @page { size: A4 landscape; margin: 10mm; }
+  body { background: #fff !important; }
+}
+
+/* Panel más ancho solo en Cátedra */
+.page-catedra .main .container{
+  max-width: clamp(1200px, 95vw, 1500px) !important;
+}
+
+/* Contenedor doble (L–V a la izquierda y Sábado a la derecha) */
+.grid-dual{
   display: grid;
-  grid-template-columns: var(--col-time) repeat(var(--cols), 1fr);
-
-  /* 1 fila para encabezado; el resto se crean implícitas
-     y cada "paso de 5 minutos" vale --unit de alto. */
-  grid-template-rows: auto;
-  grid-auto-rows: var(--unit);
+  grid-template-columns: 1fr minmax(260px, 0.8fr);
+  gap: 18px;
 }
 
-/* Encabezados */
-.gridu .hcell{
-  font-weight: 600;
-  padding: 10px 12px;
+/* Misma estética que tu tabla actual */
+.grid-table{
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid #e6dccd;
+  border-radius: 12px;
+  overflow: hidden;
+  table-layout: fixed;
+}
+.grid-table th{
+  text-align: left;
   background: #faf5ee;
-  border-bottom: 1px solid #e1d8ca;
-  display:flex; align-items:center;
+  border-bottom: 1px solid #e6dccd;
+  padding: 10px 12px;
+  font-weight: 600;
 }
-.gridu .hcell + .hcell{ border-left: 1px solid #e1d8ca; }
+.grid-table td{
+  padding: 10px 12px;
+  border-top: 1px solid #f1e9db;
+  height: 38px;
+}
+.grid-table .col-time{ width: 130px; color:#5e5245; font-weight: 600; }
+.grid-table .ah-break{ font-style: italic; color:#6f6253; background:#f8f1e6; }
 
-/* Celdas del timeline */
-.gridu .time-slot{
-  grid-column: 1 / 2;
-  display:flex; align-items:center; justify-content:flex-start;
-  padding: 0 10px;
-  border-top: 1px solid #f0e8da;
-  font-weight: 600; color:#4b3b2a;
-}
-.gridu .cell{
-  border-top: 1px solid #f0e8da;
-  border-left: 1px solid #f0e8da;
-  position: relative;
-  background: #f9f6f1;
-  border-radius: 10px;
-  margin: 3px;
-}
-.gridu .cell.is-break{
-  font-style: italic; color:#7d6f5f;
-  background: #f6efe5;
-  display:flex; align-items:center; justify-content:center;
-}
-.gridu .cell.is-selectable{ cursor: pointer; background:#f7f3ed; }
-.gridu .cell.is-selected{
-  outline: 2px solid #d6934b; background:#fff7ee;
+/* Mobile: una debajo de la otra */
+ @media (max-width: 992px){
+  .grid-dual{ grid-template-columns: 1fr; }
 }
 
-/* para que parezca tabla */
-.gridu .time-slot:first-of-type,
-.gridu .cell:first-of-type{ border-top-color: transparent; }
-
-/* Responsive: el alto por paso sube un poquito si hay espacio */
- @media (min-width: 1280px){
-  .gridu{ --unit: 7px; }
-}
+/* estética de cada bloque/sección */
+.grid-section{margin:18px 0}
+.grid-section h3{margin:.25rem 0 .5rem;font-size:1.05rem}
