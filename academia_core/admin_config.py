@@ -15,7 +15,6 @@ from .models import (
     DocenteEspacio,
     UserProfile,
     Correlatividad,
-    Horario,
     Condicion,
 )
 
@@ -112,7 +111,7 @@ class EspacioAdmin(admin.ModelAdmin):
         linea1 = f"Res. {obj.plan.resolucion}"
         linea2 = obj.plan.nombre or ""
         return format_html(
-            '{}<br><small style="color:#6b7280;">{}</small>', linea1, linea2
+            '''{}<br><small style="color:#6b7280;">{}</small>''', linea1, linea2
         )
 
     plan_en_dos_lineas.short_description = "Plan"
@@ -309,13 +308,6 @@ class UserProfileAdmin(admin.ModelAdmin):
     raw_id_fields = ["user", "estudiante", "docente"]
 
 
-class HorarioAdmin(admin.ModelAdmin):
-    list_display = ["espacio", "dia_semana", "hora_inicio", "hora_fin", "docente"]
-    list_filter = ["dia_semana", "espacio__plan__profesorado", "docente"]
-    search_fields = ["espacio__nombre", "docente__apellido"]
-    raw_id_fields = ["espacio", "docente"]
-
-
 # Register your models here.
 admin.site.register(Profesorado, ProfesoradoAdmin)
 admin.site.register(PlanEstudios, PlanEstudiosAdmin)
@@ -329,4 +321,3 @@ admin.site.register(Docente, DocenteAdmin)
 admin.site.register(DocenteEspacio, DocenteEspacioAdmin)
 admin.site.register(UserProfile, UserProfileAdmin)
 admin.site.register(Correlatividad)
-admin.site.register(Horario, HorarioAdmin)

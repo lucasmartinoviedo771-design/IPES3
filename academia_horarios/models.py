@@ -107,55 +107,34 @@ def overlaps(a1, a2, b1, b2):
     return a1 < b2 and b1 < a2
 
 class Horario(models.Model):
-    # This is the new Horario model based on the user's pseudo-code
-    # It assumes a ForeignKey to Docente, not ManyToManyField
-    carrera = models.ForeignKey(Carrera, on_delete=models.PROTECT)
-    plan = models.ForeignKey(PlanEstudios, on_delete=models.PROTECT)
-    materia = models.ForeignKey(EspacioCurricular, on_delete=models.PROTECT)
-    turno = models.CharField(max_length=16, choices=Turno.choices)
-    # NUEVO:
-    seccion = models.CharField(max_length=2, default='A')   # para distinguir 1ºA, 1ºB en el horario
-    docente = models.ForeignKey(Docente, on_delete=models.SET_NULL, null=True, blank=True)
-    aula = models.ForeignKey(Aula, on_delete=models.SET_NULL, null=True, blank=True)
-    dia = models.PositiveSmallIntegerField(choices=TimeSlot.DIA_CHOICES)
-    hora_inicio = models.TimeField()
-    hora_fin = models.TimeField()
-    observaciones = models.TextField(blank=True, default="")
-    activo = models.BooleanField(default=True)
+    # Contexto académico
+    materia = models.ForeignKey(EspacioCurricular, on_delete=models.CASCADE)
+    plan    = models.ForeignKey(PlanEstudios, on_delete=models.CASCADE)
+    profesorado = models.ForeignKey(Profesorado, on_delete=models.CASCADE)
+    anio    = models.PositiveSmallIntegerField(null=True, blank=True)  # 1..4 si aplica
+    comision = models.CharField(max_length=8, blank=True)  # opcional, si querés trackear "2°B" (sin volver al modelo Comision)
+    aula    = models.CharField(max_length=64, blank=True)
 
-    def clean(self):
-        super().clean()
-        errors = {}
+    # Asignación docente (si tenés DocenteAsignacion, referenciar eso)
+    docente = models.ForeignKey(Docente, null=True, blank=True, on_delete=models.SET_NULL)
 
-        # 1) inicio < fin
-        if self.hora_fin <= self.hora_inicio:
-            errors['hora_fin'] = 'La hora fin debe ser posterior a la hora inicio.'
+    # Bloque
+    dia     = models.CharField(max_length=2, choices=[('lu','Lunes'),('ma','Martes'),('mi','Miércoles'),('ju','Jueves'),('vi','Viernes'),('sa','Sábado')])
+    inicio  = models.TimeField()
+    fin     = models.TimeField()
 
-        # 2) choques del DOCENTE (si está designado)
-        if self.docente:
-            qs = Horario.objects.filter(docente=self.docente, dia=self.dia)
-            if self.pk: qs = qs.exclude(pk=self.pk)
-            for h in qs:
-                if overlaps(self.hora_inicio, self.hora_fin, h.hora_inicio, h.hora_fin):
-                    errors['docente'] = f'El docente {self.docente.nombre} ya tiene un horario en esa franja.'
-                    break
-
-        # 3) choques del AULA (si se indicó)
-        if self.aula:
-            qs = Horario.objects.filter(aula=self.aula, dia=self.dia)
-            if self.pk: qs = qs.exclude(pk=self.pk)
-            for h in qs:
-                if overlaps(self.hora_inicio, self.hora_fin, h.hora_inicio, h.hora_fin):
-                    errors['aula'] = 'El aula ya está ocupada en esa franja.'
-                    break
-
-        if errors:
-            raise ValidationError(errors)
-
-    def __str__(self): return f"{self.materia} - {self.dia} {self.hora_inicio}-{self.hora_fin}"
+    # Metadatos
+    turno   = models.CharField(max_length=16, blank=True)  # "manana", "tarde", "vespertino" (se puede inferir)
+    cuatrimestral = models.BooleanField(default=False)
 
     class Meta:
         db_table = "academia_horarios_horario"
+        indexes = [models.Index(fields=['materia','dia','inicio'])]
+        ordering = ('dia','inicio')
+
+    def clean(self):
+        if self.inicio >= self.fin:
+            raise ValidationError("El inicio no puede ser mayor/igual al fin")
 
 
 class HorarioClase(models.Model):
@@ -289,7 +268,7 @@ class TurnoModel(models.Model):
         return self.nombre
 
 class Bloque(models.Model):
-    turno       = models.ForeignKey(TurnoModel, on_delete=models.CASCADE)
+    turno       = models.ForeignKey(TurnoModel, on_delete=models.CASCADE, null=True, blank=True)
     dia_semana  = models.IntegerField(choices=[(0,'Lun'),(1,'Mar'),(2,'Mié'),(3,'Jue'),(4,'Vie'),(5,'Sáb')])
     orden       = models.IntegerField()
     inicio      = models.TimeField()

@@ -48,8 +48,9 @@ urlpatterns = [
     path("api/materias/", views_api.api_materias, name="api_materias"),
     path("api/docentes/", views_api.api_docentes, name="api_docentes"),
 
-    path("api/horario/grid", views_api.api_horario_grid, name="api_horario_grid"),
-    path("api/horario/toggle", views_api.api_horario_toggle, name="api_horario_toggle"),
+    
+    path("api/horario/save", views_api.api_horario_save, name="api_horario_save"),
+    path("api/horarios/materia-plan", views_api.api_horarios_materia_plan, name="api_horarios_materia_plan"),
     
     path("api/turnos", views_api.api_turnos, name="api_turnos"),
     path("api/horarios-ocupados/", views_api.api_horarios_ocupados, name="api_horarios_ocupados"),
@@ -57,12 +58,10 @@ urlpatterns = [
     path("api/correlatividades", api.api_correlatividades_por_espacio, name="api_correlatividades_por_espacio"),
     path("api/calcular-estado-administrativo/", api.api_calcular_estado_administrativo, name="api_calcular_estado_administrativo"),
 
-    # Rutas para comisiones
-    path("comisiones/<int:pk>/asignar-docente/", views.asignar_docente, name="asignar_docente"),
-    path("comisiones/<int:pk>/agregar-horario/", views.agregar_horario, name="agregar_horario"),
+    
 
     # Oferta
-    path("oferta", views.oferta_por_plan, name="oferta_por_plan"),
+    
 
     # Horarios
     path("horarios/profesorado/", views_panel.horarios_profesorado, name="horarios_profesorado"),
@@ -70,6 +69,7 @@ urlpatterns = [
 
     # APIs de solo-lectura para poblar las grillas
     path("api/carreras/", views_api.api_carreras, name="api_carreras"),
-    path("api/horarios/profesorado", views_api.api_horario_profesorado, name="api_horario_profesorado"),
-    path("api/horarios/docente", views_api.api_horario_docente, name="api_horario_docente"),
+    path("api/horarios/profesorado", views_api.api_horarios_profesorado, name="api_horario_profesorado"),
+    path("api/horarios/docente", views_api.api_horarios_docente, name="api_horario_docente"),
+    path("api/grilla-config/", views_api.api_grilla_config, name="api_grilla_config"),
 ]

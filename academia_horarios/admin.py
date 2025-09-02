@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Periodo, MateriaEnPlan, Comision, TimeSlot, HorarioClase
+from .models import Periodo, MateriaEnPlan, Comision, TimeSlot, HorarioClase, Horario
 
 @admin.register(Periodo)
 class PeriodoAdmin(admin.ModelAdmin):
@@ -25,3 +25,11 @@ class TimeSlotAdmin(admin.ModelAdmin):
 class HorarioClaseAdmin(admin.ModelAdmin):
     list_display = ("comision", "timeslot", "aula")
     list_filter = ("comision__periodo", "comision__turno")
+
+@admin.register(Horario)
+class HorarioAdmin(admin.ModelAdmin):
+    list_display = ('materia', 'dia', 'inicio', 'fin', 'docente', 'aula', 'comision', 'turno')
+    list_filter = ('profesorado', 'plan', 'anio', 'dia', 'docente', 'turno')
+    search_fields = ('materia__nombre', 'docente__apellido', 'docente__nombre', 'comision', 'aula')
+    raw_id_fields = ('materia', 'plan', 'profesorado', 'docente')
+    list_per_page = 25

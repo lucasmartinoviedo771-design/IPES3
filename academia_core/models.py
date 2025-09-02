@@ -1061,32 +1061,7 @@ class InscripcionFinal(models.Model):
         return self.inscripcion_cursada.espacio
 
 
-class Horario(models.Model):
-    DIAS = [
-        (1, "Lunes"),
-        (2, "Martes"),
-        (3, "Miércoles"),
-        (4, "Jueves"),
-        (5, "Viernes"),
-        (6, "Sábado"),
-    ]
 
-    espacio = models.ForeignKey(
-        EspacioCurricular, on_delete=models.CASCADE, related_name="horarios"
-    )
-    dia_semana = models.IntegerField(choices=DIAS)
-    hora_inicio = models.TimeField()
-    hora_fin = models.TimeField()
-    docente = models.ForeignKey(
-        Docente,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="horarios",
-    )
-
-    def __str__(self):
-        return f"{self.espacio.nombre} - {self.get_dia_semana_display()} ({self.hora_inicio} - {self.hora_fin})"
 
 
 class CorePerms(models.Model):

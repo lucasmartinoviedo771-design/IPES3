@@ -15,7 +15,14 @@
     <select id="hp_plan" class="select"><option value="">---------</option></select>
   </div>
 
-  <div id="hp_sections"></div>
+  <div id="hp_sections">
+    {% for anio in "1234" %}
+      <div class="year-section" id="year-section-{{ anio }}" style="display: none;">
+        <h2>{{ anio }}° Año</h2>
+        <div id="grid-container-{{ anio }}" class="horario-grid"></div>
+      </div>
+    {% endfor %}
+  </div>
 </div>
 {% endblock %}
 

@@ -60,10 +60,7 @@
               <div id="save-indicator" style="min-height:1.2rem; font-size:.9rem; color:#6b7280;"></div>
             </div>
           </div>
-          <div class="grid-dual" id="ah-grid">
-            <div class="grid-dual-left"  id="ah-grid-left"></div>
-            <div class="grid-dual-right" id="ah-grid-right"></div>
-          </div>
+          <div id="ah-grid" class="horario-grid"></div>
         </div>
     </div>
 
@@ -149,10 +146,12 @@
     const initialSelectedTurnoValue = "{{ selected_turno_value|default:'' }}";
 
     // Endpoints para la grilla de horarios
-    window.API_GRID = "{% url 'ui:api_horario_grid' %}";
-    window.API_TOGGLE = "{% url 'ui:api_horario_toggle' %}";
+    window.API_MATERIA_PLAN = "{% url 'ui:api_horarios_materia_plan' %}";
+    window.API_HORARIO_SAVE = "{% url 'ui:api_horario_save' %}";
+    window.API_TURNOS = "{% url 'ui:api_turnos' %}";
+    window.API_GRILLA_CONFIG = "{% url 'ui:api_grilla_config' %}";
 </script>
 
 {# Carga de la grilla de horarios #}
-<script src="{% static 'ui/js/armar_horarios.js' %}?v=5"></script></script>
+<script src="{% static 'ui/js/armar_horarios.js' %}?v=5"></script>
 {% endblock %}
