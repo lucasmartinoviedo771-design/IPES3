@@ -18,42 +18,9 @@ class OfertaView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        plan_id = self.request.GET.get("plan")
-        anio = self.request.GET.get("anio")
-        periodo_id = self.request.GET.get("periodo")
-
-        qs = MateriaEnPlan.objects.all()
-        if plan_id:
-            qs = qs.filter(plan_id=plan_id)
-
-        anios = list(
-            qs.order_by("anio").values_list("anio", flat=True).distinct()
-        ) or [1, 2, 3, 4]  # fallback si no hay datos
-
-        ctx["anios"] = anios
-        ctx["planes"] = PlanEstudios.objects.all().order_by("profesorado__nombre", "nombre")
-        ctx["periodos"] = Periodo.objects.all().order_by("-ciclo_lectivo", "cuatrimestre")
-        ctx["anio_sel"] = anio
-        ctx["plan_sel"] = int(plan_id) if plan_id else None
-        ctx["periodo_sel"] = int(periodo_id) if periodo_id else None
-        ctx["rows"] = []
-        if plan_id and anio and periodo_id:
-            meps = MateriaEnPlan.objects.filter(plan_id=plan_id, anio=anio).select_related("plan", "materia")
-            periodo = Periodo.objects.get(pk=periodo_id)
-            rows = []
-            for mep in meps:
-                comi_unica = Comision.objects.filter(materia_en_plan=mep, periodo=periodo, nombre="Única").first()
-                asignadas = hc_asignadas(comi_unica) if comi_unica else 0
-                requeridas = hc_requeridas(mep, periodo)
-                rows.append({
-                    "mep": mep,
-                    "periodo": periodo,
-                    "comision": comi_unica,
-                    "asignadas": asignadas,
-                    "requeridas": requeridas,
-                    "estado": "ok" if asignadas == requeridas else ("faltan" if asignadas < requeridas else "excedido"),
-                })
-            ctx["rows"] = rows
+        ctx["profesorados"] = Profesorado.objects.all().order_by("nombre")
+        ctx["docentes"] = Docente.objects.all().order_by("apellido", "nombre")
+        # No meter 'oferta' aquí: la llena el JS por AJAX
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -212,7 +179,6 @@ def abrir_paralela(request, plan_id, periodo_id):
             a_horarios = Horario.objects.filter(
                 plan_id=plan_id,
                 # si tenés un "anio" derivado del Periodo, filtralo aquí
-                seccion='A'  # si aún no agregaste seccion en Horario, omití y seteala al crear
             )
             for h in a_horarios:
                 nuevo = Horario(
@@ -222,11 +188,11 @@ def abrir_paralela(request, plan_id, periodo_id):
                     docente=h.docente if mantener_docentes else None,
                     aula=h.aula,
                     dia=h.dia,
-                    hora_inicio=h.hora_inicio,
-                    hora_fin=h.hora_fin,
+                    inicio=h.inicio,   # antes: hora_inicio
+                    fin=h.fin,         # antes: hora_fin
                     turno=h.turno,
                     observaciones=h.observaciones,
-                    seccion=seccion_to
+                    # quitar: seccion=...
                 )
                 try:
                     nuevo.full_clean()

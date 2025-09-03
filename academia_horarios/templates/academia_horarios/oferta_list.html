@@ -65,27 +65,20 @@
           <th style="width:1%"></th>
         </tr>
       </thead>
-      <tbody>
-        {# TODO: 'oferta' puede ser page_obj/object_list según tu vista #}
-        {% for h in oferta %}
-        <tr>
-          <td>{{ h.materia }}</td>
-          <td><a href="{% url 'academia_horarios:comision_detail' h.comision.pk %}">{{ h.comision }}</a></td>
-          <td>{{ h.docente }}</td>
-          <td>{{ h.get_dia_display|default:h.dia }}</td>
-          <td>{{ h.hora_inicio|time:"H:i" }}</td>
-          <td>{{ h.hora_fin|time:"H:i" }}</td>
-          <td>{{ h.aula|default:h.espacio }}</td>
-          <td style="white-space:nowrap">
-            <a class="btn btn-ghost" href="{% url 'academia_horarios:comision_detail' h.comision.pk %}">Ver</a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="8" class="muted">Sin resultados para los filtros seleccionados.</td></tr>
-        {% endfor %}
-      </tbody>
+      <tbody id="oferta-body"></tbody>
     </table>
   </div>
+
+  <noscript>
+    {# Opcional: si querés fallback SSR, acá podrías mostrar la tabla renderizada del backend #}
+  </noscript>
+
+  {# --- constantes para el JS --- #}
+  <script>
+    window.API_OFERTA_PROFESORADO = "{% url 'ui:api_horario_profesorado' %}";
+    window.API_OFERTA_DOCENTE     = "{% url 'ui:api_horario_docente' %}";
+  </script>
+  <script src="{% static 'ui/js/oferta_ajax.js' %}"></script>
 
   {# TODO: Si usás paginación, renderizala aquí #}
 </div>

@@ -7,29 +7,59 @@
 <div class="panel">
   <h1>Horarios por Profesorado</h1>
 
-  <div class="filters">
-    <label for="hp_carrera">Profesorado / Carrera</label>
-    <select id="hp_carrera" class="select"><option value="">---------</option></select>
+<label for="id_carrera">Profesorado / Carrera</label>
+<select id="id_carrera" name="profesorado">
+  <option value="">---------</option>
+  {% for c in profesorados %}
+    <option value="{{ c.id }}">{{ c.nombre }}</option>
+  {% endfor %}
+</select>
 
-    <label for="hp_plan">Plan</label>
-    <select id="hp_plan" class="select"><option value="">---------</option></select>
-  </div>
+<label for="id_plan">Plan</label>
+<select id="id_plan" name="plan">
+  <option value="">---------</option>
+</select>
 
-  <div id="hp_sections">
-    {% for anio in "1234" %}
-      <div class="year-section" id="year-section-{{ anio }}" style="display: none;">
-        <h2>{{ anio }}° Año</h2>
-        <div id="grid-container-{{ anio }}" class="horario-grid"></div>
-      </div>
-    {% endfor %}
-  </div>
+<div class="actions no-print" style="display:flex;justify-content:flex-end;gap:.5rem;margin:.75rem 0;">
+  <button id="btn-print" type="button" class="btn">Imprimir / Exportar PDF</button>
 </div>
-{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'ui/css/horarios.css' %}?v=16">
-{% endblock %}
+<div id="sheets" class="sheets"></div>
 
-{% block extra_js %}
-<script src="{% static 'ui/js/horarios_profesorado.js' %}?v=5"></script>
+<style>
+/* pantalla */
+.sheets__grid{display:grid;gap:16px;grid-template-columns:1fr}
+.sheet{background:#fff;border-radius:12px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.sheet__title{font-weight:700;margin:4px 0 8px;font-size:1rem}
+.sheet__meta{font-size:.9rem;opacity:.8;margin-bottom:8px}
+.sheet__table{width:100%;border-collapse:collapse;font-size:.92rem}
+.sheet__table th,.sheet__table td{border:1px solid #eee;padding:6px 8px;vertical-align:top}
+.sheet__table thead th{background:#fafafa}
+.sheet__table tr.is-break th,.sheet__table tr.is-break td{background:#fff7e6;color:#a97;font-style:italic}
+.cell__materia{font-weight:600}
+.cell__docente,.cell__extra{font-size:.85em;opacity:.9}
+.only-print{display:none}
+.empty{padding:12px;color:#777}
+
+/* impresión */
+ @media print{
+  @page{size:A4 landscape;margin:12mm}
+  body{background:#fff!important}
+  .no-print,nav,aside,header,footer{display:none!important}
+  .sheets__grid{display:block}
+  .sheet{page-break-after:always;box-shadow:none;border:none;padding:0}
+  .sheet:last-child{page-break-after:auto}
+  .sheet__title{font-size:18pt;margin-bottom:6mm}
+  .sheet__table{font-size:10pt}
+  .sheet__table th,.sheet__table td{border:1px solid #000;padding:2mm 3mm}
+  .only-print{display:block}
+}
+</style>
+
+<script>
+  window.API_OFERTA_PROFESORADO = "{% url 'ui:api_horario_profesorado' %}";
+  window.API_GRILLA_CONFIG      = "{% url 'ui:api_grilla_config' %}";
+  window.API_PLANES             = "{% url 'ui:api_planes' %}";
+</script>
+<script src="{% static 'ui/js/oferta_ajax.js' %}?v=12"></script>
 {% endblock %}

@@ -10,7 +10,7 @@ import json
 from django.utils import timezone
 
 from academia_core.models import PlanEstudios, EspacioCurricular, Docente, Profesorado
-from academia_horarios.models import Horario, TurnoModel, Bloque
+from academia_horarios.models import Horario, TurnoModel, Bloque, MateriaEnPlan
 
 
 logger = logging.getLogger(__name__)
@@ -121,17 +121,12 @@ def api_horarios_ocupados(request):
 
     ocupados = []
     if turno_slug:
-        try:
-            qs = Horario.objects.filter(turno=turno_slug, activo=True)
-            
-            if docente_id:
-                ocupados.extend(list(qs.filter(docente_id=docente_id).values('dia', 'hora_inicio', 'hora_fin')))
+        qs = Horario.objects.filter(turno=turno_slug)  # quitar activo=True
 
-            if aula_id:
-                ocupados.extend(list(qs.filter(aula_id=aula_id).values('dia', 'hora_inicio', 'hora_fin')))
-        except Exception as e:
-            logger.error("api_horarios_ocupados error: %s", e, exc_info=True)
-            return JsonResponse({'error': str(e)}, status=500)
+        if docente_id:
+            ocupados.extend(list(qs.filter(docente_id=docente_id).values('dia', 'inicio', 'fin')))
+        if aula_id:
+            ocupados.extend(list(qs.filter(aula_id=aula_id).values('dia', 'inicio', 'fin')))
 
     return JsonResponse({"ocupados": ocupados})
 
@@ -180,18 +175,25 @@ def api_horario_save(request):
     if not (materia_id and plan_id and profesorado_id and turno):
         return JsonResponse({'ok': False, 'error': 'Faltan parámetros obligatorios (materia, plan, profesorado, turno)'}, status=400)
 
-    # Usamos un simple borrado y recreación para la idempotencia
-    with transaction.atomic():
-        # 1. Borrar todos los horarios existentes para esta cátedra/turno
-        (Horario.objects
-            .filter(materia_id=materia_id, plan_id=plan_id,
-                    profesorado_id=profesorado_id, turno=turno)
-            .delete())
+    # 1) buscar el año de esa materia en ese plan
+    anio = (MateriaEnPlan.objects
+            .filter(plan_id=plan_id, materia_id=materia_id)
+            .values_list('anio', flat=True)
+            .first())
 
-        # 2. Crear los nuevos horarios desde el payload
-        nuevos_horarios = []
-        for item in items:
-            nuevos_horarios.append(Horario(
+    # 🔴 NUEVO: valida solapes en el draft
+    err = _validate_draft_overlaps(items)
+    if err:
+        return JsonResponse({'ok': False, 'error': err}, status=400)
+
+    with transaction.atomic():
+        Horario.objects.filter(
+            materia_id=materia_id, plan_id=plan_id,
+            profesorado_id=profesorado_id, turno=turno
+        ).delete()
+
+        nuevos = [
+            Horario(
                 materia_id=materia_id,
                 plan_id=plan_id,
                 profesorado_id=profesorado_id,
@@ -199,44 +201,54 @@ def api_horario_save(request):
                 dia=item['dia'],
                 inicio=item['inicio'],
                 fin=item['fin'],
-                # Aquí se podrían añadir más campos como anio, comision, aula si vinieran en el payload
-            ))
-        
-        Horario.objects.bulk_create(nuevos_horarios)
+                anio=anio,              # ← ★ ahora se guarda el año
+            )
+            for item in items
+        ]
+        Horario.objects.bulk_create(nuevos)
 
-    return JsonResponse({"ok": True, "count": len(nuevos_horarios)})
+    return JsonResponse({"ok": True, "count": len(nuevos)})
 
 
 @require_GET
 def api_horarios_profesorado(request):
     profesorado_id = request.GET.get("profesorado_id")
+    plan_id = request.GET.get("plan_id")
     if not profesorado_id:
-        return JsonResponse({'error': 'Falta el parámetro profesorado_id'}, status=400)
+        return JsonResponse({'error': 'Falta profesorado_id'}, status=400)
 
     qs = (Horario.objects
-          .filter(profesorado_id=profesorado_id)
-          .order_by('anio', 'dia', 'inicio')
-          .values('dia','inicio','fin','turno','anio','comision','aula',
-                  'materia__nombre','plan_id','profesorado_id'))
+          .filter(profesorado_id=profesorado_id))
+    if plan_id:
+        qs = qs.filter(plan_id=plan_id)
+    
+    qs = (qs.order_by('anio','dia','inicio')
+            .select_related('materia','docente')
+            .values('dia','inicio','fin','turno','anio','comision','aula','materia__nombre',
+                    'docente__apellido','docente__nombre'))
 
-    # Agrupar resultados por año
-    items_por_anio = {
-        1: [], 2: [], 3: [], 4: []
-    }
+    items_por_anio = {1:[],2:[],3:[],4:[],0:[]}
     for r in qs:
-        anio = r.get('anio')
-        if anio in items_por_anio:
-            items_por_anio[anio].append({
-                'dia': r['dia'],
-                'inicio': r['inicio'].strftime('%H:%M'),
-                'fin': r['fin'].strftime('%H:%M'),
-                'turno': r['turno'],
-                'anio': r['anio'],
-                'comision': r['comision'],
-                'aula': r['aula'],
-                'materia': r['materia__nombre'],
-            })
-            
+        nombre_doc = ''
+        ap = r.get('docente__apellido') or ''
+        no = r.get('docente__nombre') or ''
+        if ap or no:
+            nombre_doc = f"{ap}, {no}".strip(', ')
+        else:
+            nombre_doc = "Sin Docente"
+
+        bucket = r.get('anio') or 0
+        items_por_anio.setdefault(bucket, []).append({
+            'dia': r['dia'],
+            'inicio': r['inicio'].strftime('%H:%M'),
+            'fin': r['fin'].strftime('%H:%M'),
+            'turno': r['turno'],
+            'anio': r['anio'],
+            'comision': r['comision'],
+            'aula': r['aula'],
+            'materia': r['materia__nombre'],
+            'docente': nombre_doc,
+        })
     return JsonResponse(items_por_anio)
 
 @require_GET
@@ -306,30 +318,31 @@ def api_horarios_materia_plan(request):
 
 @require_GET
 def api_grilla_config(request):
-    """
-    Devuelve la estructura de la grilla (bloques y recreos) para un turno dado.
-    GET params: turno (slug, ej: "manana" o "sabado")
-    """
-    turno_slug = request.GET.get('turno')
-    if not turno_slug:
-        return JsonResponse({'error': 'Falta el parámetro turno'}, status=400)
+    turno = (request.GET.get('turno') or 'manana').lower()
+    if turno == 'sabado': turno = 'manana'
+    # normaliza tildes si hace falta
 
     try:
-        if turno_slug == 'sabado':
+        if turno == 'sabado':
             qs = Bloque.objects.filter(turno__isnull=True).order_by('orden')
         else:
-            qs = Bloque.objects.filter(turno__slug=turno_slug).order_by('orden')
+            qs = Bloque.objects.filter(turno__slug=turno).order_by('orden')
         
         bloques = list(qs.values(
             'dia_semana', 'inicio', 'fin', 'es_recreo'
         ))
 
         for b in bloques:
-            b['inicio'] = b['inicio'].strftime('%H:%M')
-            b['fin'] = b['fin'].strftime('%H:%M')
+            b['inicio_str'] = b['inicio'].strftime('%H:%M')
+            b['fin_str'] = b['fin'].strftime('%H:%M')
 
-        return JsonResponse({'bloques': bloques})
+        return JsonResponse({
+            "rows": [
+                {"ini": b['inicio_str'], "fin": b['fin_str'], "recreo": b['es_recreo']}
+                for b in bloques
+            ]
+        })
 
     except Exception as e:
-        logger.error(f"api_grilla_config error para turno={turno_slug}: {e}", exc_info=True)
+        logger.error(f"api_grilla_config error para turno={turno}: {e}", exc_info=True)
         return JsonResponse({'error': 'Error al obtener la configuración de la grilla.'}, status=500)
