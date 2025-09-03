@@ -319,7 +319,6 @@ def api_horarios_materia_plan(request):
 @require_GET
 def api_grilla_config(request):
     turno = (request.GET.get('turno') or 'manana').lower()
-    if turno == 'sabado': turno = 'manana'
     # normaliza tildes si hace falta
 
     try:

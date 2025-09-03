@@ -1,24 +1,51 @@
-// ui/js/oferta_ajax.js  v12  (Profesorado + Plan, turno por año, filtro estricto)
+// ui/js/oferta_ajax.js  v15 (robustez en datos de API)
 (function () {
   const $ = (q) => document.querySelector(q);
   const selCarrera = $('#id_carrera') || $('#id_profesorado') || document.querySelector("select[name*='profesorado' i],select[name*='carrera' i]");
   const selPlan    = $('#id_plan');
   const $sheets    = $('#sheets');
 
+  // --- constantes y normalizadores ---
+  const TURNOS = ['manana','tarde','vespertino', 'sabado'];
   const DIAS = ['lu','ma','mi','ju','vi','sa'];
   const DIA_LABEL = { lu:'Lunes', ma:'Martes', mi:'Miércoles', ju:'Jueves', vi:'Viernes', sa:'Sábado' };
-  const TURNOS = ['manana','tarde','vespertino'];
 
   const norm = (s) => String(s||'').trim();
   const normTurno = (t) => norm(t).toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'');
 
+  function normDia(raw){
+    const t = String(raw||'').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'');
+    if (t.startsWith('lu')) return 'lu';
+    if (t.startsWith('ma') && !t.startsWith('mie')) return 'ma';
+    if (t.startsWith('mi')) return 'mi';
+    if (t.startsWith('ju')) return 'ju';
+    if (t.startsWith('vi')) return 'vi';
+    if (t.startsWith('sa')) return 'sa';
+    return '';
+  }
+
+  // --- helpers de datos ---
   const HH = (hhmm) => {
-    // "07:45" -> 7.75; tolerante con "7:45:00"
     const m = String(hhmm||'').match(/^(\d{1,2}):(\d{2})/);
     if (!m) return NaN;
     return parseInt(m[1],10) + parseInt(m[2],10)/60;
   };
 
+  function toHM(x){
+    const m = String(x||'').match(/^(\d{1,2}):(\d{2})/);
+    return m ? `${m[1].padStart(2,'0')}:${m[2]}` : '';
+  }
+
+  function getMateria(it){
+    return it.materia || it.materia_nombre || it['materia__nombre'] || '';
+  }
+  function getDocente(it){
+    const d1 = it.docente || '';
+    const d2 = [it['docente__apellido'], it['docente__nombre']].filter(Boolean).join(', ');
+    return d1 || d2 || 'Sin Docente';
+  }
+
+  // --- Lógica de carga ---
   async function fetchJSON(u) {
     const r = await fetch(u, { headers: { "X-Requested-With": "XMLHttpRequest" }});
     if (!r.ok) throw new Error(`HTTP ${r.status} for ${u}`);
@@ -38,19 +65,17 @@
     selPlan.disabled = false;
   }
 
-  // --- 1) turno por año: si no hay turno en datos, lo infiero por hora ---
   function pickTurnoByYear(itemsByYear){
     const byYear = {};
     [1,2,3,4].forEach(anio => {
-      const arr = itemsByYear[anio] || [];
-      const cnt = {manana:0,tarde:0,vespertino:0};
-      arr.forEach(it=>{
+      const cnt = {manana:0,tarde:0,vespertino:0, sabado:0};
+      (itemsByYear[anio] || []).forEach(it=>{
         const k = normTurno(it.turno);
-        if (TURNOS.includes(k)) cnt[k]++; 
+        if (k in cnt) cnt[k]++; 
       });
-      let chosen = Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0][0]; // puede ser 'manana' aunque 0
-      if (cnt.manana===0 && cnt.tarde===0 && cnt.vespertino===0) {
-        // inferir por hora (mediana)
+      let chosen = Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0][0];
+      if (cnt[chosen] === 0) {
+        const arr = itemsByYear[anio] || [];
         const hs = arr.map(x => HH(x.inicio)).filter(x => !isNaN(x)).sort((a,b)=>a-b);
         const median = hs.length ? hs[Math.floor(hs.length/2)] : NaN;
         if (!isNaN(median)) {
@@ -66,8 +91,6 @@
     return byYear;
   }
 
-  // --- 2) malla por turno con cache ---
-  // dedup por (ini|fin|recreo)
   function uniqSlots(arr){
     const seen = new Set(); const out = [];
     for (const s of arr){
@@ -75,14 +98,13 @@
       if (seen.has(k)) continue;
       seen.add(k); out.push(s);
     }
-    // ordenar por inicio y luego fin
     out.sort((a,b) => (HH(a.ini)-HH(b.ini)) || (HH(a.fin)-HH(b.fin)));
     return out;
   }
 
   const gridCache = {};
   async function loadGridForTurno(turno){
-    const key = ['manana','tarde','vespertino'].includes(turno) ? turno : 'manana';
+    const key = TURNOS.includes(turno) ? turno : 'manana';
     if (gridCache[key]) return gridCache[key];
 
     const u = new URL(window.API_GRILLA_CONFIG, location.origin);
@@ -91,18 +113,17 @@
     const cfg = await fetchJSON(u);
     const rows = cfg?.rows || cfg?.bloques || [];
     let slots = rows.map(r => ({
-      ini: r.ini || r.inicio || r.hora_inicio || r[0],
-      fin: r.fin || r.hora_fin || r[1],
+      ini: toHM(r.ini || r.inicio || r.hora_inicio || r[0]),
+      fin: toHM(r.fin || r.hora_fin || r[1]),
       recreo: !!r.recreo
     })).filter(s => s.ini && s.fin);
 
-    slots = uniqSlots(slots);          // <<< dedupe + sort
-
+    slots = uniqSlots(slots);
     gridCache[key] = slots;
     return slots;
   }
 
-  // --- 3) construir/pintar ---
+  // --- Lógica de renderizado ---
   function buildSheetHTML(anio, slots, metaText){
     return `
       <div class="sheet" data-anio="${anio}">
@@ -128,27 +149,30 @@
   }
 
   function paintYear(sheetEl, items, turno){
-    // index celdas de ESA hoja
     const tdIndex = {};
     sheetEl.querySelectorAll('td[data-dia]').forEach(td=>{
       const key = `${td.dataset.dia}|${td.dataset.ini}|${td.dataset.fin}`;
       tdIndex[key] = td;
     });
 
-    items.forEach(it=>{
-      // filtro ESTRICTO por turno: si no coincide o viene vacío, NO pinta
-      const k = normTurno(it.turno);
-      if (TURNOS.includes(turno) && k !== turno) return;
+    (items || []).forEach(it=>{
+      const kturno = normTurno(it.turno);
+      if (TURNOS.includes(turno) && kturno && kturno !== turno) return;
 
-      const dia = norm(it.dia).toLowerCase().slice(0,2); // 'lu','ma',...
-      const key = `${dia}|${it.inicio}|${it.fin}`;
+      const dia = normDia(it.dia);
+      const ini = toHM(it.inicio);
+      const fin = toHM(it.fin);
+      const key = `${dia}|${ini}|${fin}`;
       const td = tdIndex[key];
       if (!td || td.closest('tr').classList.contains('is-break')) return;
 
+      const materiaTxt = getMateria(it);
+      const docenteTxt = getDocente(it);
+
       td.innerHTML = `
         <div class="cell">
-          <div class="cell__materia">${it.materia || ''}</div>
-          <div class="cell__docente">${it.docente || ''}</div>
+          <div class="cell__materia">${materiaTxt}</div>
+          <div class="cell__docente">${docenteTxt}</div>
           <div class="cell__extra">${it.comision || ''} ${it.aula ? '• '+it.aula : ''}</div>
         </div>`;
       td.classList.add('is-filled');
@@ -165,7 +189,6 @@
     const planId = selPlan?.value || '';
     if (!profId){ setEmpty(); return; }
 
-    // 1) datos agrupados por año
     const u = new URL(window.API_OFERTA_PROFESORADO, location.origin);
     u.searchParams.set('profesorado_id', profId);
     if (planId) u.searchParams.set('plan_id', planId);
@@ -173,13 +196,11 @@
     const total = Object.values(data||{}).reduce((a,v)=>a+(v?.length||0),0);
     if (!total){ setEmpty(); return; }
 
-    // 2) turno por año y mallas por turno
     const turnoByYear = pickTurnoByYear(data);
-    const uniqueTurnos = [...new Set([1,2,3,4].map(a=>turnoByYear[a]).filter(Boolean))];
+    const uniqueTurnos = [...new Set(Object.values(turnoByYear))];
     const slotsByTurno = {};
     for (const t of uniqueTurnos) slotsByTurno[t] = await loadGridForTurno(t);
 
-    // 3) dibujar 4 hojas (cada una con SU malla)
     const carreraTxt = selCarrera?.selectedOptions?.[0]?.text || '';
     const planTxt    = selPlan?.selectedOptions?.[0]?.text || '';
     const metaByYear = (anio)=>[carreraTxt, planTxt?`Plan: ${planTxt}`:null, `Turno: ${turnoByYear[anio][0].toUpperCase()+turnoByYear[anio].slice(1)}`].filter(Boolean).join(' • ');
@@ -188,7 +209,6 @@
         ${[1,2,3,4].map(anio => buildSheetHTML(anio, slotsByTurno[turnoByYear[anio]] || [], metaByYear(anio))).join('')}
       </div>`;
 
-    // 4) pintar cada hoja con sus ítems filtrados por su turno
     [1,2,3,4].forEach(anio=>{
       const sheet = $sheets.querySelector(`.sheet[data-anio="${anio}"]`);
       if (!sheet) return;
@@ -196,11 +216,10 @@
     });
   }
 
-  // eventos
+  // --- Eventos ---
   selCarrera?.addEventListener('change', async () => { await cargarPlanes(); await cargar(); });
   selPlan?.addEventListener('change', () => cargar().catch(console.error));
 
-  // imprimir
   document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('btn-print');
     if (btn) btn.addEventListener('click', () => {
