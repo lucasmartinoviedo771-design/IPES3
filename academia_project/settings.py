@@ -195,11 +195,7 @@ USE_TZ = True
 
 # =========== Static & Media ===========
 STATIC_URL = "/static/"
-_static_candidates = [
-    BASE_DIR / "ui" / "static",
-    BASE_DIR / "static",
-]
-STATICFILES_DIRS = [p for p in _static_candidates if p.exists()]
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 

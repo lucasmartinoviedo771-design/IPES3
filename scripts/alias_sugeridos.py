@@ -3,6 +3,7 @@ import re
 import unicodedata
 import difflib
 from collections import defaultdict
+from _utils import split_reqs
 from academia_core.models import Profesorado, PlanEstudios, EspacioCurricular
 
 PROF_SLUG = "profesorado-de-educacion-primaria"
@@ -18,15 +19,7 @@ def norm(s):
     return " ".join(s.split())
 
 
-def split_reqs(s):
-    if not s:
-        return []
-    s = s.strip()
-    if not s or s.lower().startswith("ninguna"):
-        return []
-    s = s.replace("°", "")
-    s = re.sub(r"\s*(\+|/|;|,|\sy\s|\sY\s)\s*", ",", s)
-    return [x.strip(" '\"\t") for x in s.split(",") if x.strip(" '\"\t")]
+
 
 
 p = Profesorado.objects.get(slug=PROF_SLUG)

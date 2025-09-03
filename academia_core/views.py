@@ -23,30 +23,10 @@ from .models import (
     Movimiento,
     DocenteEspacio,
 )
+from .view_utils import fmt_fecha, fmt_nota, link_callback
 
 
-# ---------- Helpers de formato ----------
-def _fmt_fecha(d):
-    return d.strftime("%d/%m/%Y") if d else ""
 
-
-def _fmt_nota(m):
-    if m.nota_num is not None:
-        return str(m.nota_num).rstrip("0").rstrip(".")
-    return m.nota_texto or ""
-
-
-# Resolver rutas /media y /static cuando generamos PDF
-def _link_callback(uri):
-    if uri.startswith(settings.MEDIA_URL):
-        path = os.path.join(settings.MEDIA_ROOT, uri.replace(settings.MEDIA_URL, ""))
-        return path
-    if uri.startswith(getattr(settings, "STATIC_URL", "/static/")):
-        static_root = getattr(settings, "STATIC_ROOT", "")
-        if static_root:
-            return os.path.join(static_root, uri.replace(settings.STATIC_URL, ""))
-    # Si es una URL absoluta http(s), xhtml2pdf suele bloquear; devolvemos tal cual.
-    return uri
 
 
 # ---------- Permisos ----------
@@ -221,7 +201,7 @@ def carton_primaria_pdf(request, dni):
         return HttpResponseForbidden("No tenés permiso para ver este cartón.")
     html = get_template("carton_primaria.html").render(ctx)
     out = io.BytesIO()
-    pisa.CreatePDF(html, dest=out, encoding="utf-8", link_callback=_link_callback)
+    pisa.CreatePDF(html, dest=out, encoding="utf-8", link_callback=link_callback)
     resp = HttpResponse(out.getvalue(), content_type="application/pdf")
     resp["Content-Disposition"] = f'inline; filename="carton_{dni}.pdf"'
     return resp
@@ -258,7 +238,7 @@ def carton_generico_pdf(request, prof_slug, res_slug, dni):
     ctx = _build_carton_ctx_base(prof, plan, dni)
     html = get_template("carton_primaria.html").render(ctx)
     out = io.BytesIO()
-    pisa.CreatePDF(html, dest=out, encoding="utf-8", link_callback=_link_callback)
+    pisa.CreatePDF(html, dest=out, encoding="utf-8", link_callback=link_callback)
     resp = HttpResponse(out.getvalue(), content_type="application/pdf")
     resp["Content-Disposition"] = f'inline; filename="carton_{dni}.pdf"'
     return resp

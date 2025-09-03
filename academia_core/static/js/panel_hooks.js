@@ -6,7 +6,7 @@
   onReady(function(){
     try {
       // ===== 0) Utilidades ligeras =====
-      function show(el, on){ if(!el) return; const wrap = el.closest('.item, .row, label, div') || el; wrap.style.display = on ? '' : 'none'; }
+      
       function dis(el, on){ if(!el) return; el.disabled = !!on; }
 
       // ===== 1) (Opcional) bloques que ya tengas: Adeuda / Certificación Docente =====
@@ -27,11 +27,11 @@
           const isEq  = norm(cond) === 'equivalencia';
 
           if (condicion) {
-            show(notaTexto, isEq); show(dispoInt, isEq);
-            show(ausente, !isEq); show(justif, !isEq && isAus);
-            show(nota,    !isEq && !isAus); dis(nota, isEq || isAus);
+            window.UI.show(notaTexto, isEq); window.UI.show(dispoInt, isEq);
+            window.UI.show(ausente, !isEq); window.UI.show(justif, !isEq && isAus);
+            window.UI.show(nota,    !isEq && !isAus); dis(nota, isEq || isAus);
           } else {
-            dis(nota, isAus); show(nota, !isAus); show(justif, isAus);
+            dis(nota, isAus); window.UI.show(nota, !isAus); window.UI.show(justif, isAus);
           }
 
           if (nota && !nota._hasRangeListener) {

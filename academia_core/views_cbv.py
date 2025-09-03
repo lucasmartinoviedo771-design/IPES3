@@ -16,13 +16,12 @@ from .models import (
     # === para Calificaciones (Movimiento) y alcances ===
     )
 from .forms_espacios import EspacioForm  # ← Form para Materias/Espacios
+from academia_core.auth_utils import role_of as _rol
 
 # ---------------- helpers de contexto para usar panel.html ----------------
 
 
-def _rol(user):
-    perfil = getattr(user, "perfil", None)
-    return getattr(perfil, "rol", None)
+
 
 
 def _can_admin(user):

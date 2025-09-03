@@ -15,27 +15,13 @@ from .models import (
     EspacioCurricular, InscripcionEspacio,
     Correlatividad
 )
+from .view_utils import fmt_fecha, fmt_nota, link_callback
+from .views import alumno_home, home_router
 from .forms_admin import EstudianteCreateForm
 from .forms_correlativas import CorrelatividadForm
 from .forms_carga import CargaNotaForm
 
-def _fmt_fecha(d):
-    return d.strftime("%d/%m/%Y") if d else ""
 
-def _fmt_nota(m):
-    if m.nota_num is not None:
-        return str(m.nota_num).rstrip("0").rstrip(".")
-    return m.nota_texto or ""
-
-def _link_callback(uri):
-    if uri.startswith(settings.MEDIA_URL):
-        path = os.path.join(settings.MEDIA_ROOT, uri.replace(settings.MEDIA_URL, ""))
-        return path
-    if uri.startswith(getattr(settings, "STATIC_URL", "/static/")):
-        static_root = getattr(settings, "STATIC_ROOT", "")
-        if static_root:
-            return os.path.join(static_root, uri.replace(settings.STATIC_URL, ""))
-    return uri
 
 @login_required
 def home_router(request):
@@ -139,17 +125,7 @@ def panel(request: HttpRequest, **kwargs) -> HttpResponse:
 
     return render(request, "academia_core/panel_admin.html", ctx)
 
-@login_required
-def alumno_home(request):
-    perfil = getattr(request.user, "perfil", None)
-    is_student = perfil and perfil.rol == "ESTUDIANTE" and perfil.estudiante
-    if not request.user.is_superuser and not is_student:
-        return HttpResponseForbidden("Solo para estudiantes.")
-    if request.user.is_superuser and not is_student:
-        return render(request, "alumno_home.html", {"estudiante": None, "items": []})
-    est = perfil.estudiante
-    items = []
-    return render(request, "alumno_home.html", {"estudiante": est, "items": items})
+
 
 @login_required
 def panel_correlatividades(request):
@@ -194,6 +170,12 @@ def correlatividades_form_view(request):
     if request.method == 'POST':
         form = CorrelatividadForm(request.POST)
         if form.is_valid():
+            form.save()
+            return redirect('correlatividades_form')
+    else:
+        form = CorrelatividadForm()
+    return render(request, "academia_core/panel_correlatividades_form.html", {"form": form})
+f form.is_valid():
             form.save()
             return redirect('correlatividades_form')
     else:

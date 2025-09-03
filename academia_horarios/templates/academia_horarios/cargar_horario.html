@@ -47,8 +47,9 @@
       <div>
         <label for="id_turno">Turno</label>
         <select id="id_turno" name="turno" class="select">
-            <option value="">---------</option>
-            <!-- Se completa SIEMPRE por JS -->
+            <option value="manana">Mañana</option>
+            <option value="tarde">Tarde</option>
+            <option value="vespertino">Vespertino</option>
         </select>
       </div>
 
@@ -60,7 +61,7 @@
               <div id="save-indicator" style="min-height:1.2rem; font-size:.9rem; color:#6b7280;"></div>
             </div>
           </div>
-          <div id="ah-grid" class="horario-grid"></div>
+          <div id="grid" class="grilla-horarios"></div>
         </div>
     </div>
 
@@ -146,12 +147,11 @@
     const initialSelectedTurnoValue = "{{ selected_turno_value|default:'' }}";
 
     // Endpoints para la grilla de horarios
-    window.API_MATERIA_PLAN = "{% url 'ui:api_horarios_materia_plan' %}";
-    window.API_HORARIO_SAVE = "{% url 'ui:api_horario_save' %}";
-    window.API_TURNOS = "{% url 'ui:api_turnos' %}";
-    window.API_GRILLA_CONFIG = "{% url 'ui:api_grilla_config' %}";
+    window.API_GRILLA_CONFIG     = "{% url 'ui:api_grilla_config' %}";
+    window.API_HORARIOS_OCUPADOS = "{% url 'ui:api_horarios_ocupados' %}";
+    window.API_HORARIO_SAVE      = "{% url 'ui:api_horario_save' %}";
 </script>
 
 {# Carga de la grilla de horarios #}
-<script src="{% static 'ui/js/armar_horarios.js' %}?v=5"></script>
+<script src="{% static 'ui/js/armar_horarios.js' %}?v=8"></script>
 {% endblock %}

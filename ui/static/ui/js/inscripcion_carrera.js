@@ -23,14 +23,14 @@
   // Helpers
   function getCbx(id) { return form.querySelector('#'+id); }
   function ch(el) { return !!(el && el.checked); }
-  function show(el, v) { if(!el) return; el.classList.toggle('hidden', !v); }
+  
   function disable(el, v) { if(!el) return; el.disabled = !!v; if(v) el.checked = false; }
   function textOfSelect(sel){ if(!sel) return ''; const opt = sel.options[sel.selectedIndex]; return opt ? (opt.text || '').trim() : ''; }
 
   // 1) Toggle Adeuda detalle
   function onAdeudaToggle() {
     const v = ch(adeudaBox);
-    show(adeudaExtra, v);
+    window.UI.show(adeudaExtra, v);
   }
 
   // --- Exclusividad entre: Título secundario / Título en trámite / Adeuda materias
@@ -65,42 +65,24 @@ function setupExclusivos() {
 }
 
   // 2) Cargar Planes por AJAX
-  async function loadPlanes() {
-    const url = form.getAttribute('data-planes-url');
-    if (!url || !selProf) return;
-
-    const profId = selProf.value;
-    selPlan.innerHTML = '<option value="">---------</option>';
-    if (!profId) return;
-
-    try {
-      const r = await fetch(url + '?profesorado=' + encodeURIComponent(profId));
-      if (!r.ok) return;
-      const data = await r.json();
-      (data.planes || []).forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.id; opt.textContent = p.nombre;
-        selPlan.appendChild(opt);
-      });
-    } catch (e) { /* silencio */ }
-  }
+  
 
   // 3) Regla de negocio según PROFESORADO
   function applyProfRules() {
     const isCert = textOfSelect(selProf) === CERT_DOCENTE_LABEL;
 
     // Common: mostrar/ocultar bloques
-    show(bloqueSup, isCert);
+    window.UI.show(bloqueSup, isCert);
 
     // Activar/desactivar los de Secundario
     const cbTituloSec   = getCbx('id_req_titulo_sec');
     const cbTituloTram  = getCbx('id_req_titulo_tramite');
     const cbAdeuda      = getCbx('id_req_adeuda');
 
-    show(rowTSec,   !isCert);
-    show(rowTram,   !isCert);
-    show(rowAdeuda, !isCert);
-    show(adeudaExtra, !isCert && ch(cbAdeuda));
+    window.UI.show(rowTSec,   !isCert);
+    window.UI.show(rowTram,   !isCert);
+    window.UI.show(rowAdeuda, !isCert);
+    window.UI.show(adeudaExtra, !isCert && ch(cbAdeuda));
 
     disable(cbTituloSec,  isCert);
     disable(cbTituloTram, isCert);
@@ -138,23 +120,25 @@ function setupExclusivos() {
     }
 
     // Mostrar píldoras + DDJJ si es condicional
-    show(pillRegular,  regular);
-    show(pillCond,    !regular);
-    show(ddjjWrap,    !regular);
+    window.UI.show(pillRegular,  regular);
+    window.UI.show(pillCond,    !regular);
+    window.UI.show(ddjjWrap,    !regular);
   }
 
   // Listeners
   if (adeudaBox) adeudaBox.addEventListener('change', onAdeudaToggle);
   if (selProf) {
-    selProf.addEventListener('change', () => { loadPlanes(); applyProfRules(); });
+    selProf.addEventListener('change', () => { window.loadPlanes(form, selProf, selPlan); applyProfRules(); });
   }
   form.addEventListener('change', updateStatus);
 
   // Init (prefill estudiante si viene por GET, cargar planes si ya hay prof, etc.)
   onAdeudaToggle();
   applyProfRules();
-  loadPlanes();
+  window.loadPlanes(form, selProf, selPlan);
   setupExclusivos();
   updateStatus();
+
+})();;
 
 })();

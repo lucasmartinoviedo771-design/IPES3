@@ -129,19 +129,13 @@ function paintItemDocente(item){
 // --- API & wiring ---
 
 
-async function fetchJSON(url, params={}) {
-  const qs = new URLSearchParams(params).toString();
-  const full = qs ? `${url}?${qs}` : url;
-  const r = await fetch(full, { headers: { "Accept": "application/json" } });
-  if (!r.ok) throw new Error(`HTTP ${r.status} ${full}`);
-  return r.json();
-}
+
 
 async function seedDocentes() {
   const $doc = document.getElementById("hd_docente");
   try {
     console.log("Cargando docentes desde", API_DOCENTES_LIST);
-    const data = await fetchJSON(API_DOCENTES_LIST);
+    const data = await window.fetchJSON(API_DOCENTES_LIST);
     console.log("Respuesta docentes:", data);
 
     $doc.innerHTML = '<option value="">---------</option>';

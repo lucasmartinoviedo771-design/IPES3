@@ -1,3 +1,4 @@
+import { el, resetSelect } from "./utils/form_helpers.js";
 (function () {
   const form = document.getElementById("form-insc-mat");
   const API_PLANES = form.dataset.apiPlanes;
@@ -14,30 +15,13 @@
   const prefillProf = document.getElementById("prefill_prof_id").value;
   const prefillPlan = document.getElementById("prefill_plan_id").value;
 
-  // Helpers
-  const el = (tag, cls, txt) => {
-    const x = document.createElement(tag);
-    if (cls) x.className = cls;
-    if (txt != null) x.textContent = txt;
-    return x;
-  };
-
-  function resetSelect(sel, placeholder) {
-    sel.innerHTML = "";
-    const opt = el("option", "", placeholder || "— Seleccioná —");
-    opt.value = "";
-    sel.appendChild(opt);
-  }
+  
 
   function setCount(n) {
     matsCount.textContent = n ? `${n} materias` : "";
   }
 
-  async function fetchJSON(url) {
-    const r = await fetch(url, { credentials: "same-origin" });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return await r.json();
-  }
+  
 
   // Render correlatividades en chips
   function renderCorrCell(cell, corr) {
@@ -148,7 +132,7 @@
   selCuat.addEventListener("change", selAnio.onchange);
 
   // Bootstrap: si venimos preseleccionados, cargamos straight
-  (async function init() {
+  (async function inscribirMateria_init() {
     // Si ya estás pasando el profesorado precargado desde la página anterior, podés dejar el select vacío y saltar a planes:
     resetSelect(selProf, "— (opcional) —");
 
@@ -156,7 +140,7 @@
     if (prefillProf) {
       resetSelect(selPlan, "Cargando planes…");
       try {
-        const data = await fetchJSON(`${API_PLANES}?prof_id=${prefillProf}`);
+        const data = await window.fetchJSON(`${API_PLANES}?prof_id=${prefillProf}`);
         resetSelect(selPlan, "— Seleccioná un plan —");
         (data.items || []).forEach(p => {
           const o = el("option", "", p.label);

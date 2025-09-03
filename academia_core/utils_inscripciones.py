@@ -1,69 +1,71 @@
-from typing import Iterable
-from academia_core.models import (
-    EspacioCurricular,
-    EstudianteProfesorado,
-    InscripcionEspacio,
-    InscripcionFinal,
-    Correlatividad,
-)
+from datetime import timedelta
+from academia_core.models import EstudianteProfesorado, EspacioCurricular, Correlatividad
 
+REG_OK_CODIGOS = {"PROMOCION", "APROBADO", "REGULAR"}
 
-def _tiene_regularizada(
-    est_prof: EstudianteProfesorado, espacio: EspacioCurricular
+def tiene_regularizada(
+    insc: EstudianteProfesorado, esp: EspacioCurricular, hasta_fecha=None
 ) -> bool:
-    # Regular si tiene una InscripcionEspacio previa con estado EN_CURSO o REGULAR (ajusta según tu flujo)
-    return InscripcionEspacio.objects.filter(
-        inscripcion=est_prof,
-        espacio=espacio,
-        estado__in=[
-            InscripcionEspacio.Estado.EN_CURSO
-        ],  # si tu flujo usa "REGULAR", agregalo aquí
+    qs = insc.movimientos.filter(
+        espacio=esp, tipo="REG", condicion__codigo__in=REG_OK_CODIGOS
+    )
+    if hasta_fecha:
+        qs = qs.filter(fecha__lte=hasta_fecha)
+    return qs.exists()
+
+
+def tiene_aprobada(
+    insc: EstudianteProfesorado, esp: EspacioCurricular, hasta_fecha=None
+) -> bool:
+    qs1 = insc.movimientos.filter(
+        espacio=esp, tipo="REG", condicion__codigo__in={"PROMOCION", "APROBADO"}
+    )
+    qs2 = insc.movimientos.filter(
+        espacio=esp, tipo="FIN", condicion__codigo="REGULAR", nota_num__gte=6
+    )
+    qs3 = insc.movimientos.filter(
+        espacio=esp,
+        tipo="FIN",
+        condicion__codigo="EQUIVALENCIA",
+        nota_texto__iexact="Equivalencia",
+    )
+    if hasta_fecha:
+        qs1 = qs1.filter(fecha__lte=hasta_fecha)
+        qs2 = qs2.filter(fecha__lte=hasta_fecha)
+        qs3 = qs3.filter(fecha__lte=hasta_fecha)
+    return qs1.exists() or qs2.exists() or qs3.exists()
+
+
+def cumple_correlativas(
+    insc: EstudianteProfesorado, esp: EspacioCurricular, tipo: str, fecha=None
+):
+    reglas = Correlatividad.objects.filter(plan=esp.plan, espacio=esp, tipo=tipo)
+    faltan = []
+    for r in reglas:
+        if r.requiere_espacio:
+            reqs = [r.requiere_espacio]
+        else:
+            reqs = list(
+                EspacioCurricular.objects.filter(plan=esp.plan).filter(
+                    anio__in=[
+                        f"{i}°"
+                        for i in range(1, (r.requiere_todos_hasta_anio or 0) + 1)
+                    ]
+                )
+            )
+        for req in reqs:
+            if r.requisito == "REGULARIZADA":
+                ok = tiene_regularizada(insc, req, hasta_fecha=fecha)
+            else:
+                ok = tiene_aprobada(insc, req, hasta_fecha=fecha)
+            if not ok:
+                faltan.append((r, req))
+    return (len(faltan) == 0), faltan
+
+def tiene_regularidad_vigente(
+    insc: EstudianteProfesorado, esp: EspacioCurricular, a_fecha
+) -> bool:
+    limite = a_fecha - timedelta(days=730)
+    return insc.movimientos.filter(
+        espacio=esp, tipo="REG", condicion__codigo="REGULAR", fecha__gte=limite
     ).exists()
-
-
-def _tiene_aprobada(
-    est_prof: EstudianteProfesorado, espacio: EspacioCurricular
-) -> bool:
-    # Aprobada si tiene final con nota aprobada (ajusta la condición de nota)
-    return InscripcionFinal.objects.filter(
-        inscripcion__estudiante=est_prof.estudiante,
-        espacio=espacio,
-        nota_final__isnull=False,
-    ).exists()
-
-
-def _cumple_correlativas(
-    est_prof: EstudianteProfesorado, destino: EspacioCurricular
-) -> bool:
-    reqs = Correlatividad.objects.filter(destino=destino)
-    if not reqs.exists():
-        return True
-
-    for req in reqs:
-        origen = req.origen  # ajusta si tu campo se llama distinto
-        tipo = getattr(
-            req, "tipo", "APROBADA"
-        )  # por defecto exigimos aprobada si no hay campo
-
-        if tipo == "REGULAR":
-            if not (
-                _tiene_regularizada(est_prof, origen)
-                or _tiene_aprobada(est_prof, origen)
-            ):
-                return False
-        else:  # "APROBADA"
-            if not _tiene_aprobada(est_prof, origen):
-                return False
-
-    return True
-
-
-def espacios_habilitados_para(
-    est_prof: EstudianteProfesorado,
-) -> Iterable[EspacioCurricular]:
-    base = EspacioCurricular.objects.filter(profesorado=est_prof.profesorado)
-    ids = []
-    for esp in base:
-        if _cumple_correlativas(est_prof, esp):
-            ids.append(esp.id)
-    return base.filter(id__in=ids)

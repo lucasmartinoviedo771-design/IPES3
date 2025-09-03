@@ -1,5 +1,6 @@
 import csv
 import re
+from _utils import split_reqs
 
 from academia_core.models import (
     Profesorado,
@@ -15,27 +16,7 @@ CSV_PATH = r"C:\proyectos\academia\correlatividades_primaria_1935-14.csv"
 SEP = ";"  # cambia a "," si tu CSV usa coma
 
 
-def split_reqs(s: str):
-    """Convierte el texto de requisitos del CSV en una lista de tuplas:
-    ('ESP', 'Pedagogía')  -> requisito por espacio
-    ('TODOS', 2)          -> 'todos hasta 2°'
-    """
-    if not s:
-        return []
-    s = s.strip()
-    if not s or s.lower().startswith("ninguna"):
-        return []
-    s = s.replace("°", "")
-    s = re.sub(r"\s*(\+|/|;|,|\sy\s|\sY\s)\s*", ",", s)
-    parts = [x.strip(" '\"\t") for x in s.split(",") if x.strip(" '\"\t")]
-    out = []
-    for x in parts:
-        m = re.search(r"todos\s+hasta\s+(\d+)", x.lower())
-        if m:
-            out.append(("TODOS", int(m.group(1))))
-        else:
-            out.append(("ESP", x))
-    return out
+
 
 
 def importar_correlatividades(prof_slug, plan_res, csv_path, sep=";"):

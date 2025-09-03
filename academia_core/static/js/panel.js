@@ -92,7 +92,7 @@ function initInscripcionUI() {
   }
 }
 
-window.addEventListener('DOMContentLoaded', initInscripcionUI);
+window.addEventListener('DOMContentLoaded', panel_initInscripcionUI);
 
 // Llamada AJAX para guardar la inscripción de cursada
 // Llamada AJAX para guardar la inscripción de cursada

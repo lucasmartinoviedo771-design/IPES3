@@ -9,18 +9,11 @@ const API_PLANES = window.API_PLANES || '/ui/api/planes';
 const API_HORARIO_P = window.API_HORARIO_P || '/ui/api/horarios/profesorado';
 const API_GRILLA_CONFIG = window.API_GRILLA_CONFIG || '/ui/api/grilla-config/';
 
-async function fetchJSON(url, params = {}) {
-    const qs = new URLSearchParams(params).toString();
-    const fullUrl = qs ? `${url}?${qs}` : url;
-    const res = await fetch(fullUrl, { headers: { "Accept": "application/json" } });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
-}
+
 
 // --- Lógica de renderizado de la grilla (adaptada de armar_horarios.js) ---
 
-function th(t) { const e = document.createElement("th"); e.textContent = t; return e; }
-function td(t, c) { const e = document.createElement("td"); if (c) e.className = c; if (t) e.textContent = t; return e; }
+
 
 async function renderReadOnlyGrid(containerId, turno, items) {
     const $grid = document.getElementById(containerId);
@@ -28,7 +21,7 @@ async function renderReadOnlyGrid(containerId, turno, items) {
     $grid.innerHTML = "<p class='loading'>Cargando grilla...</p>";
 
     try {
-        const cfgLV = await fetchJSON(API_GRILLA_CONFIG, { turno });
+        const cfgLV = await window.fetchJSON(API_GRILLA_CONFIG, { turno });
         const cfgSa = await fetchJSON(API_GRILLA_CONFIG, { turno: 'sabado' });
 
         const lvBlocks = cfgLV.bloques || [];
@@ -58,10 +51,10 @@ async function renderReadOnlyGrid(containerId, turno, items) {
         for (let i = 0; i < rows; i++) {
             const tr = document.createElement("tr");
             const lvTime = lvTimes[i] || null;
-            tr.appendChild(td(lvTime ? `${lvTime.inicio} – ${lvTime.fin}` : "", "col-time"));
+            tr.appendChild(window.Table.td(lvTime ? `${lvTime.inicio} – ${lvTime.fin}` : "", "col-time"));
 
             for (let day = 0; day < 5; day++) {
-                const cell = td("", "col-slot");
+                const cell = window.Table.td("", "col-slot");
                 if (lvTime) {
                     const key = `${day}-${lvTime.inicio}-${lvTime.fin}`;
                     if (byKeyLV.has(key)) {
@@ -73,13 +66,13 @@ async function renderReadOnlyGrid(containerId, turno, items) {
             }
 
             const saTime = saTimes[i] || null;
-            const tdSa = td("", "col-slot");
+            const tdSa = window.Table.td("", "col-slot");
             if (saTime && byKeySa.has(`${saTime.inicio}-${saTime.fin}`)) {
                 tdSa.dataset.day = 6;
                 tdSa.dataset.hhmm = saTime.inicio;
             }
             tr.appendChild(tdSa);
-            tr.appendChild(td(saTime ? `${saTime.inicio} – ${saTime.fin}` : "", "col-time col-time-right"));
+            tr.appendChild(window.Table.td(saTime ? `${saTime.inicio} – ${saTime.fin}` : "", "col-time col-time-right"));
             tbody.appendChild(tr);
         }
 
@@ -161,4 +154,4 @@ async function init() {
     selPlan.addEventListener('change', loadProfesorado);
 }
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", horariosProfesorado_init);

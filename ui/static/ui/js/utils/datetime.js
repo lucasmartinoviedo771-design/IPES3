@@ -1,0 +1,1 @@
+window.toHM = function(x){ const m=String(x||'').match(/^(\d{1,2}):(\d{2})/); return m?`${m[1].padStart(2,'0')}:${m[2]}`:''; }

@@ -13,6 +13,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.text import slugify
 from django.contrib.auth import get_user_model
+from .utils_inscripciones import tiene_regularizada, tiene_aprobada, cumple_correlativas, tiene_regularidad_vigente
 
 
 # --- Choices administrativos ---
@@ -516,76 +517,7 @@ class EspacioCondicion(models.Model):
 
 # ---------- Helpers de estado académico (correlatividades) ----------
 
-REG_OK_CODIGOS = {"PROMOCION", "APROBADO", "REGULAR"}
 
-
-def _tiene_regularizada(
-    insc: EstudianteProfesorado, esp: EspacioCurricular, hasta_fecha=None
-) -> bool:
-    qs = insc.movimientos.filter(
-        espacio=esp, tipo="REG", condicion__codigo__in=REG_OK_CODIGOS
-    )
-    if hasta_fecha:
-        qs = qs.filter(fecha__lte=hasta_fecha)
-    return qs.exists()
-
-
-def _tiene_aprobada(
-    insc: EstudianteProfesorado, esp: EspacioCurricular, hasta_fecha=None
-) -> bool:
-    qs1 = insc.movimientos.filter(
-        espacio=esp, tipo="REG", condicion__codigo__in={"PROMOCION", "APROBADO"}
-    )
-    qs2 = insc.movimientos.filter(
-        espacio=esp, tipo="FIN", condicion__codigo="REGULAR", nota_num__gte=6
-    )
-    qs3 = insc.movimientos.filter(
-        espacio=esp,
-        tipo="FIN",
-        condicion__codigo="EQUIVALENCIA",
-        nota_texto__iexact="Equivalencia",
-    )
-    if hasta_fecha:
-        qs1 = qs1.filter(fecha__lte=hasta_fecha)
-        qs2 = qs2.filter(fecha__lte=hasta_fecha)
-        qs3 = qs3.filter(fecha__lte=hasta_fecha)
-    return qs1.exists() or qs2.exists() or qs3.exists()
-
-
-def _cumple_correlativas(
-    insc: EstudianteProfesorado, esp: EspacioCurricular, tipo: str, fecha=None
-):
-    reglas = Correlatividad.objects.filter(plan=esp.plan, espacio=esp, tipo=tipo)
-    faltan = []
-    for r in reglas:
-        if r.requiere_espacio:
-            reqs = [r.requiere_espacio]
-        else:
-            reqs = list(
-                EspacioCurricular.objects.filter(plan=esp.plan).filter(
-                    anio__in=[
-                        f"{i}°"
-                        for i in range(1, (r.requiere_todos_hasta_anio or 0) + 1)
-                    ]
-                )
-            )
-        for req in reqs:
-            if r.requisito == "REGULARIZADA":
-                ok = _tiene_regularizada(insc, req, hasta_fecha=fecha)
-            else:
-                ok = _tiene_aprobada(insc, req, hasta_fecha=fecha)
-            if not ok:
-                faltan.append((r, req))
-    return (len(faltan) == 0), faltan
-
-
-def _tiene_regularidad_vigente(
-    insc: EstudianteProfesorado, esp: EspacioCurricular, a_fecha
-) -> bool:
-    limite = a_fecha - timedelta(days=730)
-    return insc.movimientos.filter(
-        espacio=esp, tipo="REG", condicion__codigo="REGULAR", fecha__gte=limite
-    ).exists()
 
 
 # ===================== Movimientos académicos =====================
@@ -698,7 +630,7 @@ class Movimiento(models.Model):
                         raise ValidationError(
                             "Nota de Final por regularidad debe ser >= 6."
                         )
-                    if self.fecha and not _tiene_regularidad_vigente(
+                    if self.fecha and not tiene_regularidad_vigente(
                         self.inscripcion, self.espacio, self.fecha
                     ):
                         raise ValidationError(
@@ -711,7 +643,7 @@ class Movimiento(models.Model):
                     and not self.espacio.libre_habilitado
                 ):
                     raise ValidationError("Este espacio no habilita condición Libre.")
-                if _tiene_aprobada(self.inscripcion, self.espacio):
+                if tiene_aprobada(self.inscripcion, self.espacio):
                     raise ValidationError(
                         "El espacio ya está aprobado; no corresponde rendir Libre."
                     )
@@ -723,7 +655,7 @@ class Movimiento(models.Model):
                     raise ValidationError("Debe cargar la nota o marcar Ausente.")
 
             if cond_codigo != "EQUIVALENCIA":
-                ok, faltan = _cumple_correlativas(
+                ok, faltan = cumple_correlativas(
                     self.inscripcion, self.espacio, "RENDIR", fecha=self.fecha
                 )
                 if not ok:
@@ -750,7 +682,7 @@ class Movimiento(models.Model):
             )
 
         if self.tipo == "REG":
-            ok, faltan = _cumple_correlativas(
+            ok, faltan = cumple_correlativas(
                 self.inscripcion, self.espacio, "CURSAR", fecha=self.fecha
             )
             if not ok:
@@ -853,7 +785,7 @@ class InscripcionEspacio(models.Model):
 
         # correlatividades según fecha_inscripcion
         try:
-            ok, faltan = _cumple_correlativas(
+            ok, faltan = cumple_correlativas(
                 self.inscripcion, self.espacio, "CURSAR", fecha=self.fecha_inscripcion
             )
         except Exception:

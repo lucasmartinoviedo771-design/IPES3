@@ -44,8 +44,13 @@ const GRILLAS = {
 const DAYS = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
 const DAY_KEYS = ["lu","ma","mi","ju","vi","sa"];
 
+window.Table ??= {};
+
+window.Table.th = function(t){ const e=document.createElement("th"); e.textContent=t; return e; }
+window.Table.td = function(t,c){ const e=document.createElement("td"); if(c) e.className=c; e.textContent=t; return e; }
+
 /** Construye la tabla base (vacía) */
-export function buildGrid(container, turnoKey) {
+window.Table.buildGrid = function(container, turnoKey) {
   container.innerHTML = "";
   const g = GRILLAS[turnoKey];
   if (!g) return;
@@ -56,8 +61,8 @@ export function buildGrid(container, turnoKey) {
   // Header
   const thead = document.createElement("thead");
   const trh = document.createElement("tr");
-  trh.appendChild(th("Hora"));
-  DAYS.forEach(d => trh.appendChild(th(d)));
+  trh.appendChild(window.Table.th("Hora"));
+  DAYS.forEach(d => trh.appendChild(window.Table.th(d)));
   thead.appendChild(trh);
   table.appendChild(thead);
 
@@ -65,10 +70,10 @@ export function buildGrid(container, turnoKey) {
   const tbody = document.createElement("tbody");
   g.blocks.forEach(([ini, fin]) => {
     const tr = document.createElement("tr");
-    tr.appendChild(td(`${ini} – ${fin}`, "col-time"));
+    tr.appendChild(window.Table.td(`${ini} – ${fin}`, "col-time"));
 
     DAYS.forEach((_d, idx) => {
-      const cell = td("", "col-slot");
+      const cell = window.Table.td("", "col-slot");
       if (isBreak(g, ini, fin)) {
         cell.classList.add("is-break");
         cell.textContent = "Recreo";
@@ -87,14 +92,12 @@ export function buildGrid(container, turnoKey) {
   container.appendChild(table);
 }
 
-function th(t){ const e=document.createElement("th"); e.textContent=t; return e; }
-function td(t,c){ const e=document.createElement("td"); if(c) e.className=c; e.textContent=t; return e; }
 function isBreak(g, ini, fin){
   return g.breaks.some(([b1,b2]) => b1===ini && b2===fin);
 }
 
 /** Pinta un evento (materia/docente) en su celda correspondiente */
-export function paintItem(container, item) {
+window.Table.paintItem = function(container, item) {
   // item: {dia, inicio, fin, materia, docente, anio, comision, aula?, cuatrimestral?}
   const selector = `td.col-slot[data-day="${item.dia}"][data-time="${item.inicio}-${item.fin}"]`;
   const cell = container.querySelector(selector);

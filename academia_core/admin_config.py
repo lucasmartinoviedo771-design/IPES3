@@ -17,15 +17,12 @@ from .models import (
     Correlatividad,
     Condicion,
 )
+from academia_core.auth_utils import role_of as _rol
 
 # ===================== Helpers de rol/alcance =====================
 
 
-def _rol(request):
-    try:
-        return request.user.perfil.rol
-    except Exception:
-        return None
+
 
 
 def _profesorados_permitidos(request):

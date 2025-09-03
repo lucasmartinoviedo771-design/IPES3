@@ -13,11 +13,7 @@
   const urlCorrs     = form.dataset.corrsUrl || "/ui/api/correlatividades";
 
   // ---------- helpers ----------
-  async function fetchJSON(url){
-    const r = await fetch(url, {credentials:'same-origin', headers:{'X-Requested-With':'XMLHttpRequest'}});
-    if (!r.ok) return null;
-    try { return await r.json(); } catch { return null; }
-  }
+  
 
   function clearGrids(){
     const r = $('#corr-regular-grid');
@@ -116,7 +112,7 @@ function renderChecks3Cols(container, fieldName, items) {
     clearGrids();
     if(!planId) return;
 
-    const data = await fetchJSON(`${urlMaterias}?plan_id=${encodeURIComponent(planId)}`);
+    const data = await window.fetchJSON(`${urlMaterias}?plan_id=${encodeURIComponent(planId)}`);
     const items = data?.items || [];
 
     // combo Materia (queda en el orden que mande el API; si querés solo alfabético, ordenalo allí)

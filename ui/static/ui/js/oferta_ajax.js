@@ -1,3 +1,4 @@
+console.log('OFERTA-AJAX v15 cargado');
 // ui/js/oferta_ajax.js  v15 (robustez en datos de API)
 (function () {
   const $ = (q) => document.querySelector(q);
@@ -31,10 +32,7 @@
     return parseInt(m[1],10) + parseInt(m[2],10)/60;
   };
 
-  function toHM(x){
-    const m = String(x||'').match(/^(\d{1,2}):(\d{2})/);
-    return m ? `${m[1].padStart(2,'0')}:${m[2]}` : '';
-  }
+  
 
   function getMateria(it){
     return it.materia || it.materia_nombre || it['materia__nombre'] || '';
@@ -46,11 +44,7 @@
   }
 
   // --- Lógica de carga ---
-  async function fetchJSON(u) {
-    const r = await fetch(u, { headers: { "X-Requested-With": "XMLHttpRequest" }});
-    if (!r.ok) throw new Error(`HTTP ${r.status} for ${u}`);
-    return r.json();
-  }
+  
 
   async function cargarPlanes() {
     if (!selCarrera || !selPlan) return;
@@ -60,7 +54,7 @@
 
     const u = new URL(window.API_PLANES, location.origin);
     u.searchParams.set('carrera', selCarrera.value);
-    const data = await fetchJSON(u);
+    const data = await window.fetchJSON(u);
     (data?.results || []).forEach(p => selPlan.add(new Option(p.nombre, p.id)));
     selPlan.disabled = false;
   }
@@ -110,11 +104,11 @@
     const u = new URL(window.API_GRILLA_CONFIG, location.origin);
     u.searchParams.set('turno', key);
 
-    const cfg = await fetchJSON(u);
+    const cfg = await window.fetchJSON(u);
     const rows = cfg?.rows || cfg?.bloques || [];
     let slots = rows.map(r => ({
-      ini: toHM(r.ini || r.inicio || r.hora_inicio || r[0]),
-      fin: toHM(r.fin || r.hora_fin || r[1]),
+      ini: window.toHM(r.ini || r.inicio || r.hora_inicio || r[0]),
+      fin: window.toHM(r.fin || r.hora_fin || r[1]),
       recreo: !!r.recreo
     })).filter(s => s.ini && s.fin);
 
@@ -160,8 +154,8 @@
       if (TURNOS.includes(turno) && kturno && kturno !== turno) return;
 
       const dia = normDia(it.dia);
-      const ini = toHM(it.inicio);
-      const fin = toHM(it.fin);
+      const ini = window.toHM(it.inicio);
+      const fin = window.toHM(it.fin);
       const key = `${dia}|${ini}|${fin}`;
       const td = tdIndex[key];
       if (!td || td.closest('tr').classList.contains('is-break')) return;
@@ -192,7 +186,7 @@
     const u = new URL(window.API_OFERTA_PROFESORADO, location.origin);
     u.searchParams.set('profesorado_id', profId);
     if (planId) u.searchParams.set('plan_id', planId);
-    const data = await fetchJSON(u);
+    const data = await window.fetchJSON(u);
     const total = Object.values(data||{}).reduce((a,v)=>a+(v?.length||0),0);
     if (!total){ setEmpty(); return; }
 

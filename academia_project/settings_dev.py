@@ -1,7 +1,14 @@
-from .settings import *
+from . import settings as base
 
 DEBUG = True
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+ALLOWED_HOSTS = [*getattr(base, "ALLOWED_HOSTS", []), "localhost"]
+
+# Reexportá lo necesario:
+SECRET_KEY = base.SECRET_KEY
+INSTALLED_APPS = base.INSTALLED_APPS
+MIDDLEWARE = base.MIDDLEWARE
+TEMPLATES = base.TEMPLATES
+DATABASES = base.DATABASES
 
 SECURE_SSL_REDIRECT = False
 SECURE_HSTS_SECONDS = 0
