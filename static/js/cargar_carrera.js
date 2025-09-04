@@ -1,8 +1,7 @@
 (() => {
   const sel = document.getElementById("selCarrera");
   const txtNombre = document.getElementById("txtNombre");
-  const txtAbrev  = document.getElementById("txtAbrev");
-  const chkVig    = document.getElementById("chkVigente");
+  const txtPlanVigente = document.getElementById("txtPlanVigente");
   const btnNueva  = document.getElementById("btnNueva");
   const btnGuardar= document.getElementById("btnGuardar");
   const btnEliminar= document.getElementById("btnEliminar");
@@ -18,8 +17,7 @@
   const clearForm = () => {
     sel.value = "";
     txtNombre.value = "";
-    txtAbrev.value = "";
-    chkVig.checked = true;
+    txtPlanVigente.value = "";
     msg.style.display = "none";
   };
 
@@ -32,8 +30,7 @@
     if (!js.ok) { showMsg("No se pudo cargar la carrera", false); return; }
     const d = js.data;
     txtNombre.value = d.nombre || "";
-    txtAbrev.value  = d.nombre_corto || "";
-    chkVig.checked  = !!d.vigente;
+    txtPlanVigente.value = d.plan_vigente || "";
   });
 
   btnNueva.addEventListener("click", clearForm);
@@ -42,8 +39,7 @@
     const payload = {
       id: sel.value || null,
       nombre: txtNombre.value.trim(),
-      nombre_corto: txtAbrev.value.trim(),
-      vigente: chkVig.checked
+      plan_vigente: txtPlanVigente.value.trim(),
     };
     if (!payload.nombre) { showMsg("El nombre es obligatorio", false); return; }
 

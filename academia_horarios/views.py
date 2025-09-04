@@ -12,12 +12,13 @@ from django.db import transaction, IntegrityError
 from django.db.models import Value
 from django.db.models.functions import Concat
 from django.db.utils import OperationalError, ProgrammingError
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from django.views.generic import TemplateView, DeleteView
+from django.forms import ModelForm
 
 from academia_core.models import (
     PlanEstudios,
@@ -26,7 +27,7 @@ from academia_core.models import (
     EspacioCurricular,   # “Materia en Plan” (tabla puente Plan↔Materia)
     Docente,
     Materia,
-    Profesorado,
+    Profesorado as Carrera,  # Using Profesorado as Carrera
 )
 from .forms import HorarioInlineForm
 from .models import (
@@ -50,7 +51,7 @@ class OfertaView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["profesorados"] = Profesorado.objects.all().order_by("nombre")
+        ctx["profesorados"] = Carrera.objects.all().order_by("nombre")
         ctx["docentes"] = Docente.objects.all().order_by("apellido", "nombre")
         # 'oferta' la llena el JS por AJAX
         return ctx
@@ -152,7 +153,7 @@ def cargar_horario(request):
     """
     Renderiza la pantalla de la grilla. Los combos se llenan por AJAX.
     """
-    carreras = Profesorado.objects.all().order_by("nombre")
+    carreras = Carrera.objects.all().order_by("nombre")
     aulas = Aula.objects.all().order_by("nombre")
 
     # Recordar selección si vuelve por GET (PRG)
@@ -425,9 +426,6 @@ SLOTS = [
     (_t("12:40"), _t("13:20")),  # 34
     (_t("13:20"), _t("14:00")),  # 35
 ]
-
-
-from django.utils import timezone
 
 
 def _get_or_create_periodo(turno: str | None = None, periodo_id: int | None = None):
