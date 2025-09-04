@@ -1,37 +1,78 @@
-.sheets__grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0,1fr)); }
-.sheet { background:#fff; border-radius:12px; padding:12px; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
-.sheet__title { font-weight:700; margin: 4px 0 8px; }
-.sheet__table { width:100%; border-collapse: collapse; font-size: .92rem; }
-.sheet__table th, .sheet__table td { border:1px solid #eee; padding:6px 8px; vertical-align: top; }
-.sheet__table thead th { background:#fafafa; }
-.sheet__table tr.is-break th, .sheet__table tr.is-break td { background:#fff7e6; color:#a97; font-style: italic; }
-.cell__materia { font-weight:600; }
-.cell__docente, .cell__extra { font-size:.85em; opacity:.85; }
-.empty { padding:12px; color:#777; }
- @media/** (max-width: 1200px) { .sheets__grid { grid-template-columns: 1fr; } }
-/* pantalla */
-.sheets__grid{display:grid;gap:16px;grid-template-columns:repeat(2,minmax(0,1fr))}
-.sheet{background:#fff;border-radius:12px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.sheet__title{font-weight:700;margin:4px 0 8px;font-size:1rem}
-.sheet__meta{font-size:.9rem;opacity:.8;margin-bottom:8px}
-.sheet__table{width:100%;border-collapse:collapse;font-size:.92rem}
-.sheet__table th,.sheet__table td{border:1px solid #eee;padding:6px 8px;vertical-align:top}
-.sheet__table thead th{background:#fafafa}
-.sheet__table tr.is-break th,.sheet__table tr.is-break td{background:#fff7e6;color:#a97;font-style:italic}
-.cell__materia{font-weight:600}
-.cell__docente,.cell__extra{font-size:.85em;opacity:.9}
-.only-print{display:none}
+/* === Grilla de horarios === */
+.tabla-grilla{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  font-size:14px;
+}
 
-/* impresión */
- @media/** print{
-  @page{size:A4 landscape;margin:12mm}
-  body{background:#fff!important}
-  .no-print,nav,aside,header,footer{display:none!important}
-  .sheets__grid{display:block}
-  .sheet{page-break-after:always;box-shadow:none;border:none;padding:0}
-  .sheet:last-child{page-break-after:auto}
-  .sheet__title{font-size:18pt;margin-bottom:6mm}
-  .sheet__table{font-size:10pt}
-  .sheet__table th,.sheet__table td{border:1px solid #000;padding:2mm 3mm}
-  .only-print{display:block}
+.tabla-grilla th,
+.tabla-grilla td{
+  padding:10px 12px;
+  border-bottom:1px solid #EEE3D5;  /* líneas suaves */
+  border-right:1px solid #EEE3D5;
+  vertical-align:middle;
+}
+
+.tabla-grilla thead th{
+  background:#FAF7F2;              /* cabecera suave */
+  color:#5B4636;
+  font-weight:600;
+  text-align:center;
+}
+
+.tabla-grilla tbody th{
+  background:#FAF7F2;              /* columna de horas (L-V / Sáb) */
+  color:#5B4636;
+  font-weight:600;
+}
+
+.tabla-grilla th:first-child{       /* borde izquierdo */
+  border-left:1px solid #EEE3D5;
+}
+.tabla-grilla tbody tr:first-child th,
+.tabla-grilla tbody tr:first-child td{
+  border-top:1px solid #EEE3D5;
+}
+
+/* Columnas específicas para controlar ancho */
+.col-hora-lv, .col-hora-sab{ width:140px; }
+.col-sab{ width:100px; text-align:center; }
+
+/* Estado de celdas */
+.tabla-grilla td.celda-vacia{ background:#FFF; cursor:pointer; }
+
+/* fondo durazno para celdas ocupadas o seleccionadas */
+table.tabla-grilla td.celda-ocupada,
+table.tabla-grilla td.seleccionada{
+  background: #FFF1E6;             /* durazno */
+  box-shadow: inset 0 0 0 2px #E7A268;
+}
+
+table.tabla-grilla td.celda-ocupada:hover,
+table.tabla-grilla td.seleccionada:hover{
+  background: #FFE6D1;
+}
+
+/* Recreos (ya lo tenías, lo refuerzo) */
+table.tabla-grilla td.recreo{
+  background:#F7EFE6;
+  color:#8B5E34;
+  font-style:italic;
+  text-align:center;
+}
+
+/* Un poco de redondeo general al contenedor si querés */
+.card-grilla{
+  border:1px solid #EEE3D5;
+  border-radius:12px;
+  overflow:hidden;
+}
+
+/* Selects / inputs (tu tema ya agrega .select/.input automáticamente, esto refuerza) */
+.select, .input{
+  background:#FFF;
+  border:1px solid #E6D9C9;
+  border-radius:10px;
+  padding:10px 12px;
 }

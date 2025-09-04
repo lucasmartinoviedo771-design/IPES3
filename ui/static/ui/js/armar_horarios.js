@@ -1,160 +1,247 @@
-// ARMAR-HORARIOS v8 (interactivo)
+// --- parche: fetchJSON y getCSRF si faltan ---
 (function(){
-  console.log('ARMAR-HORARIOS v8 cargado');
-  const $ = s => document.querySelector(s);
-  const selTurno   = $('#id_turno');
-  const selPlan    = $('#id_plan');
-  const selCarrera = $('#id_carrera');
-  const selMateria = $('#id_materia') || $('#id_materia_id');
-  const grid = $('#grid');
-  const btnSave = document.querySelector('button, input[type="submit"]');
-
-  // util
-
-const HH = s => { const m=String(s||'').match(/^(\d{1,2}):(\d{2})/); return m? (+m[1] + (+m[2]/60)) : 0; };
-
-
-
-// REEMPLAZA tu loadSlots por esta versión
-async function loadSlots(){
-  const turno = (document.querySelector('#id_turno')?.value || 'manana')
-                 .toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'');
-  const candidates = [];
-  if (window.API_GRILLA_CONFIG) candidates.push(window.API_GRILLA_CONFIG);
-  candidates.push('/ui/api/grilla_config/', '/api/grilla_config/');
-
-  let lastError = null, data = null;
-  for (const base of candidates){
-    try{
-      const url = new URL(base, location.origin);
-      url.searchParams.set('turno', turno);
-      const {ok,status,json} = await fetchJSON(url);
-      console.log('[grilla] intento', url.href, status, json);
-      if (!ok) { lastError = `HTTP ${status}`; continue; }
-      data = json; break;
-    }catch(e){ lastError = e.message; }
+  if (!window.getCSRF) {
+    window.getCSRF = function () {
+      const m = document.cookie.match('(^|;)\s*csrftoken\s*=\s*([^;]+)');
+      return m ? m.pop() : '';
+    };
   }
-  if (!data){
-    throw new Error('No se pudo obtener grilla: ' + (lastError || 'sin detalles'));
+  if (!window.fetchJSON) {
+    window.fetchJSON = async function (url, options = {}) {
+      const res = await fetch(url, {
+        credentials: 'same-origin',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          ...(options.method && options.method !== 'GET' ? {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.getCSRF()
+          } : {})
+        },
+        ...options
+      });
+      const ct = res.headers.get('content-type') || '';
+      const txt = await res.text();
+      if (!res.ok) throw new Error(`HTTP ${res.status} ${url}: ${txt.slice(0,200)}`);
+      if (!ct.includes('application/json')) throw new Error(`No-JSON: ${txt.slice(0,200)}`);
+      return JSON.parse(txt);
+    };
+  }
+})();
+
+// Lógica de la página de carga de horarios v12 (backend-driven)
+(function(){
+  console.log('armar_horarios.js v12 cargado');
+
+  // --- HELPERS & CONFIG ---
+  function normTurno(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+  const gridBox = document.getElementById('grid-horarios');
+  function showMsg(msg){ if (gridBox) gridBox.innerHTML = `<p class="muted">${msg}</p>`; }
+  function getCfg(){ return document.getElementById('cargar-horarios')?.dataset || {}; }
+
+  // --- RENDERIZADO (V1 - compatible con 'horas') ---
+  function renderGrid(dias, horas, rows) {
+    let html = '<table class="tabla-grilla"><thead><tr><th>Hora</th>';
+    const NOMBRES = {1:'Lun',2:'Mar',3:'Mié',4:'Jue',5:'Vie',6:'Sáb'};
+    dias.forEach(d => html += `<th>${NOMBRES[d]||d}</th>`);
+    html += '</tr></thead><tbody>';
+
+    const ocupados = {}; // 'dia@hora' -> {html content}
+    rows.forEach(r => {
+        const key = `${r.dia}@${r.desde}`;
+        const docentes = Array.isArray(r.docentes) ? r.docentes.join(', ') : (r.docentes||'');
+        ocupados[key] = `<strong>${r.comision}</strong><br><small>${docentes}</small><br><small>${r.aula}</small>`;
+    });
+
+    horas.forEach(h=>{
+      html += `<tr><th>${h}</th>`;
+      dias.forEach(d=>{
+        const key = `${d}@${h}`;
+        if (ocupados[key]) {
+            html += `<td data-dia="${d}" data-hora="${h}" class="celda-ocupada">${ocupados[key]}</td>`;
+        } else {
+            html += `<td data-dia="${d}" data-hora="${h}" class="celda-vacia" tabindex="0"></td>`;
+        }
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    gridBox.innerHTML = html;
+
+    gridBox.querySelectorAll('td.celda-vacia').forEach(td=>{
+      td.addEventListener('click', ()=> { td.classList.toggle('seleccionada'); });
+    });
   }
 
-  // aceptar varias formas del payload
-  const rows = data.rows || data.bloques || data.config || data;
-  const seen = new Set();
-  const slots = (rows||[])
-    .map(r => ({
-      ini: window.toHM(r.ini || r.inicio || r.hora_inicio || r[0]),
-      fin: window.toHM(r.fin || r.hora_fin || r[1]),
-      recreo: !!r.recreo
-    }))
-    .filter(s => s.ini && s.fin)
-    .filter(s => { const k=`${s.ini}|${s.fin}|${s.recreo?1:0}`; if (seen.has(k)) return false; seen.add(k); return true; })
-    .sort((a,b) => (HH(a.ini)-HH(b.ini)) || (HH(a.fin)-HH(b.fin)));
+  // --- RENDERIZADO (V2 - compatible con 'lv' y 'sab') ---
+  function renderGridV2(payload){
+    const { dias=[], lv=[], sab=[], rows=[] } = payload;
+    const grid = document.getElementById('grid-horarios');
+    const NOMBRES = {1:'Lun',2:'Mar',3:'Mié',4:'Jue',5:'Vie',6:'Sáb'};
+    const len = Math.max(lv.length, sab.length);
 
-  if (!slots.length) throw new Error('La API devolvió 0 filas de grilla');
-  return slots;
-}
+    // indexamos bloques existentes por 'dia@desde'
+    const ocupados = {};
+    rows.forEach(r=>{
+      const key = `${r.dia}@${r.desde}`;
+      const docentes = Array.isArray(r.docentes) ? r.docentes.join(', ') : (r.docentes||'');
+      ocupados[key] = `<strong>${r.comision||''}</strong><br><small>${docentes}</small><br><small>${r.aula||''}</small>`;
+    });
 
-  // --- Lógica de Renderizado e Interacción ---
-  function render(slots){
-    if(!grid) return;
-    const mkRow = (s) => `
-      <tr class="${s.recreo?'is-break':''}">
-        <th>${s.ini} – ${s.fin}</th>
-        <td data-dia="lu" data-ini="${s.ini}" data-fin="${s.fin}">${s.recreo?'Recreo':''}</td>
-        <td data-dia="ma" data-ini="${s.ini}" data-fin="${s.fin}">${s.recreo?'Recreo':''}</td>
-        <td data-dia="mi" data-ini="${s.ini}" data-fin="${s.fin}">${s.recreo?'Recreo':''}</td>
-        <td data-dia="ju" data-ini="${s.ini}" data-fin="${s.fin}">${s.recreo?'Recreo':''}</td>
-        <td data-dia="vi" data-ini="${s.ini}" data-fin="${s.fin}">${s.recreo?'Recreo':''}</td>
-        <th>${s.ini} – ${s.fin}</th>
-        <td data-dia="sa" data-ini="${s.ini}" data-fin="${s.fin}">${s.recreo?'Recreo':''}</td>
+    let html = `
+    <table class="tabla-grilla">
+      <thead>
+        <tr>
+          <th class="col-hora-lv">Hora (L-V)</th>
+          ${[1,2,3,4,5].map(d=>`<th>${NOMBRES[d]}</th>`).join('')}
+          <th class="col-sab">${NOMBRES[6]||'Sáb'}</th>
+          <th class="col-hora-sab">Hora (Sábado)</th>
+        </tr>
+      </thead>
+      <tbody>
+    `;
+
+    for(let i=0;i<len;i++){
+      const a = lv[i]  || {};
+      const b = sab[i] || {};
+      const isRecA = !!a.recreo, isRecB = !!b.recreo;
+
+      html += `<tr>
+        <th class="${isRecA ? 'recreo-label' : ''}">${a.desde && a.hasta ? `${a.desde} – ${a.hasta}` : ''}</th>
+        ${[1,2,3,4,5].map(d=>{
+            if (isRecA) return `<td class="recreo">Recreo</td>`;
+            const key = `${d}@${a.desde||''}`;
+            return `<td data-dia="${d}" data-hora="${a.desde||''}" class="${ocupados[key]?'celda-ocupada':'celda-vacia'}">
+                      ${ocupados[key]||''}
+                    </td>`;
+        }).join('')}
+        ${isRecB
+          ? `<td class="recreo">Recreo</td>` 
+          : (()=>{ 
+              const key = `6@${b.desde||''}`; 
+              return `<td data-dia="6" data-hora="${b.desde||''}" class="${ocupados[key]?'celda-ocupada':'celda-vacia'}">${ocupados[key]||''}</td>`;
+            })()
+        }
+        <th class="${isRecB ? 'recreo-label' : ''}">${b.desde && b.hasta ? `${b.desde} – ${b.hasta}` : ''}</th>
       </tr>`;
-    grid.innerHTML = `
-      <table class="sheet__table" id="tabla-horarios">
-        <thead><tr>
-          <th>Hora (L–V)</th><th>Lunes</th><th>Martes</th><th>Miércoles</th>
-          <th>Jueves</th><th>Viernes</th><th>Hora (Sábado)</th><th>Sábado</th>
-        </tr></thead>
-        <tbody>${slots.map(mkRow).join('')}</tbody>
-      </table>`;
-    grid.querySelectorAll('tr.is-break td[data-dia]').forEach(td=>td.classList.add('is-break'));
-    bindClicks();
-  }
+    }
 
-  function keyFrom(td){ return `${td.dataset.dia}|${td.dataset.ini}|${td.dataset.fin}`; }
+    html += `</tbody></table>`;
+    grid.innerHTML = html;
 
-  function bindClicks(){
-    grid.addEventListener('click', (ev)=>{
-      const td = ev.target.closest('td[data-dia]');
-      if(!td || td.classList.contains('is-break') || td.classList.contains('is-busy')) return;
-      td.classList.toggle('is-sel');
-      updateCounter();
+    // Agregar: clic en vacías → toggle sel-add
+    grid.querySelectorAll('td.celda-vacia').forEach(td=>{
+      td.addEventListener('click', ()=>{
+        td.classList.toggle('sel-add');
+      });
     });
-    updateCounter();
-  }
 
-  function updateCounter(){
-    const n = grid.querySelectorAll('td.is-sel').length;
-    console.log('Bloques seleccionados:', n);
-    const counterEl = document.getElementById('block-counter');
-    if(counterEl) counterEl.textContent = `${n} bloques seleccionados`;
-  }
-
-  async function loadBusy(){
-    if(!window.API_HORARIOS_OCUPADOS) return;
-    const params = new URLSearchParams({profesorado_id:selCarrera?.value||'', plan_id:selPlan?.value|| '', materia_id:selMateria?.value||'', turno:normTurno(selTurno?.value)});
-    const u = `${window.API_HORARIOS_OCUPADOS}?${params.toString()}`;
-    const data = await window.fetchJSON(u);
-    const index = {};
-    grid.querySelectorAll('td[data-dia]').forEach(td => index[keyFrom(td)] = td);
-    (data || []).forEach(it=>{
-      const dia = String(it.dia).toLowerCase().slice(0,2);
-      const ini = window.toHM(it.inicio), fin = window.toHM(it.fin);
-      const td = index[`${dia}|${ini}|${fin}`];
-      if(!td) return;
-      td.classList.remove('is-sel');
-      td.classList.add('is-busy');
-      const mat = it.materia || it.materia_nombre || it['materia__nombre'] || '';
-      const doc = it.docente || [it['docente__apellido'], it['docente__nombre']].filter(Boolean).join(', ') || 'Sin Docente';
-      td.innerHTML = `<div><strong>${mat}</strong><br><small>${doc}</small></div>`;
+    // Quitar: clic en ocupadas → toggle sel-del
+    grid.querySelectorAll('td.celda-ocupada').forEach(td=>{
+      td.addEventListener('click', ()=>{
+        td.classList.toggle('sel-del');
+      });
     });
-    updateCounter();
   }
 
-  // --- Lógica de Guardado ---
-  btnSave?.addEventListener('click', async (ev)=>{
-    ev.preventDefault();
-    const items = [...grid.querySelectorAll('td.is-sel')].map(td => ({dia:td.dataset.dia, inicio:td.dataset.ini, fin:td.dataset.fin}));
-    if(!items.length) return alert('No hay bloques seleccionados.');
-    const payload = {profesorado_id:selCarrera?.value, plan_id:selPlan?.value, materia_id:selMateria?.value, turno:normTurno(selTurno?.value), items};
-    try{
-      const r = await fetch(window.API_HORARIO_SAVE, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
-      if(!r.ok){
-        const j = await r.json().catch(()=>({}));
-        const msg = j?.error || j?.detail || `Error ${r.status}`;
-        return alert(msg);
+  // --- LÓGICA DE CARGA ---
+  async function loadGrid(){
+    const prof = document.querySelector('#sel_profesorado, #id_profesorado, [name="carrera"], [name="profesorado"]')?.value || '';
+    const plan = document.querySelector('#sel_plan, #id_plan, [name="plan"], [name="plan_id"]')?.value || '';
+    const materia = document.querySelector('#sel_materia, #id_materia, [name="materia"], [name="espacio_id"]')?.value || '';
+    const turno = normTurno(document.querySelector('#sel_turno, #id_turno, [name="turno"]')?.value || '');
+
+    if (!plan || !materia) { showMsg('Seleccioná Plan y Materia para ver/armar la grilla.'); return; }
+
+    const { gridUrl } = getCfg();
+    const base = (gridUrl || '/panel/horarios/api/grilla/').trim();
+    const q = new URLSearchParams({ carrera: prof, plan, materia, turno });
+    const url = base + (base.includes('?') ? '&' : '?') + q.toString();
+
+    try {
+      const data = await window.fetchJSON(url);
+      console.log('[grilla] payload', data);
+      if (Array.isArray(data.lv) && Array.isArray(data.sab)) {
+        renderGridV2(data);
+      } else {
+        // compat con payload viejo
+        renderGrid(data.dias || [], data.horas || [], data.rows || []);
       }
-      alert('Malla guardada.');
-      await loadBusy();
-    }catch(e){
-      console.error(e);
-      alert('No se pudo guardar.');
-    }
-  });
-
-  // --- Ejecución Principal ---
-  async function run(){
-    try{
-      const slots = await loadSlots();
-      render(slots);
-      await loadBusy();
-      console.log('Grilla lista', {turno: normTurno(selTurno?.value), filas: slots.length});
-    }catch(e){
-      console.error('No se pudo construir la grilla', e);
-      if(grid) grid.innerHTML = `<p class="empty">No se pudo cargar la grilla.</p>`;
+    } catch (e) {
+      console.error('[grilla] error', e);
+      showMsg('No se pudo cargar la grilla. Revisá consola.');
     }
   }
 
-  [selTurno, selPlan, selCarrera, selMateria].forEach(el => el && el.addEventListener('change', run));
-  document.addEventListener('DOMContentLoaded', run);
+  // --- LÓGICA DE GUARDADO ---
+  function getCSRF() {
+    const m = document.cookie.match(/(^|;\s*)csrftoken=([^;]+)/);
+    return m ? m[2] : "";
+  }
+
+  async function guardarHorarios() {
+    const grid = document.getElementById('grid-horarios');
+    if (!grid) return;
+
+    const planId  = document.querySelector('#id_plan').value;
+    const materia = document.querySelector('#id_materia').value;
+    const turno   = document.querySelector('#id_turno').value;
+
+    // Celdas ocupadas que no fueron marcadas para borrar
+    const kept = [...grid.querySelectorAll('td.celda-ocupada:not(.sel-del)')];
+    // Celdas vacías que fueron marcadas para agregar
+    const added = [...grid.querySelectorAll('td.sel-add')];
+
+    const finalCells = [...kept, ...added];
+    const keys = finalCells.map(td => `${td.dataset.dia} @${td.dataset.hora}`);
+
+    let resp;
+    try {
+      resp = await fetch(window.API_HORARIO_SAVE, {
+        method: 'POST',
+        headers: {
+          'Content-Type':'application/json',
+          'X-CSRFToken': getCSRF()
+        },
+        body: JSON.stringify({
+          plan_id: Number(planId),
+          espacio_id: Number(materia),
+          turno: turno,
+          keys: keys
+        })
+      });
+    } catch (e) {
+      alert('No se pudo llamar a la API (fetch).'); 
+      console.error(e);
+      return;
+    }
+
+    let data;
+    try {
+      data = await resp.json();
+    } catch (e) {
+      const text = await resp.text();
+      alert(`Error ${resp.status}. Respuesta no JSON.\n${text.slice(0,400)}`);
+      console.error(text);
+      return;
+    }
+
+    if (!resp.ok || !data.ok) {
+      alert(`No se pudo guardar. ${data.error || '(sin detalle)'} (HTTP ${resp.status})`);
+      console.warn('detalle:', data);
+      return;
+    }
+
+    alert(`Guardado OK. Altas: ${data.added} | Bajas: ${data.removed}`);
+    // Recargamos la grilla para ver el estado final
+    await loadGrid();
+  }
+
+
+  // --- EVENTOS ---
+  ['#id_plan', '#id_materia', '#id_turno', '#id_carrera'].forEach(sel => {
+      document.querySelector(sel)?.addEventListener('change', loadGrid);
+  });
+  document.addEventListener('DOMContentLoaded', loadGrid);
+  document.getElementById('btn-guardar-horario')?.addEventListener('click', guardarHorarios);
+
 })();

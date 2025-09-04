@@ -1,11 +1,11 @@
 from datetime import timedelta
-from academia_core.models import EstudianteProfesorado, EspacioCurricular, Correlatividad
 
 REG_OK_CODIGOS = {"PROMOCION", "APROBADO", "REGULAR"}
 
 def tiene_regularizada(
-    insc: EstudianteProfesorado, esp: EspacioCurricular, hasta_fecha=None
+    insc, esp, hasta_fecha=None
 ) -> bool:
+    from academia_core.models import EstudianteProfesorado, EspacioCurricular
     qs = insc.movimientos.filter(
         espacio=esp, tipo="REG", condicion__codigo__in=REG_OK_CODIGOS
     )
@@ -15,8 +15,9 @@ def tiene_regularizada(
 
 
 def tiene_aprobada(
-    insc: EstudianteProfesorado, esp: EspacioCurricular, hasta_fecha=None
+    insc, esp, hasta_fecha=None
 ) -> bool:
+    from academia_core.models import EstudianteProfesorado, EspacioCurricular
     qs1 = insc.movimientos.filter(
         espacio=esp, tipo="REG", condicion__codigo__in={"PROMOCION", "APROBADO"}
     )
@@ -37,8 +38,9 @@ def tiene_aprobada(
 
 
 def cumple_correlativas(
-    insc: EstudianteProfesorado, esp: EspacioCurricular, tipo: str, fecha=None
+    insc, esp, tipo: str, fecha=None
 ):
+    from academia_core.models import EstudianteProfesorado, EspacioCurricular, Correlatividad
     reglas = Correlatividad.objects.filter(plan=esp.plan, espacio=esp, tipo=tipo)
     faltan = []
     for r in reglas:
@@ -63,8 +65,9 @@ def cumple_correlativas(
     return (len(faltan) == 0), faltan
 
 def tiene_regularidad_vigente(
-    insc: EstudianteProfesorado, esp: EspacioCurricular, a_fecha
+    insc, esp, a_fecha
 ) -> bool:
+    from academia_core.models import EstudianteProfesorado, EspacioCurricular
     limite = a_fecha - timedelta(days=730)
     return insc.movimientos.filter(
         espacio=esp, tipo="REG", condicion__codigo="REGULAR", fecha__gte=limite

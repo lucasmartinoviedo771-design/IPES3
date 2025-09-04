@@ -6,14 +6,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>{% block title %}IPES Paulo Freire{% endblock %}</title>
   {% block extra_head %}{% endblock %}
-  {% block main_css %}
   <link rel="stylesheet" href="{% static 'academia_core/tema-ipes.css' %}?v=12">
-  {% endblock %}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   {% block extra_css %}{% endblock %}
 </head>
-<body class="{% block body_class %}page-hdoc{% endblock %}">
+<body class="{% block body_class %}page-hdoc{% endblock %}>
   <!-- Topbar VERDE, ancho completo -->
   <header class="topbar">
     <div class="topbar-inner">
@@ -104,45 +102,10 @@
       </div>
     </main>
   </div>
-<script>
-(function () {
-  const items = document.querySelectorAll('.nav-item.has-children');
-
-  // Cierra todos y abre el clickeado (acordeón)
-  function openOnly(item) {
-    items.forEach(i => i.classList.toggle('open', i === item));
-  }
-
-  // Toggle al hacer click en el padre
-  items.forEach(item => {
-    const parent = item.querySelector('.nav-parent');
-    parent.addEventListener('click', (e) => {
-      e.preventDefault();
-      const isOpen = item.classList.contains('open');
-      items.forEach(i => i.classList.remove('open'));
-      if (!isOpen) item.classList.add('open');
-    });
-  });
-
-  // Si hay un hijo activo en esta página, que arranque abierto
-  items.forEach(item => {
-    if (item.querySelector('.subnav a.active')) {
-      item.classList.add('open');
-    }
-  });
-})();
-</script>
-<script>
-  // Aplica clases del tema si faltan (select/input/textarea) en cualquier formulario
-  (function(){
-    document.querySelectorAll('.panel input, .panel select, .panel textarea').forEach(el=>{
-      if (el.type === 'checkbox' || el.type === 'radio' || el.type === 'file') return;
-      const hasClass = ['input','select','textarea'].some(c=>el.classList.contains(c));
-      if (hasClass) return;
-      el.classList.add(el.tagName === 'SELECT' ? 'select' : (el.tagName === 'TEXTAREA' ? 'textarea' : 'input'));
-    });
-  })();
-</script>
-{% block extra_js %}{% endblock %}
+  <script src="{% static 'ui/js/nav_accordion.js' %}" defer></script>
+  <script src="{% static 'ui/js/form_styling.js' %}" defer></script>
+  <script src="{% static 'ui/js/utils/ui_helpers.js' %}" defer></script>
+  <script src="{% static 'ui/js/utils/loadPlanes.js' %}" defer></script>
+  {% block extra_js %}{% endblock %}
 </body>
 </html>

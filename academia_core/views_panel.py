@@ -175,9 +175,3 @@ def correlatividades_form_view(request):
     else:
         form = CorrelatividadForm()
     return render(request, "academia_core/panel_correlatividades_form.html", {"form": form})
-f form.is_valid():
-            form.save()
-            return redirect('correlatividades_form')
-    else:
-        form = CorrelatividadForm()
-    return render(request, "academia_core/panel_correlatividades_form.html", {"form": form})

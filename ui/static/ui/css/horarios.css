@@ -74,3 +74,9 @@
 #ah-grid {
   margin-top: 8px;
 }
+
+/* Estilos para la nueva tabla-grilla */
+.tabla-grilla { width:100%; border-collapse: collapse; }
+.tabla-grilla th, .tabla-grilla td { border:1px solid #eee; padding:.5rem; text-align:center; }
+.tabla-grilla td.celda-vacia { cursor:pointer; user-select:none; }
+.tabla-grilla td.seleccionada { outline:2px solid #c47; background-color: #fde9d8; }

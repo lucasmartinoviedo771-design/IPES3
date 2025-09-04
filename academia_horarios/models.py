@@ -80,6 +80,7 @@ class TimeSlot(models.Model):
     dia_semana = models.PositiveSmallIntegerField()
     inicio = models.TimeField()
     fin = models.TimeField()
+    turno = models.CharField(max_length=16, choices=Turno.choices, default='manana') # Added 'turno' field
 
     DIA_CHOICES = [
         (1, "Lunes"),

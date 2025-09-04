@@ -11,7 +11,9 @@
 
     <form id="insc-carrera-form" method="post" action="{{ request.path }}"
           data-planes-url="{% url 'ui:api_planes' %}"
-          data-prefill-est="{{ request.GET.est|default:'' }}">
+          data-planes-param="carrera_id"
+          data-prefill-est="{{ request.GET.est|default:'' }}"
+          data-cert-docente-label="{{ CERT_DOCENTE_LABEL|default:'Certificación Docente para la Educación Secundaria' }}">
       {% csrf_token %}
       {{ form.non_field_errors }}
 
@@ -140,8 +142,9 @@
     </form>
   </div>
 
-  <script>
-    window.CERT_DOCENTE_LABEL = "{{ CERT_DOCENTE_LABEL|default:'Certificación Docente para la Educación Secundaria' }}";
-  </script>
-  <script src="{% static 'ui/js/inscripcion_carrera.js' %}"></script>
+  
+  <script>window.PLANES_MAP = {{ planes_map|default:"{}"|safe }};</script>
+  <script src="{% static 'ui/js/utils/ui_helpers.js' %}" defer></script>
+  <script src="{% static 'ui/js/utils/loadPlanes.js' %}" defer></script>
+  <script src="{% static 'ui/js/inscripcion_carrera.js' %}?v=13" defer></script>
 {% endblock %}
