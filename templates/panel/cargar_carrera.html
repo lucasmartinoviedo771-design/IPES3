@@ -1,0 +1,59 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Cargar carrera</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script defer src="{% static 'js/cargar_carrera.js' %}"></script>
+  <style>
+    .wrap { max-width: 820px; margin: 24px auto; }
+    .row { display: grid; grid-template-columns: 180px 1fr; gap: 12px; margin: 10px 0; align-items: center; }
+    input[type="text"]{ width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;}
+    select{ width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;}
+    .actions{ display:flex; gap:12px; margin-top:14px;}
+    .btn{ padding:10px 14px; border:0; border-radius:8px; cursor:pointer;}
+    .btn-primary{ background:#e48a4c; color:#fff;}
+    .btn-outline{ background:#fff; border:1px solid #ddd;}
+    .alert{ margin-top: 12px; padding: 10px; border-radius: 6px; background:#f7f7f7; border:1px solid #eee; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Cargar / Editar carreras</h2>
+
+  <div class="row">
+    <label>Seleccionar carrera</label>
+    <select id="selCarrera">
+      <option value="">— Nueva carrera —</option>
+      {% for c in carreras %}
+        <option value="{{ c.id }}">{{ c.nombre }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="row">
+    <label>Nombre completo</label>
+    <input id="txtNombre" type="text" placeholder="Profesorado de Educación Primaria">
+  </div>
+
+  <div class="row">
+    <label>Abreviatura</label>
+    <input id="txtAbrev" type="text" placeholder="Prof. Prim">
+  </div>
+
+  <div class="row">
+    <label>Vigente</label>
+    <label><input id="chkVigente" type="checkbox" checked> Sí</label>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-outline" id="btnNueva">Nueva</button>
+    <button class="btn btn-primary" id="btnGuardar">Guardar</button>
+    <button class="btn btn-outline" id="btnEliminar">Eliminar</button>
+  </div>
+
+  <div id="msg" class="alert" style="display:none"></div>
+</div>
+</body>
+</html>

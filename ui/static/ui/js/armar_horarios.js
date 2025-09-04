@@ -1,9 +1,9 @@
-// --- parche: fetchJSON y getCSRF si faltan ---
+// --- helpers: CSRF + fetchJSON (idempotente si ya existen) ---
 (function(){
   if (!window.getCSRF) {
     window.getCSRF = function () {
-      const m = document.cookie.match('(^|;)\s*csrftoken\s*=\s*([^;]+)');
-      return m ? m.pop() : '';
+      const m = document.cookie.match(/(^|;\s*)csrftoken=([^;]+)/);
+      return m ? m[2] : '';
     };
   }
   if (!window.fetchJSON) {
@@ -28,58 +28,32 @@
   }
 })();
 
-// Lógica de la página de carga de horarios v12 (backend-driven)
+// ------------------ armar_horarios.js v13 ------------------
 (function(){
-  console.log('armar_horarios.js v12 cargado');
+  console.log('armar_horarios.js v13 cargado');
 
-  // --- HELPERS & CONFIG ---
-  function normTurno(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
-  const gridBox = document.getElementById('grid-horarios');
-  function showMsg(msg){ if (gridBox) gridBox.innerHTML = `<p class="muted">${msg}</p>`; }
-  function getCfg(){ return document.getElementById('cargar-horarios')?.dataset || {}; }
+  // ---- CONFIG / HELPERS ----
+  const grid = document.getElementById('grid-horarios');
+  const $ = sel => document.querySelector(sel);
+  const normTurno = s => (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
 
-  // --- RENDERIZADO (V1 - compatible con 'horas') ---
-  function renderGrid(dias, horas, rows) {
-    let html = '<table class="tabla-grilla"><thead><tr><th>Hora</th>';
-    const NOMBRES = {1:'Lun',2:'Mar',3:'Mié',4:'Jue',5:'Vie',6:'Sáb'};
-    dias.forEach(d => html += `<th>${NOMBRES[d]||d}</th>`);
-    html += '</tr></thead><tbody>';
+  // Mapa HH:MM -> índice SLOTS (debe coincidir con SLOTS del backend)
+  const SLOTS_MAP = {
+    "07:45": 0,  "08:25": 1,  "09:05": 2,  "09:15": 3,  "09:55": 4,  "10:35": 5,  "10:45": 6,  "11:25": 7,  "12:05": 8,
+    "13:00": 9,  "13:40":10,  "14:20":11,  "14:30":12,  "15:10":13,  "15:50":14,  "16:00":15,  "16:40":16,  "17:20":17,
+    "18:10":18,  "18:50":19,  "19:30":20,  "19:40":21,  "20:20":22,  "21:00":23,  "21:10":24,  "21:50":25,  "22:30":26,
+    // sábado
+    "09:00":27,  "09:40":28,  "10:20":29,  "10:30":30,  "11:10":31,  "11:50":32,  "12:00":33,  "12:40":34,  "13:20":35,
+  };
 
-    const ocupados = {}; // 'dia@hora' -> {html content}
-    rows.forEach(r => {
-        const key = `${r.dia}@${r.desde}`;
-        const docentes = Array.isArray(r.docentes) ? r.docentes.join(', ') : (r.docentes||'');
-        ocupados[key] = `<strong>${r.comision}</strong><br><small>${docentes}</small><br><small>${r.aula}</small>`;
-    });
+  function msg(text){ if (grid) grid.innerHTML = `<p class="muted">${text}</p>`; }
 
-    horas.forEach(h=>{
-      html += `<tr><th>${h}</th>`;
-      dias.forEach(d=>{
-        const key = `${d}@${h}`;
-        if (ocupados[key]) {
-            html += `<td data-dia="${d}" data-hora="${h}" class="celda-ocupada">${ocupados[key]}</td>`;
-        } else {
-            html += `<td data-dia="${d}" data-hora="${h}" class="celda-vacia" tabindex="0"></td>`;
-        }
-      });
-      html += '</tr>';
-    });
-    html += '</tbody></table>';
-    gridBox.innerHTML = html;
-
-    gridBox.querySelectorAll('td.celda-vacia').forEach(td=>{
-      td.addEventListener('click', ()=> { td.classList.toggle('seleccionada'); });
-    });
-  }
-
-  // --- RENDERIZADO (V2 - compatible con 'lv' y 'sab') ---
+  // ---- RENDER (payload con {dias, lv, sab, rows}) ----
   function renderGridV2(payload){
     const { dias=[], lv=[], sab=[], rows=[] } = payload;
-    const grid = document.getElementById('grid-horarios');
     const NOMBRES = {1:'Lun',2:'Mar',3:'Mié',4:'Jue',5:'Vie',6:'Sáb'};
-    const len = Math.max(lv.length, sab.length);
 
-    // indexamos bloques existentes por 'dia@desde'
+    // Index de ocupadas: 'dia@HH:MM' → html
     const ocupados = {};
     rows.forEach(r=>{
       const key = `${r.dia}@${r.desde}`;
@@ -87,55 +61,66 @@
       ocupados[key] = `<strong>${r.comision||''}</strong><br><small>${docentes}</small><br><small>${r.aula||''}</small>`;
     });
 
+    const len = Math.max(lv.length, sab.length);
     let html = `
-    <table class="tabla-grilla">
-      <thead>
-        <tr>
-          <th class="col-hora-lv">Hora (L-V)</th>
-          ${[1,2,3,4,5].map(d=>`<th>${NOMBRES[d]}</th>`).join('')}
-          <th class="col-sab">${NOMBRES[6]||'Sáb'}</th>
-          <th class="col-hora-sab">Hora (Sábado)</th>
-        </tr>
-      </thead>
-      <tbody>
+      <table class="tabla-grilla">
+        <thead>
+          <tr>
+            <th class="col-hora-lv">Hora (L-V)</th>
+            ${[1,2,3,4,5].map(d=>`<th>${NOMBRES[d]}</th>`).join('')}
+            <th class="col-sab">${NOMBRES[6]||'Sáb'}</th>
+            <th class="col-hora-sab">Hora (Sábado)</th>
+          </tr>
+        </thead>
+        <tbody>
     `;
 
-    for(let i=0;i<len;i++){
-      const a = lv[i]  || {};
-      const b = sab[i] || {};
+    for (let i=0;i<len;i++){
+      const a = lv[i]||{}, b = sab[i]||{};
       const isRecA = !!a.recreo, isRecB = !!b.recreo;
 
       html += `<tr>
-        <th class="${isRecA ? 'recreo-label' : ''}">${a.desde && a.hasta ? `${a.desde} – ${a.hasta}` : ''}</th>
+        <th class="${isRecA?'recreo-label':''}">${a.desde&&a.hasta?`${a.desde} – ${a.hasta}`:''}</th>
         ${[1,2,3,4,5].map(d=>{
-            if (isRecA) return `<td class="recreo">Recreo</td>`;
-            const key = `${d}@${a.desde||''}`;
-            return `<td data-dia="${d}" data-hora="${a.desde||''}" class="${ocupados[key]?'celda-ocupada':'celda-vacia'}">
-                      ${ocupados[key]||''}
-                    </td>`;
+          if (isRecA) return `<td class="recreo">Recreo</td>`;
+          const desde = a.desde||'';
+          const key   = `${d}@${desde}`;
+          const idx   = SLOTS_MAP[desde];
+          const cls   = (desde && idx!=null)
+                        ? (ocupados[key] ? 'celda-ocupada' : 'celda-vacia')
+                        : 'disabled';
+          return `<td data-dia="${d}" data-hora="${desde}" data-slot-idx="${idx??''}" class="${cls}">
+                    ${ocupados[key]||''}
+                  </td>`;
         }).join('')}
-        ${isRecB
-          ? `<td class="recreo">Recreo</td>` 
-          : (()=>{ 
-              const key = `6@${b.desde||''}`; 
-              return `<td data-dia="6" data-hora="${b.desde||''}" class="${ocupados[key]?'celda-ocupada':'celda-vacia'}">${ocupados[key]||''}</td>`;
+        ${
+          isRecB
+          ? `<td class="recreo">Recreo</td>`
+          : (()=>{
+              const desde = b.desde||'';
+              const key   = `6@${desde}`;
+              const idx   = SLOTS_MAP[desde];
+              const cls   = (desde && idx!=null)
+                            ? (ocupados[key] ? 'celda-ocupada' : 'celda-vacia')
+                            : 'disabled';
+              return `<td data-dia="6" data-hora="${desde}" data-slot-idx="${idx??''}" class="${cls}">
+                        ${ocupados[key]||''}
+                      </td>`;
             })()
         }
-        <th class="${isRecB ? 'recreo-label' : ''}">${b.desde && b.hasta ? `${b.desde} – ${b.hasta}` : ''}</th>
+        <th class="${isRecB?'recreo-label':''}">${b.desde&&b.hasta?`${b.desde} – ${b.hasta}`:''}</th>
       </tr>`;
     }
 
     html += `</tbody></table>`;
     grid.innerHTML = html;
 
-    // Agregar: clic en vacías → toggle sel-add
+    // Clicks: vacías → agregar; ocupadas → marcar para borrar
     grid.querySelectorAll('td.celda-vacia').forEach(td=>{
       td.addEventListener('click', ()=>{
         td.classList.toggle('sel-add');
       });
     });
-
-    // Quitar: clic en ocupadas → toggle sel-del
     grid.querySelectorAll('td.celda-ocupada').forEach(td=>{
       td.addEventListener('click', ()=>{
         td.classList.toggle('sel-del');
@@ -143,19 +128,16 @@
     });
   }
 
-  // --- LÓGICA DE CARGA ---
+  // ---- CARGA DE GRILLA ----
   async function loadGrid(){
-    const prof = document.querySelector('#sel_profesorado, #id_profesorado, [name="carrera"], [name="profesorado"]')?.value || '';
-    const plan = document.querySelector('#sel_plan, #id_plan, [name="plan"], [name="plan_id"]')?.value || '';
-    const materia = document.querySelector('#sel_materia, #id_materia, [name="materia"], [name="espacio_id"]')?.value || '';
-    const turno = normTurno(document.querySelector('#sel_turno, #id_turno, [name="turno"]')?.value || '');
+    const planId = $('#id_plan')?.value || '';
+    const espId  = $('#id_materia')?.value || '';
+    const turno  = normTurno($('#id_turno')?.value || '');
 
-    if (!plan || !materia) { showMsg('Seleccioná Plan y Materia para ver/armar la grilla.'); return; }
+    if (!planId || !espId || !turno) { msg('Seleccioná Plan, Materia y Turno.'); return; }
 
-    const { gridUrl } = getCfg();
-    const base = (gridUrl || '/panel/horarios/api/grilla/').trim();
-    const q = new URLSearchParams({ carrera: prof, plan, materia, turno });
-    const url = base + (base.includes('?') ? '&' : '?') + q.toString();
+    const base = (window.API_GRID_URL || '/panel/horarios/api/grilla/').trim();
+    const url  = `${base}${base.includes('?')?'&':'?'}plan=${encodeURIComponent(planId)}&materia=${encodeURIComponent(espId)}&turno=${encodeURIComponent(turno)}`;
 
     try {
       const data = await window.fetchJSON(url);
@@ -163,85 +145,92 @@
       if (Array.isArray(data.lv) && Array.isArray(data.sab)) {
         renderGridV2(data);
       } else {
-        // compat con payload viejo
-        renderGrid(data.dias || [], data.horas || [], data.rows || []);
+        msg('Formato de respuesta no compatible.'); // fallback simple si cambiara el backend
       }
     } catch (e) {
       console.error('[grilla] error', e);
-      showMsg('No se pudo cargar la grilla. Revisá consola.');
+      msg('No se pudo cargar la grilla. Revisá consola.');
     }
   }
 
-  // --- LÓGICA DE GUARDADO ---
-  function getCSRF() {
-    const m = document.cookie.match(/(^|;\s*)csrftoken=([^;]+)/);
-    return m ? m[2] : "";
-  }
-
-  async function guardarHorarios() {
-    const grid = document.getElementById('grid-horarios');
+  // ---- GUARDAR ----
+  async function guardarHorarios(){
     if (!grid) return;
 
-    const planId  = document.querySelector('#id_plan').value;
-    const materia = document.querySelector('#id_materia').value;
-    const turno   = document.querySelector('#id_turno').value;
+    const planId = $('#id_plan')?.value;
+    const espId  = $('#id_materia')?.value;
+    const turno  = normTurno($('#id_turno')?.value);
 
-    // Celdas ocupadas que no fueron marcadas para borrar
-    const kept = [...grid.querySelectorAll('td.celda-ocupada:not(.sel-del)')];
-    // Celdas vacías que fueron marcadas para agregar
+    if (!planId || !espId || !turno) {
+      alert('Completá Plan, Materia y Turno.'); return;
+    }
+
+    // Estado final deseado = ocupadas no marcadas para borrar + vacías marcadas para agregar
+    const kept  = [...grid.querySelectorAll('td.celda-ocupada:not(.sel-del)')];
     const added = [...grid.querySelectorAll('td.sel-add')];
 
-    const finalCells = [...kept, ...added];
-    const keys = finalCells.map(td => `${td.dataset.dia} @${td.dataset.hora}`);
+    const rows = [];
+    for (const td of [...kept, ...added]) {
+      const d = Number(td.dataset.dia);
+      const i = Number(td.dataset.slotIdx);
+      if (!Number.isFinite(d) || !Number.isFinite(i)) continue; // ignora celdas sin índice
+      rows.push({ d, i });
+    }
+
+    if (rows.length === 0 && kept.length === 0) {
+      alert('No hay cambios para guardar.');
+      return;
+    }
 
     let resp;
     try {
-      resp = await fetch(window.API_HORARIO_SAVE, {
+      resp = await fetch(window.API_HORARIO_SAVE || '/panel/horarios/api/guardar/', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: {
-          'Content-Type':'application/json',
-          'X-CSRFToken': getCSRF()
+          'Content-Type': 'application/json',
+          'X-CSRFToken': window.getCSRF(),
         },
         body: JSON.stringify({
           plan_id: Number(planId),
-          espacio_id: Number(materia),
+          espacio_id: Number(espId),
           turno: turno,
-          keys: keys
-        })
+          rows: rows,
+        }),
       });
     } catch (e) {
-      alert('No se pudo llamar a la API (fetch).'); 
-      console.error(e);
+      alert('No se pudo llamar a la API (fetch).'); console.error(e); return;
+    }
+
+    const raw = await resp.text();
+    let data = null;
+    try { data = JSON.parse(raw); } catch {}
+
+    if (!resp.ok || !data?.ok) {
+      const detalle = (data && data.error) || raw || '(sin detalle)';
+      alert(`No se pudo guardar (HTTP ${resp.status}). ${detalle}`);
+      console.warn('respuesta cruda:', raw, 'json:', data);
       return;
     }
 
-    let data;
-    try {
-      data = await resp.json();
-    } catch (e) {
-      const text = await resp.text();
-      alert(`Error ${resp.status}. Respuesta no JSON.\n${text.slice(0,400)}`);
-      console.error(text);
-      return;
-    }
-
-    if (!resp.ok || !data.ok) {
-      alert(`No se pudo guardar. ${data.error || '(sin detalle)'} (HTTP ${resp.status})`);
-      console.warn('detalle:', data);
-      return;
-    }
-
-    alert(`Guardado OK. Altas: ${data.added} | Bajas: ${data.removed}`);
-    // Recargamos la grilla para ver el estado final
+    alert(`Guardado OK. Altas: ${data.added||0} | Bajas: ${data.removed||0}`);
     await loadGrid();
   }
 
+  // ---- EVENTOS ----
+  function onReady(fn){ document.readyState !== 'loading' ? fn() : document.addEventListener('DOMContentLoaded', fn); }
 
-  // --- EVENTOS ---
-  ['#id_plan', '#id_materia', '#id_turno', '#id_carrera'].forEach(sel => {
-      document.querySelector(sel)?.addEventListener('change', loadGrid);
+  onReady(()=>{
+    ['#id_plan', '#id_materia', '#id_turno'].forEach(sel=>{
+      const el = $(sel);
+      if (el) el.addEventListener('change', loadGrid);
+    });
+
+    const btn = $('#btn-guardar-horario');
+    if (btn) btn.addEventListener('click', ()=>{ console.log('[ui] click Guardar'); guardarHorarios(); });
+    else console.warn('[ui] no encontré #btn-guardar-horario');
+
+    loadGrid();
   });
-  document.addEventListener('DOMContentLoaded', loadGrid);
-  document.getElementById('btn-guardar-horario')?.addEventListener('click', guardarHorarios);
 
 })();
