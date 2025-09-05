@@ -1,11 +1,6 @@
 // academia_core/static/js/panel.js
 
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-  return null;
-}
+
 
 // Alternativa: leer el token del input hidden del form (por si la cookie no está)
 function getCsrfFromForm() {

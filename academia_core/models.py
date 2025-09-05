@@ -436,8 +436,46 @@ class EspacioCurricular(models.Model):
             )
         ]
 
-    def __str__(self):
-        return f"{self.anio} {self.get_cuatrimestre_display()} - {self.nombre}"
+    @property
+    def nombre(self) -> str:
+        """
+        Compatibilidad con código legacy/admin que usaba `espacio.nombre`.
+        Devuelve el nombre de la Materia asociada, o cadena vacía si no hay.
+        """
+        try:
+            return self.materia.nombre if self.materia_id else ""
+        except Exception:
+            return ""
+
+    def __str__(self) -> str:
+        """
+        Representación legible sin depender de un campo 'nombre' inexistente.
+        Usa la Materia vinculada + datos del plan/año/cuatrimestre si están.
+        """
+        mat = getattr(self, "materia", None)
+        mat_name = getattr(mat, "nombre", "") if mat else ""
+        plan_str = ""
+        try:
+            if self.plan_id:
+                res = getattr(self.plan, "resolucion", None)
+                plan_str = f" — Plan {res}" if res else f" — Plan {self.plan_id}"
+        except Exception:
+            pass
+
+        anio_str = f" — Año {self.anio}" if getattr(self, "anio", None) else ""
+        cuat_val = getattr(self, "cuatrimestre", None)
+        if cuat_val:
+            # si tu modelo tiene choices, esto usa el display; si no, cae al valor bruto
+            cuat_str = (
+                f" — {self.get_cuatrimestre_display()}"
+                if hasattr(self, "get_cuatrimestre_display")
+                else f" — Cuat. {cuat_val}"
+            )
+        else:
+            cuat_str = ""
+
+        base = mat_name or "Espacio"
+        return f"{base}{plan_str}{anio_str}{cuat_str}"
 
     @property
     def anio_num(self) -> int:

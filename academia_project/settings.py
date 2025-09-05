@@ -226,7 +226,7 @@ TEMPLATES = [
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
+        "ENGINE": os.getenv("DB_ENGINE", "django.db.backends.mysql"),
         "NAME": os.getenv("DB_NAME", "academia"),
         "USER": os.getenv("DB_USER", "academia"),
         "PASSWORD": os.getenv("DB_PASSWORD", "TuClaveSegura123"),  # Cambiá en prod
@@ -268,7 +268,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "es-ar"
 TIME_ZONE = os.getenv("TIME_ZONE", "America/Argentina/Buenos_Aires")
-USE_I18N = True
+USE_I1N = True
 USE_TZ = True
 
 
@@ -312,3 +312,19 @@ REST_FRAMEWORK = {
 # =============================================================================
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
+
+# --- Conexión a la base LEGACY (solo lectura para migrar) ---
+if os.getenv("LEGACY_DB_NAME"):
+    DATABASES["legacy"] = {
+        "ENGINE": os.getenv("LEGACY_DB_ENGINE", "django.db.backends.mysql"),
+        "NAME": os.getenv("LEGACY_DB_NAME"),
+        "USER": os.getenv("LEGACY_DB_USER", "root"),
+        "PASSWORD": os.getenv("LEGACY_DB_PASSWORD", ""),
+        "HOST": os.getenv("LEGACY_DB_HOST", "127.0.0.1"),
+        "PORT": os.getenv("LEGACY_DB_PORT", "3306"),
+        "OPTIONS": {
+            "charset": "utf8mb4",
+            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
+    }

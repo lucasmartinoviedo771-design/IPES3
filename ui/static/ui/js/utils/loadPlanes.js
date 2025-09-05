@@ -1,13 +1,6 @@
 // ui/js/utils/loadPlanes.js
 (function(){
-  async function fetchJSON(url){
-    const r = await fetch(url, {credentials:'same-origin', headers:{'X-Requested-With':'XMLHttpRequest'}});
-    const ct = r.headers.get('content-type') || '';
-    const txt = await r.text();
-    if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt.slice(0,200)}`);
-    if (!ct.includes('application/json')) throw new Error('No-JSON');
-    return JSON.parse(txt);
-  }
+  
   function setOptions(sel, items){
     if (!sel) return;
     sel.innerHTML = '<option value="">--------</option>' +

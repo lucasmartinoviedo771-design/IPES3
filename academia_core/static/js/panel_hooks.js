@@ -1,6 +1,6 @@
 /*! panel_hooks.js — actualización: condicion sin fallback a estado + carga de espacios por data-espacios-url */
 (function () {
-  function onReady(fn){ if(document.readyState!=='loading'){ fn(); } else { document.addEventListener('DOMContentLoaded', fn); } }
+  
   const norm = s => String(s||'').trim().toLowerCase();
 
   onReady(function(){

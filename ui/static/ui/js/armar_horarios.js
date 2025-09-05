@@ -218,7 +218,7 @@
   }
 
   // ---- EVENTOS ----
-  function onReady(fn){ document.readyState !== 'loading' ? fn() : document.addEventListener('DOMContentLoaded', fn); }
+  
 
   onReady(()=>{
     ['#id_plan', '#id_materia', '#id_turno'].forEach(sel=>{

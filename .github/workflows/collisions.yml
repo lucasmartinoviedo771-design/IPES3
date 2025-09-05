@@ -10,4 +10,4 @@ jobs:
           python-version: "3.11"
       - run: python scripts/check_collisions.py | tee collisions.txt
       - name: Fail if warnings
-        run: '! grep -q "⚠" collisions.txt'
+        run: '! grep -E -q "\[!\]|WARN" collisions.txt'
