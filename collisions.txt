@@ -1,0 +1,27 @@
+== Analizando C:\proyectos\academia ==
+
+[1/5] Plantillas y estáticos con misma ruta relativa...
+  OK Sin colisiones en templates/static
+
+[2/5] Nombres de URL de Django repetidos...
+  OK Nombres de URL únicos
+
+[3/5] Funciones/clases Python definidas en múltiples módulos...
+  WARN función '_get_model' está en:
+     - C:\proyectos\academia\academia_core\correlativas.py
+     - C:\proyectos\academia\tests\test_models_smoke.py
+
+[4/5] Importaciones riesgosas (alias repetidos / import *)...
+  OK Sin importaciones riesgosas detectadas
+
+[5/5] Funciones JS/TS duplicadas por nombre...
+  [!] función JS 'fetchJSON' está en:
+     - C:\proyectos\academia\ui\static\ui\js\utils\fetchJSON.js
+     - C:\proyectos\academia\ui\static\ui\js\utils\loadPlanes.js
+  [!] función JS 'getCookie' está en:
+     - C:\proyectos\academia\academia_core\static\js\panel.js
+     - C:\proyectos\academia\ui\static\js\ui_helpers.js
+     - C:\proyectos\academia\ui\static\ui\js\utils\ui_helpers.js
+  [!] función JS 'onReady' está en:
+     - C:\proyectos\academia\academia_core\static\js\panel_hooks.js
+     - C:\proyectos\academia\ui\static\ui\js\armar_horarios.js

@@ -92,7 +92,7 @@ def collect_relative_under_marker(base_dir: Path, marker: str, file_exts: Iterab
 
 
 def print_section_1(base_dir: Path) -> None:
-    print("[1/5] Plantillas y estáticos con misma ruta relativa…")
+    print("[1/5] Plantillas y estáticos con misma ruta relativa...")
     tmpl = collect_relative_under_marker(base_dir, TEMPLATE_DIR_NAME, {".html", ".txt"})
     stat = collect_relative_under_marker(base_dir, STATIC_DIR_NAME, {".css", ".js", ".png", ".jpg", ".jpeg", ".svg", ".gif", ".ico", ".webp"})
 
@@ -107,12 +107,12 @@ def print_section_1(base_dir: Path) -> None:
     for key, paths in sorted(stat.items()):
         if len(paths) > 1:
             reported = True
-            print(f"  ⚠ static: '{key}' aparece {len(paths)} veces:")
+            print(f"  WARN static: '{key}' aparece {len(paths)} veces:")
             for p in paths:
                 print(f"     - {p}")
 
     if not reported:
-        print("  ✓ Sin colisiones en templates/static")
+        print("  OK Sin colisiones en templates/static")
 
 
 # ------------------------------------------------
@@ -161,14 +161,14 @@ def collect_django_url_names(base_dir: Path) -> Dict[str, List[str]]:
 
 
 def print_section_2(base_dir: Path) -> None:
-    print("[2/5] Nombres de URL de Django repetidos…")
+    print("[2/5] Nombres de URL de Django repetidos...")
     names_map = collect_django_url_names(base_dir)
     dups = {k: v for k, v in names_map.items() if len(v) > 1}
     if not dups:
-        print("  ✓ Nombres de URL únicos")
+        print("  OK Nombres de URL únicos")
         return
     for name, paths in sorted(dups.items()):
-        print(f"  ⚠ nombre de URL '{name}' definido en:")
+        print(f"  WARN nombre de URL '{name}' definido en:")
         for p in paths:
             print(f"     - {p}")
 
@@ -211,13 +211,13 @@ def check_py_function_collisions(base_dir: Path) -> Dict[str, List[str]]:
 
 
 def print_section_3(base_dir: Path) -> None:
-    print("[3/5] Funciones/clases Python definidas en múltiples módulos…")
+    print("[3/5] Funciones/clases Python definidas en múltiples módulos...")
     col = check_py_function_collisions(base_dir)
     if not col:
-        print("  ✓ Definiciones de módulo únicas")
+        print("  OK Definiciones de módulo únicas")
         return
     for name, paths in sorted(col.items()):
-        print(f"  ⚠ función '{name}' está en:")
+        print(f"  WARN función '{name}' está en:")
         for p in paths:
             print(f"     - {p}")
 
@@ -291,7 +291,7 @@ def check_risky_imports(base_dir: Path):
 
 
 def print_section_4(base_dir: Path) -> None:
-    print("[4/5] Importaciones riesgosas (alias repetidos / import *)…")
+    print("[4/5] Importaciones riesgosas (alias repetidos / import *)...")
     conflicts, star_files, short_models = check_risky_imports(base_dir)
 
     something = False
@@ -301,7 +301,7 @@ def print_section_4(base_dir: Path) -> None:
         for fpath, alias_map in conflicts.items():
             for alias, mods in alias_map.items():
                 mods_str = ", ".join(sorted(mods))
-                print(f"  ⚠ alias '{alias}' usado para múltiples módulos en {fpath}: {mods_str}")
+                print(f"  WARN alias '{alias}' usado para múltiples módulos en {fpath}: {mods_str}")
 
     if star_files:
         something = True
@@ -310,10 +310,10 @@ def print_section_4(base_dir: Path) -> None:
 
     for f, ln in short_models:
         something = True
-        print(f"  ⚠ import relativo ambiguo en {f}:{ln}  ← usa import absoluto (p.ej. from tu_app.models import …)")
+        print(f"  WARN import relativo ambiguo en {f}:{ln}  ← usa import absoluto (p.ej. from tu_app.models import ...)")
 
     if not something:
-        print("  ✓ Sin importaciones riesgosas detectadas")
+        print("  OK Sin importaciones riesgosas detectadas")
 
 
 # ------------------------------------------------
@@ -348,10 +348,10 @@ def collect_js_functions(base_dir: Path) -> Dict[str, List[str]]:
 
 
 def print_section_5(base_dir: Path) -> None:
-    print("[5/5] Funciones JS/TS duplicadas por nombre…")
+    print("[5/5] Funciones JS/TS duplicadas por nombre...")
     dups = collect_js_functions(base_dir)
     if not dups:
-        print("  ✓ Sin funciones JS/TS duplicadas")
+        print("  OK Sin funciones JS/TS duplicadas")
         return
     for name, paths in sorted(dups.items()):
         print(f"  [!] función JS '{name}' está en:")

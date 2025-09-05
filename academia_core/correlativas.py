@@ -43,18 +43,14 @@ class Requisito:
     minimo: str = "REGULAR"
 
 
-def _get_model(app_label: str, model_name: str):
-    try:
-        return apps.get_model(app_label, model_name)
-    except Exception:
-        return None
+from .utils import get_model
 
 
 def _requisitos_desde_modelo(espacio) -> List[Requisito]:
     """Intenta leer requisitos desde un modelo Correlatividad si existe.
     Supuesto de campos (flexible): espacio_objetivo, espacio_requerido, tipo, minimo
     """
-    Model = _get_model("academia_core", "Correlatividad")
+    Model = get_model("academia_core", "Correlatividad")
     if Model is None:
         return []
     # Campos tolerantes
@@ -111,7 +107,7 @@ def obtener_requisitos_para(espacio) -> List[Requisito]:
 
 
 def _buscar_cursadas_de(inscripcion, espacio_ids: Iterable[int]):
-    InscripcionEspacio = _get_model("academia_core", "InscripcionEspacio")
+    InscripcionEspacio = get_model("academia_core", "InscripcionEspacio")
     if InscripcionEspacio is None:
         return []
     return list(

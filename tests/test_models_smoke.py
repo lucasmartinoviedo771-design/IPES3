@@ -3,11 +3,7 @@ from django.apps import apps
 from django.conf import settings as dj_settings
 
 
-def _get_model(app_label, model_name):
-    try:
-        return apps.get_model(app_label, model_name)
-    except LookupError:
-        return None
+from academia_core.utils import get_model
 
 
 def test_apps_installed():
@@ -25,5 +21,5 @@ def test_apps_installed():
 )
 def test_modelos_clave_existen(app_label, model_name):
     # Si algún nombre no coincide en tu código real, el test se salta (no rompe)
-    if _get_model(app_label, model_name) is None:
+    if get_model(app_label, model_name) is None:
         pytest.skip(f"Modelo no encontrado (ajustar nombres): {app_label}.{model_name}")
