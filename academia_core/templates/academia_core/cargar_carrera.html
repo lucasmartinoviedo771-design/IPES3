@@ -1,0 +1,214 @@
+{% extends "ui/base.html" %}
+{% block title %}Cargar / Editar carreras{% endblock %}
+
+{% block content %}
+<style>
+/* Estilos locales y MUY suaves para compatibilizar el layout 
+   incluso si el CSS global no tiene estas clases. */
+.x-page    { max-width: 980px; margin: 0 auto; }
+.x-title   { font-size: 2rem; margin: 16px 0 20px; font-weight: 700; }
+.x-card    { background: #fff; border-radius: 16px; box-shadow: 0 8px 18px rgba(0,0,0,.05); }
+.x-body    { padding: 20px; }
+.x-row     { margin-bottom: 14px; }
+.x-grid2   { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.x-label   { display:block; font-size:.9rem; margin-bottom:6px; color:#6b675f; }
+.x-input,
+.x-select  { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #cdbda6; background: #faf8f4; }
+.x-actions { display:flex; gap:10px; margin-top: 10px; }
+/* Botones: respetamos tus clases si existen; si no, damos un fallback. */
+.btn{display:inline-flex;align-items:center;gap:6px;border-radius:10px;border:1px solid #d6a06a;background:#d5803b;color:#fff;padding:8px 14px;cursor:pointer}
+.btn-ghost{background:#f3ece4;color:#7c5f43;border-color:#e6d7c5}
+.btn-danger{background:#b2483c;border-color:#9f3c31}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.small-note{font-size:.85rem;color:#857a6d}
+.inline-btn{margin-left:8px}
+</style>
+
+<div class="x-page">
+  <h1 class="x-title">Cargar / Editar carreras</h1>
+
+  <div class="x-card">
+    <div class="x-body">
+
+      <div class="x-row">
+        <label for="selCarrera" class="x-label">Seleccionar carrera</label>
+        <select id="selCarrera" class="x-select">
+          <option value="">— Nueva carrera —</option>
+        </select>
+      </div>
+
+      <div class="x-grid2">
+        <div class="x-row">
+          <label for="inpNombre" class="x-label">Nombre completo</label>
+          <input id="inpNombre" class="x-input" type="text" placeholder="Ej: Profesorado de Educación Primaria">
+        </div>
+
+        <div class="x-row">
+          <label for="selPlan" class="x-label">Plan vigente</label>
+          <div style="display:flex;align-items:center;">
+            <select id="selPlan" class="x-select">
+              <option value="">Seleccione un plan…</option>
+              {% for p in planes %}
+                <option value="{{ p.id }}">{{ p.resolucion }}</option>
+              {% endfor %}
+            </select>
+            <button id="btnNuevoPlan" type="button" class="btn btn-ghost inline-btn" title="Crear plan rápido">+ Nuevo plan</button>
+          </div>
+          <div class="small-note">Podés crear un plan rápido (solo resolución) y queda disponible en el combo.</div>
+        </div>
+      </div>
+
+      <div class="x-actions">
+        <button id="btnNueva"   class="btn btn-ghost"   type="button">Nueva</button>
+        <button id="btnGuardar" class="btn"            type="button">Guardar</button>
+        <button id="btnEliminar" class="btn btn-danger" type="button" style="display:none;">Eliminar</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // === URLs (namespace academia_core) ===
+  const URL_LIST   = "{% url 'academia_core:carrera_list_api' %}";
+  const URL_SAVE   = "{% url 'academia_core:carrera_save_api' %}";
+  const URL_GET    = (id) => "{% url 'academia_core:carrera_get_api' 0 %}".replace(/0\/$/, id + "/");
+  const URL_DELETE = (id) => "{% url 'academia_core:carrera_delete_api' 0 %}".replace(/0\/$/, id + "/");
+  const URL_PLAN_LIST = "{% url 'academia_core:plan_list_api' %}";
+  const URL_PLAN_SAVE = "{% url 'academia_core:plan_save_api' %}";
+
+  // Elements
+  const selCarrera  = document.getElementById('selCarrera');
+  const inpNombre   = document.getElementById('inpNombre');
+  const selPlan     = document.getElementById('selPlan');
+  const btnNueva    = document.getElementById('btnNueva');
+  const btnGuardar = document.getElementById('btnGuardar');
+  const btnEliminar = document.getElementById('btnEliminar');
+  const btnNuevoPlan= document.getElementById('btnNuevoPlan');
+
+  let actualId = null;
+
+  // CSRF Django
+  function getCookie(name) {
+    const m = document.cookie.match('(^|;)\s*' + name + '\s*=\s*([^;]+)');
+    return m ? m.pop() : '';
+  }
+  const CSRF = getCookie('csrftoken');
+
+  // ===== Carreras =====
+  async function cargarListado() {
+    selCarrera.innerHTML = '<option value="">— Nueva carrera —</option>';
+    const resp = await fetch(URL_LIST);
+    const data = await resp.json();
+    data.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id;
+      o.textContent = c.nombre;
+      selCarrera.appendChild(o);
+    });
+  }
+
+  function limpiar() {
+    actualId = null;
+    selCarrera.value = "";
+    inpNombre.value = "";
+    selPlan.value = "";
+    btnEliminar.style.display = 'none';
+  }
+
+  async function cargarCarrera(id) {
+    const resp = await fetch(URL_GET(id));
+    if (!resp.ok) { alert("No se pudo cargar la carrera."); return; }
+    const c = await resp.json();
+    actualId = c.id;
+    inpNombre.value = c.nombre || '';
+    selPlan.value = c.plan_id || '';
+    btnEliminar.style.display = 'inline-flex';
+  }
+
+  async function guardar() {
+    const payload = {
+      id: actualId,
+      nombre: inpNombre.value.trim(),
+      plan_id: selPlan.value || null
+    };
+    if (!payload.nombre) { alert("Ingresá el nombre de la carrera."); return; }
+
+    const resp = await fetch(URL_SAVE, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) {
+      alert(data.error || "No se pudo guardar.");
+      return;
+    }
+    await cargarListado();
+    if (data.id) { selCarrera.value = data.id; await cargarCarrera(data.id); }
+    alert("Guardado correctamente.");
+  }
+
+  async function eliminar() {
+    if (!actualId) return;
+    if (!confirm("¿Eliminar esta carrera?")) return;
+    const resp = await fetch(URL_DELETE(actualId), {
+      method: 'DELETE',
+      headers: {'X-CSRFToken': CSRF}
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) {
+      alert(data.error || "No se pudo eliminar.");
+      return;
+    }
+    await cargarListado();
+    limpiar();
+    alert("Eliminado.");
+  }
+
+  // ===== Planes =====
+  async function recargarPlanes() {
+    selPlan.innerHTML = '<option value="">Seleccione un plan…</option>';
+    const resp = await fetch(URL_PLAN_LIST);
+    const planes = await resp.json();
+    planes.forEach(p => {
+      const o = document.createElement('option');
+      o.value = p.id; o.textContent = p.resolucion;
+      selPlan.appendChild(o);
+    });
+  }
+
+  async function nuevoPlan() {
+    const resol = prompt("Ingresá la resolución del plan (ej: 1935/14):");
+    if (!resol) return;
+    const resp = await fetch(URL_PLAN_SAVE, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+      body: JSON.stringify({ resolucion: resol.trim() })
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) {
+      alert(data.error || "No se pudo crear el plan.");
+      return;
+    }
+    await recargarPlanes();
+    selPlan.value = data.id;
+    alert("Plan creado.");
+  }
+
+  // Eventos
+  selCarrera.addEventListener('change', e => e.target.value ? cargarCarrera(e.target.value) : limpiar());
+  btnNueva.addEventListener('click', limpiar);
+  btnGuardar.addEventListener('click', guardar);
+  btnEliminar.addEventListener('click', eliminar);
+  btnNuevoPlan.addEventListener('click', nuevoPlan);
+
+  // Init
+  cargarListado();
+  // opcional: que los planes también se recarguen desde API
+  // (siempre tendrás el contexto del render inicial, pero esto lo mantiene actualizado)
+  recargarPlanes();
+})();
+</script>
+{% endblock %}

@@ -52,9 +52,13 @@
     <div class="nav-item has-children">
       <a href="#" class="nav-parent">Inscripciones</a>
       <div class="subnav">
-        <a href="{% url 'insc_carrera_new' %}" class="{% block nav_insc_carrera %}{% endblock %}">a Carrera</a>
-        <a href="{% url 'insc_materia_new' %}" class="{% block nav_insc_materia %}{% endblock %}">a Materia</a>
-        <a href="{% url 'insc_mesa_new' %}" class="{% block nav_insc_mesa %}{% endblock %}">a Mesa</a>
+        {% url 'ui:insc_carrera_new'  as insc_carrera_url %}
+        {% url 'ui:insc_materia_new'  as insc_materia_url %}
+        {% url 'ui:insc_mesa_new'     as insc_mesa_url %}
+
+        <a href="{{ insc_carrera_url|default:'#' }}" class="{% block nav_insc_carrera %}{% endblock %}">a Carrera</a>
+        <a href="{{ insc_materia_url|default:'#' }}" class="{% block nav_insc_materia %}{% endblock %}">a Materia</a>
+        <a href="{{ insc_mesa_url|default:'#' }}"    class="{% block nav_insc_mesa %}{% endblock %}">a Mesa</a>
       </div>
     </div>
 
@@ -79,7 +83,7 @@
       <div class="subnav">
         <a href="#" class="{% block nav_admin_hab %}{% endblock %}">Habilitaciones</a>
         <a href="{% url 'ui:docente_nuevo' %}" class="{% block nav_admin_docente %}{% endblock %}">Cargar docente</a>
-        <a href="#" class="{% block nav_admin_carrera %}{% endblock %}">Cargar carrera</a>
+        <a href="{% url 'academia_core:cargar_carrera' %}" class="{% block nav_admin_carrera %}{% endblock %}">Cargar carrera</a>
         <a href="#" class="{% block nav_admin_plan %}{% endblock %}">Cargar plan</a>
         <a href="#" class="{% block nav_admin_materia %}{% endblock %}">Cargar materias</a>
         <a href="{% url 'ui:correlatividades' %}" class="{% block nav_admin_corr %}{% endblock %}">Cargar correlatividades</a>

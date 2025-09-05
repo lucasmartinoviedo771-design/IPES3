@@ -6,7 +6,7 @@ from .views import (
     InscribirMateriaView, InscribirFinalView, InscripcionProfesoradoView,
     CartonEstudianteView, HistoricoEstudianteView,
     SwitchRoleView,
-    CorrelatividadesView,
+    CorrelatividadesView
 )
 from . import api
 from . import views
@@ -21,7 +21,7 @@ urlpatterns = [
     path("dashboard", DashboardView.as_view(), name="dashboard"),
 
     # Personas
-    path("estudiantes", EstudianteListView.as_view(), name="estudiantes_list"),
+    path("estudiantes/", EstudianteListView.as_view(), name="estudiantes_list"),
     path("estudiantes/<int:pk>", EstudianteDetailView.as_view(), name="estudiantes_detail"),
     path("personas/estudiantes/nuevo", NuevoEstudianteView.as_view(), name="estudiante_nuevo"),
     path("docentes", DocenteListView.as_view(), name="docentes_list"),
@@ -32,6 +32,10 @@ urlpatterns = [
     path("inscribir/materias", InscribirMateriaView.as_view(), name="inscribir_materias"),
     path("inscripciones/mesa-final", InscribirFinalView.as_view(), name="inscribir_final"),
     path("inscripciones/profesorado", InscripcionProfesoradoView.as_view(), name="inscripcion_profesorado"),
+
+    path("inscripciones/carrera/nueva/", views.insc_carrera_new, name="insc_carrera_new"),
+    path("inscripciones/materia/nueva/", views.insc_materia_new, name="insc_materia_new"),
+    path("inscripciones/mesa/nueva/",    views.insc_mesa_new,    name="insc_mesa_new"),
 
     # Académico
     path("academico/correlatividades", CorrelatividadesView.as_view(), name="correlatividades"),

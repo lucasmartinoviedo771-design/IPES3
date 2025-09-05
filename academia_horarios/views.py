@@ -12,22 +12,20 @@ from django.db import transaction, IntegrityError
 from django.db.models import Value
 from django.db.models.functions import Concat
 from django.db.utils import OperationalError, ProgrammingError
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_GET, require_POST, require_http_methods
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, DeleteView
-from django.forms import ModelForm
 
 from academia_core.models import (
     PlanEstudios,
-    Carrera,
     Aula,
     EspacioCurricular,   # “Materia en Plan” (tabla puente Plan↔Materia)
     Docente,
     Materia,
-    Profesorado as Carrera,  # Using Profesorado as Carrera
+    Profesorado as Carrera,
 )
 from .forms import HorarioInlineForm
 from .models import (

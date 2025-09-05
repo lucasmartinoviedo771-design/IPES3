@@ -40,6 +40,12 @@ BEDEL_MENU = [
         ],
     },
     {
+        "title": "ADMINISTRACIÓN",
+        "items": [
+            {"label": "Carreras", "url_name": "academia_core:cargar_carrera", "path": "/administracion/carreras/", "icon": "briefcase"},
+        ],
+    },
+    {
         "title": "AYUDA",
         "items": [
             {"label": "Documentación", "path": "/docs", "icon": "book"},

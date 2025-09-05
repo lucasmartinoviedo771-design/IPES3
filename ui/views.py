@@ -17,6 +17,8 @@ from django.db import transaction
 from django.apps import apps
 from django.core.exceptions import ValidationError
 from django.views.decorators.http import require_POST
+from django.http import HttpResponse # Added for new views
+from django.contrib.auth.decorators import login_required # Added for new views
 
 # Modelos
 from academia_core.models import Estudiante, Docente
@@ -351,3 +353,16 @@ def oferta_por_plan(request):
         # ... y lo que ya usás para construir la tabla / resultados
     }
     return render(request, 'ui/oferta_por_plan.html', ctx)
+
+
+@login_required
+def insc_carrera_new(request):
+    return HttpResponse("Inscripción a Carrera (WIP)")
+
+@login_required
+def insc_materia_new(request):
+    return HttpResponse("Inscripción a Materia (WIP)")
+
+@login_required
+def insc_mesa_new(request):
+    return HttpResponse("Inscripción a Mesa (WIP)")
