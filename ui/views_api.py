@@ -9,7 +9,12 @@ import logging
 import json
 from django.utils import timezone
 
-from academia_core.models import PlanEstudios, EspacioCurricular, Docente, Profesorado
+from django.apps import apps
+
+PlanEstudios = apps.get_model('academia_core', 'PlanEstudios')
+EspacioCurricular = apps.get_model('academia_core', 'EspacioCurricular')
+Docente = apps.get_model('academia_core', 'Docente')
+Carrera = apps.get_model('academia_core', 'Carrera')
 from academia_horarios.models import Horario, TurnoModel, Bloque, MateriaEnPlan
 
 
@@ -18,7 +23,7 @@ logger = logging.getLogger(__name__)
 @require_GET
 def api_carreras(request):
     qs = (
-        Profesorado.objects.order_by("nombre").values("id", "nombre")
+        Carrera.objects.order_by("nombre").values("id", "nombre")
     )
     results = list(qs)
     logger.info("api_carreras -> %s items", len(results))
@@ -31,7 +36,7 @@ def api_planes(request):
     qs = []
     if carrera_id:
         qs = (PlanEstudios.objects
-              .filter(profesorado_id=carrera_id, vigente=True)
+              .filter(carrera_id=carrera_id, vigente=True)
               .order_by('nombre')
               .values('id', 'nombre'))
     logger.info("api_planes params=%s -> %s items", request.GET.dict(), len(qs))
@@ -51,7 +56,7 @@ def api_materias(request):
     try:
         qs = EspacioCurricular.objects.filter(plan_id=plan_id)
         if carrera_id:
-            qs = qs.filter(plan__profesorado_id=carrera_id)
+            qs = qs.filter(plan__carrera_id=carrera_id)
         qs = qs.order_by('anio', 'cuatrimestre', 'nombre')
         data = [{'id': m.id, 'nombre': m.nombre, 'horas': m.horas} for m in qs]
         logger.info("api_materias OK plan=%s carrera=%s count=%s", plan_id, carrera_id, len(data))
@@ -77,7 +82,7 @@ def api_docentes(request):
     if carrera_id and materia_id:
         qs = qs.filter(
             asignaciones__espacio_id=materia_id,
-            asignaciones__espacio__plan__profesorado_id=carrera_id
+            asignaciones__espacio__plan__carrera_id=carrera_id
         )
 
     qs = (qs.distinct()
@@ -168,12 +173,12 @@ def api_horario_save(request):
 
     materia_id = payload.get("materia_id")
     plan_id = payload.get("plan_id")
-    profesorado_id = payload.get("profesorado_id")
+    carrera_id = payload.get("profesorado_id") or payload.get("carrera_id")
     turno = payload.get("turno")
     items = payload.get("items", [])
 
-    if not (materia_id and plan_id and profesorado_id and turno):
-        return JsonResponse({'ok': False, 'error': 'Faltan parámetros obligatorios (materia, plan, profesorado, turno)'}, status=400)
+    if not (materia_id and plan_id and carrera_id and turno):
+        return JsonResponse({'ok': False, 'error': 'Faltan parámetros obligatorios (materia, plan, carrera, turno)'}, status=400)
 
     # 1) buscar el año de esa materia en ese plan
     anio = (MateriaEnPlan.objects
@@ -189,14 +194,14 @@ def api_horario_save(request):
     with transaction.atomic():
         Horario.objects.filter(
             materia_id=materia_id, plan_id=plan_id,
-            profesorado_id=profesorado_id, turno=turno
+            carrera_id=carrera_id, turno=turno
         ).delete()
 
         nuevos = [
             Horario(
                 materia_id=materia_id,
                 plan_id=plan_id,
-                profesorado_id=profesorado_id,
+                carrera_id=carrera_id,
                 turno=turno,
                 dia=item['dia'],
                 inicio=item['inicio'],
@@ -212,13 +217,13 @@ def api_horario_save(request):
 
 @require_GET
 def api_horarios_profesorado(request):
-    profesorado_id = request.GET.get("profesorado_id")
+    carrera_id = request.GET.get("profesorado_id") or request.GET.get("carrera_id")
     plan_id = request.GET.get("plan_id")
-    if not profesorado_id:
-        return JsonResponse({'error': 'Falta profesorado_id'}, status=400)
+    if not carrera_id:
+        return JsonResponse({'error': 'Falta carrera_id'}, status=400)
 
     qs = (Horario.objects
-          .filter(profesorado_id=profesorado_id))
+          .filter(carrera_id=carrera_id))
     if plan_id:
         qs = qs.filter(plan_id=plan_id)
     
@@ -287,15 +292,15 @@ def api_horarios_docente(request):
 def api_horarios_materia_plan(request):
     materia_id = request.GET.get("materia_id")
     plan_id = request.GET.get("plan_id")
-    profesorado_id = request.GET.get("profesorado_id")
+    carrera_id = request.GET.get("profesorado_id") or request.GET.get("carrera_id")
     anio = request.GET.get("anio")
     comision = request.GET.get("comision", "")
 
-    if not (materia_id and plan_id and profesorado_id):
-        return JsonResponse({'error': 'Faltan parámetros materia_id, plan_id o profesorado_id'}, status=400)
+    if not (materia_id and plan_id and carrera_id):
+        return JsonResponse({'error': 'Faltan parámetros materia_id, plan_id o carrera_id'}, status=400)
 
     qs = (Horario.objects
-          .filter(materia_id=materia_id, plan_id=plan_id, profesorado_id=profesorado_id)
+          .filter(materia_id=materia_id, plan_id=plan_id, carrera_id=carrera_id)
           .values('dia','inicio','fin','turno','anio','comision','aula'))
 
     if anio:

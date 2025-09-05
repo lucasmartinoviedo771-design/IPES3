@@ -2,7 +2,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from academia_core.models import EspacioCurricular, PlanEstudios, Estudiante, Profesorado, Docente, Movimiento, Correlatividad # Added Correlatividad
+from academia_core.models import EspacioCurricular, PlanEstudios, Estudiante, Carrera as Profesorado, Docente, Movimiento, Correlatividad # Added Correlatividad
 from academia_core.eligibilidad import habilitado
 from django.apps import apps
 
@@ -55,15 +55,15 @@ def api_listar_profesorados(request):
 @require_GET
 def api_listar_planes_estudios(request):
     profesorado_id = request.GET.get("profesorado_id")
-    planes = PlanEstudios.objects.all().order_by("profesorado__nombre", "nombre")
+    planes = PlanEstudios.objects.all().order_by("carrera__nombre", "nombre")
     if profesorado_id:
-        planes = planes.filter(profesorado_id=profesorado_id)
+        planes = planes.filter(carrera_id=profesorado_id)
     data = [
         {
             "id": p.id,
             "nombre": p.nombre,
             "resolucion": p.resolucion,
-            "profesorado_id": p.profesorado_id,
+            "profesorado_id": p.carrera_id,
         }
         for p in planes
     ]
@@ -280,7 +280,7 @@ def api_get_planes_for_profesorado(request):
     if not profesorado_id:
         return JsonResponse({"items": []})
     
-    planes = PlanEstudios.objects.filter(profesorado_id=profesorado_id).order_by("resolucion")
+    planes = PlanEstudios.objects.filter(carrera_id=profesorado_id).order_by("resolucion")
     data = [
         {
             "id": p.id,

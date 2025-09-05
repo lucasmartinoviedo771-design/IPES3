@@ -10,4 +10,5 @@ class AcademiaCoreConfig(AppConfig):
         from . import signals  # noqa: F401
 
         # Importa los archivos admin.py para registrar los modelos
-        import academia_core.admin_config  # noqa: F401
+        # import academia_core.admin_config  # noqa: F401
+        pass

@@ -40,23 +40,23 @@ def estudiante_foto_path(instance, filename):
 # ===================== Catálogos básicos =====================
 
 
-class Profesorado(models.Model):
-    nombre = models.CharField(max_length=120, unique=True)
-    plan_vigente = models.CharField(max_length=20, blank=True)
-    slug = models.SlugField(max_length=255, unique=True, blank=True, null=True)
+class Carrera(models.Model):
+    nombre = models.CharField(max_length=255, unique=True)
+    abreviatura = models.CharField(max_length=50, blank=True)
+    plan_vigente = models.ForeignKey(
+        "PlanEstudios",
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+"
+    )
 
     def __str__(self):
         return self.nombre
 
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.nombre)
-        super().save(*args, **kwargs)
-
 
 class PlanEstudios(models.Model):
-    profesorado = models.ForeignKey(
-        Profesorado, on_delete=models.CASCADE, related_name="planes"
+    carrera = models.ForeignKey(
+        Carrera, on_delete=models.PROTECT, related_name="planes", null=True
     )
     resolucion = models.CharField(max_length=30)  # ej: 1935/14
     resolucion_slug = models.SlugField(max_length=100, blank=True, null=True)
@@ -65,11 +65,20 @@ class PlanEstudios(models.Model):
     observaciones = models.TextField(blank=True)
 
     class Meta:
-        unique_together = [("profesorado", "resolucion")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["carrera"], condition=models.Q(vigente=True),
+                name="unique_plan_vigente_por_carrera",
+            ),
+            models.UniqueConstraint(
+                fields=["carrera", "resolucion"],
+                name="unique_resolucion_por_carrera",
+            ),
+        ]
 
     def __str__(self):
         nom = f" ({self.nombre})" if self.nombre else ""
-        return f"{self.profesorado} - Res. {self.resolucion}{nom}"
+        return f"{self.carrera} - Res. {self.resolucion}{nom}"
 
     def save(self, *args, **kwargs):
         if not self.resolucion_slug:
@@ -128,7 +137,7 @@ class Estudiante(models.Model):
 
         return InscripcionEspacio.objects.filter(
             inscripcion__estudiante=self
-        ).select_related("espacio", "inscripcion", "inscripcion__profesorado")
+        ).select_related("espacio", "inscripcion", "inscripcion__carrera")
 
     @property
     def espacios_qs(self):
@@ -153,8 +162,8 @@ class EstudianteProfesorado(models.Model):
     estudiante = models.ForeignKey(
         "Estudiante", on_delete=models.CASCADE, related_name="inscripciones_carrera"
     )
-    profesorado = models.ForeignKey(
-        "Profesorado", on_delete=models.PROTECT, related_name="inscripciones"
+    carrera = models.ForeignKey(
+        "Carrera", on_delete=models.PROTECT, related_name="inscripciones", null=True
     )
     plan = models.ForeignKey(
         "PlanEstudios",
@@ -239,9 +248,9 @@ class EstudianteProfesorado(models.Model):
         # si hay plan, debe pertenecer al profesorado elegido
         if (
             self.plan_id
-            and self.profesorado_id
-            and getattr(self.plan, "profesorado_id", None)
-            and self.plan.profesorado_id != self.profesorado_id
+            and self.carrera_id
+            and getattr(self.plan, "carrera_id", None)
+            and self.plan.carrera_id != self.carrera_id
         ):
             raise ValidationError("El plan seleccionado no pertenece al profesorado.")
 
@@ -260,23 +269,23 @@ class EstudianteProfesorado(models.Model):
                 fields=["estudiante", "plan"], name="uniq_estudiante_plan"
             )
         ]
-        ordering = ["estudiante__apellido", "estudiante__nombre", "profesorado__nombre"]
+        ordering = ["estudiante__apellido", "estudiante__nombre", "carrera__nombre"]
 
     def __str__(self):
-        return f"{self.estudiante} → {self.profesorado}"
+        return f"{self.estudiante} → {self.carrera}"
 
     # ----------------- Helpers de negocio -----------------
-    def profesorado_es_certificacion_docente(self) -> bool:
+    def carrera_es_certificacion_docente(self) -> bool:
         """
         Usa un booleano del modelo Profesoroado si existe (es_certificacion),
         si no, detecta por el nombre.
         """
-        prof = getattr(self, "profesorado", None)
-        if prof is None:
+        carrera = getattr(self, "carrera", None)
+        if carrera is None:
             return False
-        if hasattr(prof, "es_certificacion"):
-            return bool(getattr(prof, "es_certificacion"))
-        nombre = (getattr(prof, "nombre", "") or "").lower()
+        if hasattr(carrera, "es_certificacion"):
+            return bool(getattr(carrera, "es_certificacion"))
+        nombre = (getattr(carrera, "nombre", "") or "").lower()
         return ("certificación docente" in nombre) or (
             "certificacion docente" in nombre
         )
@@ -294,7 +303,7 @@ class EstudianteProfesorado(models.Model):
             ("doc_fotos_carnet", True),
             ("doc_folios_oficio", True),
         ]
-        if self.profesorado_es_certificacion_docente():
+        if self.carrera_es_certificacion_docente():
             base += [
                 ("doc_titulo_terciario_legalizado", True),
                 ("doc_incumbencias", True),
@@ -332,7 +341,7 @@ class EstudianteProfesorado(models.Model):
 
     @property
     def es_condicional(self) -> bool:
-        return self.calcular_condicion_admin() == CondicionAdmin.CONDICIONAL
+        return self.calcular_condicion_admin() == CondicionAdmin.CONDicional
 
     # --------- Promedio (igual que tenías) ---------
     def _mov_aprueba(self, m) -> bool:
@@ -405,7 +414,9 @@ class EspacioCurricular(models.Model):
     )
     anio = models.CharField(max_length=10)  # ej: "1°", "2°"
     cuatrimestre = models.CharField(max_length=1, choices=CUATRIS)
-    nombre = models.CharField(max_length=160)
+    materia = models.ForeignKey(
+        'Materia', on_delete=models.PROTECT, related_name="en_planes", null=True
+    )
     horas = models.PositiveIntegerField(default=0)
     formato = models.CharField(max_length=80, blank=True)
     libre_habilitado = models.BooleanField(
@@ -413,16 +424,16 @@ class EspacioCurricular(models.Model):
     )
 
     class Meta:
-        ordering = ["anio", "cuatrimestre", "nombre"]
+        # NO usar 'nombre' directo en EspacioCurricular (no existe).
+        # Ordenar por carrera del plan, año, cuatrimestre y nombre de la materia.
+        ordering = ["plan__carrera__nombre", "anio", "cuatrimestre", "materia__nombre"]
+
+        # La unicidad debe ser por (plan, materia, anio, cuatrimestre) — NO por 'nombre'
         constraints = [
             models.UniqueConstraint(
-                fields=["plan", "nombre"],
-                name="uq_espacio_plan_nombre",
-            ),
-            models.CheckConstraint(
-                name="anio_valido_1a4",
-                condition=models.Q(anio__in=["1°", "2°", "3°", "4°"]),
-            ),
+                fields=["plan", "materia", "anio", "cuatrimestre"],
+                name="uniq_espacio_en_plan",
+            )
         ]
 
     def __str__(self):
@@ -468,7 +479,12 @@ class Correlatividad(models.Model):
     observaciones = models.CharField(max_length=200, blank=True)
 
     class Meta:
-        ordering = ["espacio__anio", "espacio__cuatrimestre", "espacio__nombre"]
+        ordering = [
+            "espacio__plan__carrera__nombre",
+            "espacio__anio",
+            "espacio__cuatrimestre",
+            "espacio__materia__nombre",
+        ]
         # constraints y indexes pueden ir aquí si son necesarios
 
     def __str__(self):
@@ -676,7 +692,7 @@ class Movimiento(models.Model):
                     "Alcanzó las tres posibilidades de final: debe recursar el espacio."
                 )
 
-        if self.inscripcion.profesorado_id != self.espacio.plan.profesorado_id:
+        if self.inscripcion.carrera_id != self.espacio.plan.carrera_id:
             raise ValidationError(
                 "El espacio no pertenece al mismo profesorado de la inscripción del estudiante."
             )
@@ -727,10 +743,10 @@ class InscripcionEspacio(models.Model):
 
     class Meta:
         ordering = [
-            "-anio_academico",
+            "espacio__plan__carrera__nombre",
             "espacio__anio",
             "espacio__cuatrimestre",
-            "espacio__nombre",
+            "espacio__materia__nombre",
         ]
         # unique_together = [("inscripcion", "espacio", "anio_academico")] # Replaced by UniqueConstraint
         indexes = [
@@ -771,7 +787,7 @@ class InscripcionEspacio(models.Model):
         if (
             self.inscripcion
             and self.espacio
-            and self.inscripcion.profesorado_id != self.espacio.plan.profesorado_id
+            and self.inscripcion.carrera_id != self.espacio.plan.carrera_id
         ):
             raise ValidationError("El espacio pertenece a otro profesorado.")
 
@@ -907,8 +923,8 @@ class UserProfile(models.Model):
         on_delete=models.SET_NULL,
         related_name="usuarios",
     )
-    profesorados_permitidos = models.ManyToManyField(
-        Profesorado, blank=True, related_name="usuarios_habilitados"
+    carreras_permitidas = models.ManyToManyField(
+        Carrera, blank=True, related_name="usuarios_habilitados"
     )
 
     def __str__(self):
@@ -1047,15 +1063,10 @@ class RequisitosIngreso(models.Model):
     def __str__(self):
         return f"Requisitos de {self.inscripcion_id}"
 
-class Carrera(models.Model):
-    nombre = models.CharField(max_length=150)
-    def __str__(self): return self.nombre
 
 class Materia(models.Model):
     nombre = models.CharField(max_length=150)
-    carrera = models.ForeignKey(Carrera, on_delete=models.CASCADE, related_name="materias")
-    anio = models.PositiveSmallIntegerField(default=1)
-    def __str__(self): return f"{self.nombre} ({self.carrera})"
+    def __str__(self): return self.nombre
 
 class Mesa(models.Model):
     materia = models.ForeignKey(Materia, on_delete=models.CASCADE, related_name="mesas")

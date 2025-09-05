@@ -25,7 +25,7 @@ from academia_core.models import (
     EspacioCurricular,   # “Materia en Plan” (tabla puente Plan↔Materia)
     Docente,
     Materia,
-    Profesorado as Carrera,
+    Carrera,
 )
 from .forms import HorarioInlineForm
 from .models import (
@@ -238,14 +238,14 @@ def horarios_opciones(request):
       - materias (Espacios curriculares) del plan o del profesorado
       - docentes (lista completa con nombre corto)
     """
-    prof_id = request.GET.get("profesorado") or request.GET.get("carrera")
+    prof_id = request.GET.get("carrera") or request.GET.get("carrera")
     plan_id = request.GET.get("plan") or request.GET.get("plan_id")
 
     mats_qs = EspacioCurricular.objects.all()
     if plan_id:
         mats_qs = mats_qs.filter(plan_id=plan_id)
     elif prof_id:
-        mats_qs = mats_qs.filter(plan__profesorado_id=prof_id)
+        mats_qs = mats_qs.filter(plan__carrera_id=prof_id)
 
     materias = list(
         mats_qs.order_by("nombre").values("id", "nombre")

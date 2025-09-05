@@ -1,9 +1,9 @@
 from django.shortcuts import render
-from academia_core.models import Profesorado
+from academia_core.models import Carrera
 
 def horarios_profesorado(request):
     return render(request, "ui/horarios_profesorado.html", {
-        "profesorados": Profesorado.objects.all().order_by("nombre")
+        "profesorados": Carrera.objects.all().order_by("nombre")
     })
 
 def horarios_docente(request):

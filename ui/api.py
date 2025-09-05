@@ -36,7 +36,7 @@ def _find_plan_model():
             for fk in fks:
                 fkname = fk.name.lower()
                 target = fk.related_model.__name__.lower()
-                if any(k in fkname for k in ("prof", "carr")) or any(k in target for k in ("prof", "carr")):
+                if any(k in fkname for k in ("carr", "prof")) or any(k in target for k in ("carr", "prof")):
                     candidates.append(m)
                     break
     # si hay muchos, priorizo los que incluyan 'estudio' en el nombre
@@ -98,22 +98,22 @@ def api_planes_por_carrera(request):
     GET /ui/api/planes?profesorado=<id> o ?prof=<id>
     Devuelve: {"planes":[{"id":..., "nombre":"..."}]}
     """
-    prof_id = request.GET.get('profesorado') or request.GET.get('prof') or ''
-    if not prof_id:
-        return HttpResponseBadRequest("Falta profesorado o prof")
+    carrera_id = request.GET.get('profesorado') or request.GET.get('prof') or request.GET.get('carrera') or request.GET.get('carrera_id') or ''
+    if not carrera_id:
+        return HttpResponseBadRequest("Falta carrera o prof")
 
     PlanModel = _find_plan_model()
     if not PlanModel:
         logger.error("No se pudo inferir el modelo de Plan (Plan/PlanEstudio).")
         return HttpResponseBadRequest("No se pudo inferir el modelo de Plan.")
 
-    fk_name = _first_matching_fk_name(PlanModel, "profesorado", "carrera", "titulo", "prof")
+    fk_name = _first_matching_fk_name(PlanModel, "carrera", "profesorado", "titulo", "prof")
     logger.debug("PlanModel=%s, FK a profesorados=%s", PlanModel.__name__, fk_name)
 
     qs = PlanModel.objects.all()
     # filtrar por el FK descubierto
     if fk_name:
-        qs = qs.filter(**{f"{fk_name}_id": prof_id})
+        qs = qs.filter(**{f"{fk_name}_id": carrera_id})
 
     # filtros típicos de soft delete / activo si existieran
     if hasattr(PlanModel, "activo"):

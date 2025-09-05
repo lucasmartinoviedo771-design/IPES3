@@ -2,14 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from datetime import time
 
-from academia_core.models import (
-    Docente,
-    Profesorado,
-    PlanEstudios,        # tu “Plan”
-    EspacioCurricular,   # tu “Materia”
-    Carrera, # Added Carrera for Horario model
-    Aula, # Added Aula for Horario model
-)
+
 
 # ======= Catálogos/Períodos =======
 class Turno(models.TextChoices):
@@ -32,8 +25,8 @@ class TipoDictado(models.TextChoices):
     CUATRIMESTRAL = "CUATRIMESTRAL", "Cuatrimestral"
 
 class MateriaEnPlan(models.Model):
-    plan = models.ForeignKey(PlanEstudios, on_delete=models.PROTECT)
-    materia = models.ForeignKey(EspacioCurricular, on_delete=models.PROTECT)
+    plan = models.ForeignKey('academia_core.PlanEstudios', on_delete=models.PROTECT)
+    materia = models.ForeignKey('academia_core.EspacioCurricular', on_delete=models.PROTECT)
     anio = models.PositiveSmallIntegerField()
     tipo_dictado = models.CharField(max_length=16, choices=TipoDictado.choices)
     horas_catedra_semana_1c = models.PositiveSmallIntegerField(default=0)
@@ -70,7 +63,7 @@ class Comision(models.Model):
 
     def __str__(self):
         p = self.materia_en_plan
-        return f"{p.plan.profesorado} {p.anio}° — {p.materia} — {self.periodo} — {self.nombre} ({self.get_turno_display()})"
+        return f"{p.plan.carrera} {p.anio}° — {p.materia} — {self.periodo} — {self.nombre} ({self.get_turno_display()})"
     class Meta:
         db_table = "academia_horarios_comision"
         # unique_together = ("materia_en_plan", "periodo", "nombre") # OLD
@@ -109,15 +102,15 @@ def overlaps(a1, a2, b1, b2):
 
 class Horario(models.Model):
     # Contexto académico
-    materia = models.ForeignKey(EspacioCurricular, on_delete=models.CASCADE)
-    plan    = models.ForeignKey(PlanEstudios, on_delete=models.CASCADE)
-    profesorado = models.ForeignKey(Profesorado, on_delete=models.CASCADE)
+    materia = models.ForeignKey('academia_core.EspacioCurricular', on_delete=models.CASCADE)
+    plan    = models.ForeignKey('academia_core.PlanEstudios', on_delete=models.CASCADE)
+    profesorado = models.ForeignKey('academia_core.Carrera', on_delete=models.CASCADE)
     anio    = models.PositiveSmallIntegerField(null=True, blank=True)  # 1..4 si aplica
     comision = models.CharField(max_length=8, blank=True)  # opcional, si querés trackear "2°B" (sin volver al modelo Comision)
     aula    = models.CharField(max_length=64, blank=True)
 
     # Asignación docente (si tenés DocenteAsignacion, referenciar eso)
-    docente = models.ForeignKey(Docente, null=True, blank=True, on_delete=models.SET_NULL)
+    docente = models.ForeignKey('academia_core.Docente', null=True, blank=True, on_delete=models.SET_NULL)
 
     # Bloque
     dia     = models.CharField(max_length=2, choices=[('lu','Lunes'),('ma','Martes'),('mi','Miércoles'),('ju','Jueves'),('vi','Viernes'),('sa','Sábado')])
@@ -142,7 +135,7 @@ class HorarioClase(models.Model):
     comision = models.ForeignKey(Comision, on_delete=models.CASCADE, related_name="horarios")
     timeslot = models.ForeignKey(TimeSlot, on_delete=models.PROTECT)
     aula = models.CharField(max_length=64, blank=True, default="")
-    docentes = models.ManyToManyField(Docente, blank=True)
+    docentes = models.ManyToManyField('academia_core.Docente', blank=True)
     observaciones = models.TextField(blank=True, default="")
 
     def clean(self):
@@ -160,7 +153,7 @@ class HorarioClase(models.Model):
                 timeslot=self.timeslot,
                 comision__periodo=c.periodo,
                 comision__materia_en_plan__anio=mep.anio,
-                comision__materia_en_plan__plan__profesorado=mep.plan.profesorado,
+                comision__materia_en_plan__plan__carrera=mep.plan.carrera,
             )
             .exclude(pk=self.pk)
             .exists()

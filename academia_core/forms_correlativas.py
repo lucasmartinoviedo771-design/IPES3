@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import ModelChoiceField, ModelMultipleChoiceField
-from academia_core.models import Profesorado, PlanEstudios, EspacioCurricular, Correlatividad
+from academia_core.models import Carrera as Profesorado, PlanEstudios, EspacioCurricular, Correlatividad
 
 
 class CorrelatividadForm(forms.Form):
@@ -42,7 +42,7 @@ class CorrelatividadForm(forms.Form):
         if 'profesorado' in data_source:
             try:
                 profesorado_id = int(data_source.get('profesorado'))
-                self.fields['plan'].queryset = PlanEstudios.objects.filter(profesorado_id=profesorado_id).order_by('resolucion')
+                self.fields['plan'].queryset = PlanEstudios.objects.filter(carrera_id=profesorado_id).order_by('resolucion')
             except (ValueError, TypeError):
                 pass # Invalid input, leave queryset empty
 
