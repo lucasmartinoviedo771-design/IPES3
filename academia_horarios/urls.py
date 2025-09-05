@@ -1,4 +1,5 @@
 from django.urls import path
+from . import views
 from .views import (
     OfertaView, comision_detail, HorarioDeleteView, timeslots_api, 
     cargar_horario, abrir_paralela, horarios_grilla, horarios_opciones, 
