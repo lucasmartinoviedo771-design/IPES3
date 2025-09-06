@@ -12,7 +12,7 @@
   <h2>Armar Horarios de Cátedra</h2>
   <p class="muted">Seleccioná una materia y un turno para definir los bloques horarios que ocupará la cátedra.</p>
 
-  <div class="grid grid-cols-2 gap-3">
+  <div class="grid grid-cols-3 gap-3">
     <div>
       <label>Profesorado / Carrera</label>
       <select id="sel-carrera" class="input">
@@ -25,24 +25,41 @@
 
     <div>
       <label>Plan</label>
-      <select id="sel-plan" class="input">
+      <select id="sel-plan" class="input" disabled>
         <option value="">---------</option>
       </select>
     </div>
 
     <div>
       <label>Materia</label>
-      <select id="sel-materia" class="input">
+      <select id="sel-materia" class="input" disabled>
         <option value="">---------</option>
       </select>
     </div>
 
     <div>
-      <label>Turno</label>
-      <select id="sel-turno" class="input">
-        {% for t in turnos %}
-          <option value="{{ t.id }}">{{ t.label }}</option>
+      <label>Período Lectivo</label>
+      <select id="sel-periodo" class="input">
+        <option value="">---------</option>
+        {% for p in periodos %}
+          <option value="{{ p.id }}">{{ p }}</option>
         {% endfor %}
+      </select>
+    </div>
+
+    <div>
+        <label>Turno</label>
+        <select id="sel-turno" class="input">
+          {% for t in turnos %}
+            <option value="{{ t.id }}">{{ t.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+    <div>
+      <label>Comisión</label>
+      <select id="sel-comision" class="input" disabled>
+        <option value="">---------</option>
       </select>
     </div>
   </div>
@@ -65,5 +82,7 @@
   // Obtiene /panel o /panel/horarios a partir de la URL de api/planes
   window.HOR_BASE = "{% url 'academia_horarios:api_planes' %}".replace(/\/api\/planes\/?$/, "");
 </script>
+<script src="{% static 'ui/js/utils/getCookie.js' %}"></script>
+<script src="{% static 'ui/js/utils/fetchJSON.js' %}"></script>
 <script src="{% static 'ui/js/armar_horarios.js' %}?v=15"></script>
 {% endblock %}

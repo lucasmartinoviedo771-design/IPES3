@@ -13,8 +13,12 @@ class RolesPermitidosMixin(UserPassesTestMixin):
             return False
         if getattr(u, "is_superuser", False):
             return True
+        
+        # Use allowed_roles from the view if it exists
+        allowed = getattr(self, 'allowed_roles', self.allowed)
+        
         names = set(u.groups.values_list("name", flat=True))
-        return bool(self.allowed & names)
+        return bool(set(allowed) & names)
 
 # Alias retrocompatible: cualquier vista que use RolesAllowedMixin seguirá funcionando
 class RolesAllowedMixin(RolesPermitidosMixin):

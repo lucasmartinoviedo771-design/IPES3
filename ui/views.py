@@ -22,7 +22,8 @@ from django.contrib.auth.decorators import login_required # Added for new views
 
 # Modelos
 from academia_core.models import Estudiante, Docente
-from academia_horarios.models import Comision, TimeSlot, HorarioClase
+from academia_horarios.models import Comision, TimeSlot, HorarioClase, Catedra, DocenteAsignacion
+from academia_horarios.forms import DocenteAsignacionForm
 from academia_horarios import services
 
 # Formularios de la app UI
@@ -282,22 +283,38 @@ def _redir_comision(comision):
     Cambiá este redirect al name real de tu detalle de comisión.
     Si ya tenés una vista llamada 'comision_detail' namespaced en ui, dejá como está.
     """
-    return redirect("ui:comision_detail", pk=comision.pk)
+    return redirect("academia_horarios:comision_detail", pk=comision.pk)
 
 @require_POST
 def asignar_docente(request, pk):
     comision = get_object_or_404(Comision, pk=pk)
-    docente_id = request.POST.get("docente_id")
-    if not docente_id:
-        messages.error(request, "Debés elegir un docente.")
-        return _redir_comision(comision)
+    
+    # Obtener o crear la Catedra asociada a la Comision
+    # Asumo valores por defecto para horas_semanales y permite_solape_interno
+    # Deberías ajustar esto según la lógica de tu negocio
+    turno_model_instance = get_object_or_404(TurnoModel, slug=comision.turno)
+    catedra, created = Catedra.objects.get_or_create(
+        comision=comision,
+        materia_en_plan=comision.materia_en_plan,
+        turno=turno_model_instance,
+        defaults={'horas_semanales': 0, 'permite_solape_interno': False}
+    )
 
-    docente = get_object_or_404(Docente, pk=docente_id)
-    try:
-        services.asignar_docente_a_comision(comision, docente)
-        messages.success(request, "Docente asignado con éxito.")
-    except ValidationError as e:
-        messages.error(request, e.message if hasattr(e, "message") else str(e))
+    form = DocenteAsignacionForm(request.POST)
+    if form.is_valid():
+        asignacion = form.save(commit=False)
+        asignacion.catedra = catedra
+        try:
+            asignacion.full_clean()
+            asignacion.save()
+            messages.success(request, "Docente asignado con éxito.")
+        except ValidationError as e:
+            messages.error(request, e.message if hasattr(e, "message") else str(e))
+    else:
+        messages.error(request, "Error en el formulario de asignación de docente.")
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(request, f"{field}: {error}")
     return _redir_comision(comision)
 
 @require_POST
@@ -322,8 +339,7 @@ def agregar_horario(request, pk):
     ts, _ = TimeSlot.objects.get_or_create(dia_semana=dia_semana, inicio=inicio, fin=fin)
 
     hc = HorarioClase(comision=comision, timeslot=ts, aula=aula)
-    if docente_id:
-        hc.docente = get_object_or_404(Docente, pk=docente_id)
+    
 
     try:
         hc.full_clean()  # dispara tu clean() con todas las validaciones

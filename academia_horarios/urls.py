@@ -1,13 +1,13 @@
 from django.urls import path
+from .views import ComisionDetailView
 from . import views
 
 urlpatterns = [
     # UI
     path("cargar/", views.cargar_horario, name="cargar_horario"),
+    path("comisiones/<int:pk>/", ComisionDetailView.as_view(), name="comision_detail"),
 
-    # APIs (selects encadenados)
-    path("api/planes/",    views.api_planes_por_carrera, name="api_planes"),
-    path("api/materias/",  views.api_materias_por_plan,  name="api_materias"),
+    
 
     # API (time-slots por turno)
     path("api/timeslots/", views.api_timeslots_por_turno, name="api_timeslots"),

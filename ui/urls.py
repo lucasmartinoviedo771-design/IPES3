@@ -55,18 +55,24 @@ urlpatterns = [
     
     path("api/horario/save", views_api.api_horario_save, name="api_horario_save"),
     path("api/horarios/materia/", views_api.api_get_horarios_materia, name="api_get_horarios_materia"),
+    path("api/comisiones/materia/", views_api.api_get_comisiones_materia, name="api_get_comisiones_materia"),
+    path("api/comisiones/add/", views_api.api_add_comision, name="api_add_comision"),
     path("api/horarios/materia-plan", views_api.api_horarios_materia_plan, name="api_horarios_materia_plan"),
     
     path("api/turnos", views_api.api_turnos, name="api_turnos"),
     path("api/horarios-ocupados/", views_api.api_horarios_ocupados, name="api_horarios_ocupados"),
     path("api/cohortes", api.api_cohortes_por_plan, name="api_cohortes"),
     path("api/correlatividades", api.api_correlatividades_por_espacio, name="api_correlatividades_por_espacio"),
+    path("api/materias-por-plan/", api.api_materias_por_plan, name="api_materias_por_plan"),
     path("api/calcular-estado-administrativo/", api.api_calcular_estado_administrativo, name="api_calcular_estado_administrativo"),
 
     
 
     # Oferta
     
+
+    # Administracion
+    path("administracion/comisiones/", views_panel.gestionar_comisiones, name="gestionar_comisiones"),
 
     # Horarios
     path("horarios/profesorado/", views_panel.horarios_profesorado, name="horarios_profesorado"),

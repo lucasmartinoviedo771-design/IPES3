@@ -1,9 +1,11 @@
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_GET, require_POST
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, HttpResponseBadRequest
+from django.views.generic import DetailView
 from academia_core.models import Carrera, PlanEstudios, EspacioCurricular
-# from academia_horarios.models import TimeSlot, HorarioClase, ...  # tus modelos reales
+from academia_horarios.models import Periodo, Comision, HorarioClase, Catedra, DocenteAsignacion
+from academia_horarios.forms import HorarioInlineForm, DocenteAsignacionForm
 
 # ========== UI ========== 
 @login_required
@@ -11,6 +13,7 @@ def cargar_horario(request):
     """Render del template con el layout del panel."""
     ctx = {
         "carreras": Carrera.objects.order_by("nombre"),
+        "periodos": Periodo.objects.all().order_by("-ciclo_lectivo", "-cuatrimestre"),
         "turnos": [
             {"id": "maniana", "label": "Mañana"},
             {"id": "tarde",   "label": "Tarde"},
@@ -20,48 +23,7 @@ def cargar_horario(request):
     return render(request, "academia_horarios/cargar_horario.html", ctx)
 
 
-# ========== APIs para selects encadenados ========== 
-@login_required
-@require_GET
-def api_planes_por_carrera(request):
-    """
-    GET /panel/horarios/api/planes?carrera=<id>
-    -> 200 JSON: [{id, resolucion, vigente}]
-    """
-    carrera_id = request.GET.get("carrera")
-    if not carrera_id:
-        return JsonResponse({"results": []})
-    qs = (PlanEstudios.objects
-          .filter(carrera_id=carrera_id)
-          .order_by("-vigente", "resolucion")
-          .values("id", "resolucion", "nombre"))
-    data = [
-        {
-            "id": p["id"],
-            "nombre": (p["resolucion"] or p["nombre"] or f"Plan {p['id']}")
-        }
-        for p in qs
-    ]
-    return JsonResponse({"results": data})
 
-
-@login_required
-@require_GET
-def api_materias_por_plan(request):
-    """
-    GET /panel/horarios/api/materias?plan=<id>
-    -> 200 JSON: [{id (EspacioCurricular), materia, anio, cuatrimestre}]
-    """
-    plan_id = request.GET.get("plan")
-    if not plan_id:
-        return JsonResponse({"results": []})
-    qs = (EspacioCurricular.objects
-          .select_related("materia")
-          .filter(plan_id=plan_id)
-          .order_by("anio", "materia__nombre")
-          .values("id", "materia__nombre"))
-    data = [{"id": m["id"], "nombre": m["materia__nombre"]} for m in qs]
-    return JsonResponse({"results": data})
 
 
 # ========== API de grilla (time-slots por turno) ========== 
@@ -187,3 +149,27 @@ def horarios_guardar(request):
     #
     # Ejemplo de "no-op" (sólo para mostrar que el contrato funciona):
     return JsonResponse({"ok": True})
+
+class ComisionDetailView(DetailView):
+    model = Comision
+    template_name = "academia_horarios/comision_detail.html"
+    context_object_name = "comision"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        comision = self.get_object()
+        ctx["horarios"] = HorarioClase.objects.filter(comision=comision).select_related("timeslot").order_by("timeslot__dia_semana", "timeslot__inicio")
+        
+        # Get or create Catedra for this Comision
+        turno_model_instance = get_object_or_404(TurnoModel, slug=comision.turno)
+        catedra, created = Catedra.objects.get_or_create(
+            comision=comision,
+            materia_en_plan=comision.materia_en_plan,
+            turno=turno_model_instance,
+            defaults={'horas_semanales': 0, 'permite_solape_interno': False}
+        )
+        ctx["asignaciones_docentes"] = DocenteAsignacion.objects.filter(catedra=catedra).select_related("docente").order_by("docente__apellido", "docente__nombre")
+        
+        ctx["form_horario"] = HorarioInlineForm(initial={'comision': comision.pk})
+        ctx["form_asignacion"] = DocenteAsignacionForm(initial={'catedra': catedra.pk})
+        return ctx

@@ -43,6 +43,7 @@ BEDEL_MENU = [
         "title": "ADMINISTRACIÓN",
         "items": [
             {"label": "Carreras", "url_name": "academia_core:cargar_carrera", "path": "/administracion/carreras/", "icon": "briefcase"},
+            {"label": "Gestionar Comisiones", "path": "/administracion/comisiones/", "icon": "copy"},
         ],
     },
     {

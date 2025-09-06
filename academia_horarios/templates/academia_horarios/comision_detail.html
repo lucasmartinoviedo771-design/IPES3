@@ -38,7 +38,7 @@
     <table class="table">
       <thead>
         <tr>
-          <th>Docente</th>
+          
           <th>Día</th>
           <th>Inicio</th>
           <th>Fin</th>
@@ -49,18 +49,19 @@
       <tbody>
         {% for h in horarios %}
         <tr>
-          <td>{{ h.docente }}</td>
-          <td>{{ h.get_dia_display|default:h.dia }}</td>
-          <td>{{ h.hora_inicio|time:"H:i" }}</td>
-          <td>{{ h.hora_fin|time:"H:i" }}</td>
-          <td>{{ h.aula|default:h.espacio }}</td>
+          
+          <td>{{ h.timeslot.get_dia_semana_display }}</td>
+          <td>{{ h.timeslot.inicio|time:"H:i" }}</td>
+          <td>{{ h.timeslot.fin|time:"H:i" }}</td>
+          <td>{{ h.aula|default:"-" }}</td>
           <td style="white-space:nowrap">
-            <a class="btn btn-ghost" href="{% url 'academia_horarios:horario_edit' h.pk %}">Editar</a>
-            <a class="btn btn-ghost" href="{% url 'academia_horarios:horario_delete' h.pk %}">Borrar</a>
+            {# TODO: Add edit/delete for HorarioClase #}
+            <a class="btn btn-ghost" href="#">Editar</a>
+            <a class="btn btn-ghost" href="#">Borrar</a>
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="6" class="muted">Esta comisión aún no tiene horarios.</td></tr>
+        <tr><td colspan="5" class="muted">Esta comisión aún no tiene horarios.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -68,35 +69,18 @@
 
   {# Alta de horario dentro del detalle #}
   <h2 style="margin-top:18px">Agregar horario</h2>
-  <form method="post" class="form-grid-2">
+  <form method="post" class="form-grid-2" action="{% url 'ui:agregar_horario' comision.pk %}">
     {% csrf_token %}
     {{ form_horario.non_field_errors }}
 
     <div>
-      <label for="{{ form_horario.docente.id_for_label }}">Docente</label>
-      {{ form_horario.docente|addclass:"select" }}
-    </div>
-    <div>
-      <label for="{{ form_horario.dia.id_for_label }}">Día</label>
-      {{ form_horario.dia|addclass:"select" }}
-    </div>
-    <div>
-      <label for="{{ form_horario.hora_inicio.id_for_label }}">Hora inicio</label>
-      {{ form_horario.hora_inicio|addclass:"input" }}
-    </div>
-    <div>
-      <label for="{{ form_horario.hora_fin.id_for_label }}">Hora fin</label>
-      {{ form_horario.hora_fin|addclass:"input" }}
+      <label for="{{ form_horario.timeslot.id_for_label }}">Bloque</label>
+      {{ form_horario.timeslot|addclass:"select" }}
     </div>
     <div>
       <label for="{{ form_horario.aula.id_for_label }}">Aula</label>
-      {{ form_horario.aula|addclass:"select" }}
+      {{ form_horario.aula|addclass:"input" }}
     </div>
-    <div>
-      <label for="{{ form_horario.activo.id_for_label }}">Activo</label>
-      <label class="checkbox">{{ form_horario.activo }} <span>Activo</span></label>
-    </div>
-
     <div class="grid-span-2">
       <label for="{{ form_horario.observaciones.id_for_label }}">Observaciones</label>
       {{ form_horario.observaciones|addclass:"input" }}
@@ -104,8 +88,73 @@
 
     <div class="grid-span-2 actions">
       <button class="btn btn-primary">Guardar Horario</button>
-      <a class="btn btn-ghost" href="{% url 'academia_horarios:panel_oferta' %}">Cancelar</a>
     </div>
   </form>
+
+  <h2 style="margin-top:18px">Docentes Asignados</h2>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Docente</th>
+          <th>Condición</th>
+          <th>Desde</th>
+          <th>Hasta</th>
+          <th style="width:1%"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for asignacion in asignaciones_docentes %}
+        <tr>
+          <td>{{ asignacion.docente }}</td>
+          <td>{{ asignacion.get_condicion_display }}</td>
+          <td>{{ asignacion.fecha_desde|date:"d/m/Y" }}</td>
+          <td>{{ asignacion.fecha_hasta|date:"d/m/Y"|default:"Actual" }}</td>
+          <td style="white-space:nowrap">
+            {# TODO: Add edit/delete for DocenteAsignacion #}
+            <a class="btn btn-ghost" href="#">Editar</a>
+            <a class="btn btn-ghost" href="#">Borrar</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="muted">Esta comisión aún no tiene docentes asignados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# Alta de asignacion docente #}
+  <h2 style="margin-top:18px">Asignar Docente</h2>
+  <form method="post" class="form-grid-2" action="{% url 'ui:asignar_docente' comision.pk %}">
+    {% csrf_token %}
+    {{ form_asignacion.non_field_errors }}
+    {{ form_asignacion.catedra }} {# Hidden field #}
+
+    <div>
+      <label for="{{ form_asignacion.docente.id_for_label }}">Docente</label>
+      {{ form_asignacion.docente|addclass:"select" }}
+    </div>
+    <div>
+      <label for="{{ form_asignacion.condicion.id_for_label }}">Condición</label>
+      {{ form_asignacion.condicion|addclass:"select" }}
+    </div>
+    <div>
+      <label for="{{ form_asignacion.fecha_desde.id_for_label }}">Fecha Desde</label>
+      {{ form_asignacion.fecha_desde|addclass:"input" }}
+    </div>
+    <div>
+      <label for="{{ form_asignacion.fecha_hasta.id_for_label }}">Fecha Hasta</label>
+      {{ form_asignacion.fecha_hasta|addclass:"input" }}
+    </div>
+    <div>
+      <label for="{{ form_asignacion.activa.id_for_label }}">Activa</label>
+      <label class="checkbox">{{ form_asignacion.activa }} <span>Activa</span></label>
+    </div>
+
+    <div class="grid-span-2 actions">
+      <button class="btn btn-primary">Asignar Docente</button>
+    </div>
+  </form>
+
 </div>
 {% endblock %}

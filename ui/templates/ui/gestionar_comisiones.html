@@ -1,0 +1,59 @@
+{% extends "ui/base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>{{ page_title }}</h2>
+  <p class="muted">Seleccioná una carrera y un plan para ver las materias y gestionar sus comisiones.</p>
+
+  <div class="grid grid-cols-2 gap-3 mb-4">
+    <div>
+      <label>Profesorado / Carrera</label>
+      <select id="sel-carrera" class="input">
+        <option value="">---------</option>
+        {% for c in carreras %}
+          <option value="{{ c.id }}">{{ c.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label>Período Lectivo</label>
+      <select id="sel-periodo" class="input">
+        <option value="">---------</option>
+        {% for p in periodos %}
+          <option value="{{ p.id }}">{{ p }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label>Plan de Estudios</label>
+      <select id="sel-plan" class="input" disabled>
+        <option value="">Seleccioná una carrera</option>
+      </select>
+    </div>
+
+    <div>
+      <label>Materia</label>
+      <select id="sel-materia" class="input" disabled>
+        <option value="">Seleccioná un plan</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="comisiones-container">
+    <!-- Las comisiones se cargarán aquí por JS -->
+    <p class="muted">Por favor, completá los campos superiores para ver las comisiones.</p>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'ui/js/utils/fetchJSON.js' %}"></script>
+<script src="{% static 'ui/js/utils/fillSelect.js' %}"></script> {# Asumiendo que crearemos este util #}
+<script src="{% static 'ui/js/gestionar_comisiones.js' %}"></script>
+{% endblock %}

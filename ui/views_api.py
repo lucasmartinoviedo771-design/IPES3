@@ -48,18 +48,26 @@ def api_materias(request):
     logger.info("api_materias GET params=%s", params)
 
     plan_id = params.get('plan') or params.get('plan_id')
-    carrera_id = params.get('carrera') or params.get('carrera_id')
+    periodo_id = params.get('periodo_id')
 
     if not plan_id:
-        return JsonResponse({'error': 'Falta parámetro plan/plan_id', 'recibido': params}, status=400)
+        return JsonResponse({'error': 'Falta parámetro plan_id'}, status=400)
 
     try:
         qs = EspacioCurricular.objects.filter(plan_id=plan_id)
-        if carrera_id:
-            qs = qs.filter(plan__carrera_id=carrera_id)
-        qs = qs.order_by('anio', 'cuatrimestre', 'nombre')
+
+        if periodo_id:
+            Periodo = apps.get_model('academia_horarios', 'Periodo')
+            periodo = Periodo.objects.filter(id=periodo_id).first()
+            if periodo:
+                if periodo.cuatrimestre == 1:
+                    qs = qs.filter(cuatrimestre__in=['1', 'A'])
+                elif periodo.cuatrimestre == 2:
+                    qs = qs.filter(cuatrimestre__in=['2', 'A'])
+
+        qs = qs.order_by('anio', 'cuatrimestre', 'materia__nombre')
         data = [{'id': m.id, 'nombre': m.nombre, 'horas': m.horas} for m in qs]
-        logger.info("api_materias OK plan=%s carrera=%s count=%s", plan_id, carrera_id, len(data))
+        logger.info("api_materias OK plan=%s count=%s", plan_id, len(data))
         return JsonResponse({'results': data})
     except Exception as e:
         logger.error("api_materias error: %s", e, exc_info=True)
@@ -173,28 +181,49 @@ def api_horario_save(request):
 
     materia_id = payload.get("materia_id")
     plan_id = payload.get("plan_id")
-    profesorado_id = payload.get("profesorado_id") or payload.get("carrera_id")
+    profesorado_id = payload.get("profesorado_id")
+    periodo_id = payload.get("periodo_id")
     turno = payload.get("turno")
+    comision_id = payload.get("comision_id")
     items = payload.get("items", [])
 
-    if not (materia_id and plan_id and profesorado_id and turno):
-        return JsonResponse({'ok': False, 'error': 'Faltan parámetros obligatorios (materia, plan, carrera, turno)'}, status=400)
+    if not all([materia_id, plan_id, profesorado_id, turno, comision_id, periodo_id]):
+        return JsonResponse({'ok': False, 'error': 'Faltan parámetros obligatorios'}, status=400)
 
-    # 1) buscar el año de esa materia en ese plan
+    # Obtener la seccion de la comision (ej. 'A', 'B')
+    Comision = apps.get_model('academia_horarios', 'Comision')
+    comision_seccion = ''
+    if comision_id == 'default':
+        # Si es la comisión por defecto, puede que no exista. La creamos si es necesario.
+        mep = MateriaEnPlan.objects.filter(plan_id=plan_id, materia_id=materia_id).first()
+        comision_obj, created = Comision.objects.get_or_create(
+            materia_en_plan=mep,
+            periodo_id=periodo_id,
+            seccion='A',
+            defaults={'turno': turno, 'nombre': 'Comisión A'}
+        )
+        comision_seccion = 'A'
+    else:
+        comision_obj = Comision.objects.filter(id=comision_id).first()
+        if not comision_obj:
+            return JsonResponse({'ok': False, 'error': 'La comisión seleccionada no existe.'}, status=404)
+        comision_seccion = comision_obj.seccion
+
     anio = (MateriaEnPlan.objects
             .filter(plan_id=plan_id, materia_id=materia_id)
             .values_list('anio', flat=True)
             .first())
 
-    # 🔴 NUEVO: valida solapes en el draft
     err = _validate_draft_overlaps(items)
     if err:
         return JsonResponse({'ok': False, 'error': err}, status=400)
 
     with transaction.atomic():
+        # El borrado ahora es específico para la comisión
         Horario.objects.filter(
             materia_id=materia_id, plan_id=plan_id,
-            profesorado_id=profesorado_id, turno=turno
+            profesorado_id=profesorado_id, turno=turno,
+            comision=comision_seccion
         ).delete()
 
         nuevos = [
@@ -203,10 +232,12 @@ def api_horario_save(request):
                 plan_id=plan_id,
                 profesorado_id=profesorado_id,
                 turno=turno,
+                comision=comision_seccion,
                 dia=item['dia'],
                 inicio=item['inicio'],
                 fin=item['fin'],
-                anio=anio,              # ← ★ ahora se guarda el año
+                anio=anio,
+                docente_id=item.get('docente_id') # <-- Guardar el docente
             )
             for item in items
         ]
@@ -373,3 +404,78 @@ def api_get_horarios_materia(request):
     ).values('dia', 'inicio', 'fin')
 
     return JsonResponse({'horarios': list(qs)})
+
+
+@require_GET
+def api_get_comisiones_materia(request):
+    """
+    Devuelve las comisiones existentes para una materia en un plan y periodo.
+    """
+    plan_id = request.GET.get("plan_id")
+    materia_id = request.GET.get("materia_id") # Ojo: este es EspacioCurricular ID
+    periodo_id = request.GET.get("periodo_id")
+
+    if not all([plan_id, materia_id, periodo_id]):
+        return JsonResponse({'error': 'Faltan parámetros'}, status=400)
+
+    # Comision se relaciona con MateriaEnPlan. Hay que encontrar el MateriaEnPlan
+    # que corresponde a este EspacioCurricular en este Plan.
+    mep = MateriaEnPlan.objects.filter(plan_id=plan_id, materia_id=materia_id).first()
+    if not mep:
+        return JsonResponse({'comisiones': []}) # No hay materia en plan, no puede haber comisiones
+
+    Comision = apps.get_model('academia_horarios', 'Comision')
+    qs = Comision.objects.filter(
+        materia_en_plan=mep,
+        periodo_id=periodo_id
+    ).order_by('seccion').values('id', 'seccion', 'nombre')
+
+    return JsonResponse({'comisiones': list(qs)})
+
+
+@require_POST
+def api_add_comision(request):
+    """
+    Crea la siguiente comisión para una materia en un plan y periodo.
+    """
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+        plan_id = payload.get("plan_id")
+        materia_id = payload.get("materia_id")
+        periodo_id = payload.get("periodo_id")
+    except Exception:
+        return JsonResponse({'ok': False, 'error': 'JSON inválido'}, status=400)
+
+    if not all([plan_id, materia_id, periodo_id]):
+        return JsonResponse({'ok': False, 'error': 'Faltan parámetros'}, status=400)
+
+    mep = MateriaEnPlan.objects.filter(plan_id=plan_id, materia_id=materia_id).first()
+    if not mep:
+        return JsonResponse({'ok': False, 'error': 'Materia en Plan no encontrada'}, status=404)
+
+    Comision = apps.get_model('academia_horarios', 'Comision')
+    existentes = Comision.objects.filter(
+        materia_en_plan=mep,
+        periodo_id=periodo_id
+    ).order_by('seccion')
+
+    ultima_seccion = '@' # Caracter anterior a la 'A'
+    if existentes.exists():
+        ultima_seccion = existentes.last().seccion
+    
+    nueva_seccion = chr(ord(ultima_seccion) + 1)
+
+    # Lógica para tomar el turno de la comisión anterior, si existe.
+    turno_base = existentes.first().turno if existentes.exists() else 'manana'
+
+    try:
+        nueva_comision = Comision.objects.create(
+            materia_en_plan=mep,
+            periodo_id=periodo_id,
+            seccion=nueva_seccion,
+            nombre=f"Comisión {nueva_seccion}",
+            turno=turno_base
+        )
+        return JsonResponse({'ok': True, 'id': nueva_comision.id, 'seccion': nueva_comision.seccion})
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': str(e)}, status=500)

@@ -135,7 +135,7 @@ class HorarioClase(models.Model):
     comision = models.ForeignKey(Comision, on_delete=models.CASCADE, related_name="horarios")
     timeslot = models.ForeignKey(TimeSlot, on_delete=models.PROTECT)
     aula = models.CharField(max_length=64, blank=True, default="")
-    docentes = models.ManyToManyField('academia_core.Docente', blank=True)
+    
     observaciones = models.TextField(blank=True, default="")
 
     def clean(self):

@@ -341,7 +341,7 @@ class EstudianteProfesorado(models.Model):
 
     @property
     def es_condicional(self) -> bool:
-        return self.calcular_condicion_admin() == CondicionAdmin.CONDicional
+        return self.calcular_condicion_admin() == CondicionAdmin.CONDICIONAL
 
     # --------- Promedio (igual que tenías) ---------
     def _mov_aprueba(self, m) -> bool:
@@ -676,7 +676,7 @@ class Movimiento(models.Model):
                     "No puede inscribirse a mesa: documentación/legajo incompleto."
                 )
 
-            if cond_codigo == "REGULAR":
+            if cond_codigo in {"REGULAR", "FINAL_APROBADO"}:
                 if not self.ausente:
                     if self.nota_num is None:
                         raise ValidationError("Debe cargar la nota o marcar Ausente.")
