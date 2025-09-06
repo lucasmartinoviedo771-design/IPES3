@@ -1,0 +1,60 @@
+/* tabla base */
+.tabla-horaria {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.tabla-horaria th,
+.tabla-horaria td {
+  border: 1px solid #e6d9c8;
+  padding: .45rem .5rem;
+  text-align: center;
+  vertical-align: middle;
+}
+.tabla-horaria thead th {
+  background: #f7efe6;
+  font-weight: 600;
+}
+
+/* celdas seleccionables */
+.slot {
+  cursor: pointer;
+  height: 2.1rem;
+  user-select: none;
+}
+.slot--recreo {
+  font-style: italic;
+  color: #a77;
+  background: #fbf7f3;
+  cursor: not-allowed;
+}
+.slot--activo {
+  background: #f3b98a !important; /* naranja suave */
+  color: #3a2a1f;
+  font-weight: 600;
+  border-color: #e2a476;
+}
+
+/* Estilo para celdas seleccionadas por el usuario en la grilla */
+.tabla-horaria td.seleccionada {
+  background-color: #d4edda; /* Verde suave */
+  font-weight: 600;
+  color: #155724;
+  cursor: pointer;
+}
+
+
+/* cositas de layout */
+.card { background:#fff8; padding:1rem 1.25rem; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+.input{ width:100%; padding:.5rem .6rem; border:1px solid #e6d9c8; border-radius:6px; }
+.btn{ padding:.5rem .8rem; border-radius:8px; border:1px solid #d9b48a; background:#fff; }
+.btn-primary{ background:#d07d3b; color:#fff; border-color:#c56f28; }
+.btn:hover{ filter:brightness(.98); }
+.muted{ color:#7d6b5a; font-size:.9rem; }
+.grid{ display:grid; }
+.grid-cols-2{ grid-template-columns:1fr 1fr; }
+.gap-3{ gap: .75rem; }
+.mt-3{ margin-top: .75rem; }
+.mt-4{ margin-top: 1rem; }
+.mb-4{ margin-bottom: 1rem; }
+.overflow-x{ overflow-x:auto; }

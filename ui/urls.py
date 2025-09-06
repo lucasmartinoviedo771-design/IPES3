@@ -54,6 +54,7 @@ urlpatterns = [
 
     
     path("api/horario/save", views_api.api_horario_save, name="api_horario_save"),
+    path("api/horarios/materia/", views_api.api_get_horarios_materia, name="api_get_horarios_materia"),
     path("api/horarios/materia-plan", views_api.api_horarios_materia_plan, name="api_horarios_materia_plan"),
     
     path("api/turnos", views_api.api_turnos, name="api_turnos"),

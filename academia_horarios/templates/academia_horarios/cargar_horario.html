@@ -1,252 +1,69 @@
 {% extends "ui/base.html" %}
-{% load static form_extras %}
-
-{% block body_class %}page-catedra{% endblock %}
+{% load static %}
 
 {% block title %}Armar Horarios de Cátedra{% endblock %}
 
-{% block content %}
-<div id="cargar-horarios" class="panel"
-     data-grid-url="{% url 'academia_horarios:horarios_grilla' %}"
-     data-timeslots-url="{% url 'academia_horarios:timeslots_api' %}"
-     data-param-prof="carrera" data-param-plan="plan"
-     data-param-materia="materia" data-param-turno="turno">
-  <h1>Armar Horarios de Cátedra</h1>
-  <p>Seleccioná una materia y un turno para definir los bloques horarios que ocupará la cátedra.</p>
-
-  <form id="frm-horario" method="post" action="{{ request.path }}">
-    {% csrf_token %}
-
-    <div class="form-grid-2">
-      <!-- Carrera, Plan, Materia -->
-      <div>
-        <label for="id_carrera">Profesorado / Carrera</label>
-        <select id="id_carrera" name="carrera" class="select">
-          <option value="">---------</option>
-          {% for c in carreras %}
-          <option value="{{ c.id }}" {% if c.id|stringformat:"s" == selected_carrera_id %}selected{% endif %}>{{ c.nombre }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div>
-        <label for="id_plan">Plan</label>
-        <select id="id_plan" name="plan" class="select" disabled>
-            <option value="">---------</option>
-            {% if selected_plan_id %}
-            <option value="{{ selected_plan_id }}" selected></option>
-            {% endif %}
-        </select>
-      </div>
-      <div>
-        <label for="id_materia">Materia</label>
-        <select id="id_materia" name="materia" class="select" disabled>
-            <option value="">---------</option>
-            {% if selected_materia_id %}
-            <option value="{{ selected_materia_id }}" selected></option>
-            {% endif %}
-        </select>
-      </div>
-
-      <!-- Selector de Turno -->
-      <div>
-        <label for="id_turno">Turno</label>
-        <select id="id_turno" name="turno" class="select">
-            <option value="manana">Mañana</option>
-            <option value="tarde">Tarde</option>
-            <option value="vespertino">Vespertino</option>
-        </select>
-      </div>
-
-      <div class="grid-span-2" id="grid-auto-anchor">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="margin:1rem 0 .5rem">Grilla de Horarios</h2>
-            <div style="display: flex; align-items: center; gap: 1rem;">
-              <div id="block-counter" style="font-size:.9rem; color:#6b7280;"></div>
-              <div id="save-indicator" style="min-height:1.2rem; font-size:.9rem; color:#6b7280;"></div>
-            </div>
-          </div>
-          <div id="grid-horarios"><p class="muted">Seleccioná Plan y Materia para ver/armar la grilla.</p></div>
-        </div>
-    </div>
-
-    <div class="actions">
-      <button id="btn-guardar-horario" class="btn btn-primary" type="button">Guardar Malla Horaria</button>
-    </div>
-  </form>
-</div>
-{% endblock %}
-
 {% block extra_css %}
-<style>
-/* === Grilla de horarios === */
-.tabla-grilla{
-  width:100%;
-  border-collapse:separate;
-  border-spacing:0;
-  font-size:14px;
-}
-
-.tabla-grilla th,
-.tabla-grilla td{
-  padding:10px 12px;
-  border-bottom:1px solid #EEE3D5;  /* líneas suaves */
-  border-right:1px solid #EEE3D5;
-  vertical-align:middle;
-}
-
-.tabla-grilla thead th{
-  background:#FAF7F2;              /* cabecera suave */
-  color:#5B4636;
-  font-weight:600;
-  text-align:center;
-}
-
-.tabla-grilla tbody th{
-  background:#FAF7F2;              /* columna de horas (L-V / Sáb) */
-  color:#5B4636;
-  font-weight:600;
-}
-
-.tabla-grilla th:first-child{       /* borde izquierdo */
-  border-left:1px solid #EEE3D5;
-}
-.tabla-grilla tbody tr:first-child th,
-.tabla-grilla tbody tr:first-child td{
-  border-top:1px solid #EEE3D5;
-}
-
-/* Columnas específicas para controlar ancho */
-.col-hora-lv, .col-hora-sab{ width:140px; }
-.col-sab{ width:100px; text-align:center; }
-
-/* Estado de celdas */
-.tabla-grilla td.celda-vacia{ background:#FFF; cursor:pointer; }
-
-/* fondo durazno para celdas ocupadas o seleccionadas */
-table.tabla-grilla td.celda-ocupada,
-table.tabla-grilla td.seleccionada{
-  background: #FFF1E6;             /* durazno */
-  box-shadow: inset 0 0 0 2px #E7A268;
-}
-
-table.tabla-grilla td.celda-ocupada:hover,
-table.tabla-grilla td.seleccionada:hover{
-  background: #FFE6D1;
-}
-
-/* Recreos (ya lo tenías, lo refuerzo) */
-table.tabla-grilla td.recreo{
-  background:#F7EFE6;
-  color:#8B5E34;
-  font-style:italic;
-  text-align:center;
-}
-
-/* selección para agregar (sobre celdas vacías) */
-table.tabla-grilla td.sel-add{
-  outline:2px solid #E05666;
-  background:#FFEDEE;
-}
-
-/* selección para quitar (sobre celdas ocupadas) */
-table.tabla-grilla td.sel-del{
-  outline:2px dashed #E05666;
-  background:#FFF4F4;
-}
-
-/* Un poco de redondeo general al contenedor si querés */
-.card-grilla{
-  border:1px solid #EEE3D5;
-  border-radius:12px;
-  overflow:hidden;
-}
-
-/* Selects / inputs (tu tema ya agrega .select/.input automáticamente, esto refuerza) */
-.select, .input{
-  background:#FFF;
-  border:1px solid #E6D9C9;
-  border-radius:10px;
-  padding:10px 12px;
-}
-</style>
+<link rel="stylesheet" href="{% static 'academia_horarios/horarios.css' %}">
 {% endblock %}
 
-{% block extra_js %}
-{# Carga de combos en cascada #}
-<script>
-(function() {
-    const selCarrera = document.getElementById('id_carrera');
-    const selPlan = document.getElementById('id_plan');
-    const selMateria = document.getElementById('id_materia');
+{% block content %}
+<div class="card">
+  <h2>Armar Horarios de Cátedra</h2>
+  <p class="muted">Seleccioná una materia y un turno para definir los bloques horarios que ocupará la cátedra.</p>
 
-    const API_PLANES = "{% url 'ui:api_planes' %}";
-    const API_MATERIAS = "{% url 'ui:api_materias' %}";
-    const absURL = (path) => new URL(path, window.location.origin);
+  <div class="grid grid-cols-2 gap-3">
+    <div>
+      <label>Profesorado / Carrera</label>
+      <select id="sel-carrera" class="input">
+        <option value="">---------</option>
+        {% for c in carreras %}
+          <option value="{{ c.id }}">{{ c.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
 
-    async function fetchJSON(url) {
-        const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-    }
-    function toArray(data) {
-        if (!data) return [];
-        if (Array.isArray(data)) return data; 
-        return data.results || data.items || [];
-    }
-    function setOptions($select, data, valueKey='id', labelKey='nombre') {
-        const list = toArray(data);
-        $select.innerHTML = '<option value="">--------</option>';
-        list.forEach(it => $select.add(new Option(it[labelKey], it[valueKey])));
-        $select.disabled = list.length === 0;
-    }
-    function clearAndDisable(selects) {
-        selects.forEach(s => { s.innerHTML = '<option value="">--------</option>'; s.disabled = true; });
-    }
+    <div>
+      <label>Plan</label>
+      <select id="sel-plan" class="input">
+        <option value="">---------</option>
+      </select>
+    </div>
 
-    async function updatePlanes() {
-        const carreraId = selCarrera.value;
-        clearAndDisable([selPlan, selMateria]);
-        if (!carreraId) return;
-        const u = absURL(API_PLANES); u.searchParams.set('carrera', carreraId);
-        const data = await fetchJSON(u);
-        setOptions(selPlan, data);
-        selPlan.disabled = false;
-    }
+    <div>
+      <label>Materia</label>
+      <select id="sel-materia" class="input">
+        <option value="">---------</option>
+      </select>
+    </div>
 
-    async function updateMaterias() {
-        const planId = selPlan.value;
-        clearAndDisable([selMateria]);
-        if (!planId) return;
-        const u = absURL(API_MATERIAS); u.searchParams.set('plan_id', planId);
-        const data = await fetchJSON(u);
-        setOptions(selMateria, data);
-        selMateria.disabled = false;
-    }
+    <div>
+      <label>Turno</label>
+      <select id="sel-turno" class="input">
+        {% for t in turnos %}
+          <option value="{{ t.id }}">{{ t.label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
 
-    selCarrera.addEventListener('change', updatePlanes);
-    selPlan.addEventListener('change', updateMaterias);
+  <h3 class="mt-4">Grilla de Horarios</h3>
+  <p class="muted">Seleccioná Plan, Materia y Turno para ver/armar la grilla.</p>
 
-    if (selCarrera.value) {
-        updatePlanes().then(() => {
-            if (selPlan.value) updateMaterias();
-        });
-    }
-})();
-</script>
+  <div id="grilla-wrapper" class="overflow-x">
+    <table id="grilla" class="tabla-horaria">
+      <!-- Se genera por JS -->
+    </table>
+  </div>
+
+  <div class="mt-3">
+    <button id="btn-guardar" class="btn btn-primary">Guardar Malla Horaria</button>
+  </div>
+</div>
 
 <script>
-    // Valores iniciales pasados desde Django
-    const initialSelectedCarreraId = "{{ selected_carrera_id|default:'' }}";
-    const initialSelectedPlanId = "{{ selected_plan_id|default:'' }}";
-    const initialSelectedMateriaId = "{{ selected_materia_id|default:'' }}";
-    const initialSelectedTurnoValue = "{{ selected_turno_value|default:'' }}";
-
-    // Endpoints para la grilla de horarios
-    window.API_GRILLA_CONFIG     = "{% url 'ui:api_grilla_config' %}";
-    window.API_HORARIOS_OCUPADOS = "{% url 'ui:api_horarios_ocupados' %}";
-    window.API_HORARIO_SAVE      = "{% url 'academia_horarios:api_guardar_horarios' %}";
+  // Obtiene /panel o /panel/horarios a partir de la URL de api/planes
+  window.HOR_BASE = "{% url 'academia_horarios:api_planes' %}".replace(/\/api\/planes\/?$/, "");
 </script>
-
-{# Carga de la grilla de horarios #}
-<script src="{% static 'ui/js/armar_horarios.js' %}?v=9"></script>
+<script src="{% static 'ui/js/armar_horarios.js' %}?v=15"></script>
 {% endblock %}

@@ -173,11 +173,11 @@ def api_horario_save(request):
 
     materia_id = payload.get("materia_id")
     plan_id = payload.get("plan_id")
-    carrera_id = payload.get("profesorado_id") or payload.get("carrera_id")
+    profesorado_id = payload.get("profesorado_id") or payload.get("carrera_id")
     turno = payload.get("turno")
     items = payload.get("items", [])
 
-    if not (materia_id and plan_id and carrera_id and turno):
+    if not (materia_id and plan_id and profesorado_id and turno):
         return JsonResponse({'ok': False, 'error': 'Faltan parámetros obligatorios (materia, plan, carrera, turno)'}, status=400)
 
     # 1) buscar el año de esa materia en ese plan
@@ -194,14 +194,14 @@ def api_horario_save(request):
     with transaction.atomic():
         Horario.objects.filter(
             materia_id=materia_id, plan_id=plan_id,
-            carrera_id=carrera_id, turno=turno
+            profesorado_id=profesorado_id, turno=turno
         ).delete()
 
         nuevos = [
             Horario(
                 materia_id=materia_id,
                 plan_id=plan_id,
-                carrera_id=carrera_id,
+                profesorado_id=profesorado_id,
                 turno=turno,
                 dia=item['dia'],
                 inicio=item['inicio'],
@@ -350,3 +350,26 @@ def api_grilla_config(request):
     except Exception as e:
         logger.error(f"api_grilla_config error para turno={turno}: {e}", exc_info=True)
         return JsonResponse({'error': 'Error al obtener la configuración de la grilla.'}, status=500)
+
+
+@require_GET
+def api_get_horarios_materia(request):
+    """
+    Devuelve los bloques de horario existentes para una materia/turno.
+    """
+    profesorado_id = request.GET.get("profesorado_id")
+    plan_id = request.GET.get("plan_id")
+    materia_id = request.GET.get("materia_id")
+    turno = request.GET.get("turno")
+
+    if not all([profesorado_id, plan_id, materia_id, turno]):
+        return JsonResponse({'error': 'Faltan parámetros'}, status=400)
+
+    qs = Horario.objects.filter(
+        profesorado_id=profesorado_id,
+        plan_id=plan_id,
+        materia_id=materia_id,
+        turno=turno
+    ).values('dia', 'inicio', 'fin')
+
+    return JsonResponse({'horarios': list(qs)})
