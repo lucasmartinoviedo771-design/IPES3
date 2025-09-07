@@ -27,7 +27,7 @@ Pygments==2.19.2
 pyHanko==0.29.1
 pyhanko-certvalidator==0.27.0
 PyMySQL==1.1.1
-pypdf==5.9.0
+pypdf==6.0.0
 python-bidi==0.6.6
 python-dotenv==1.1.1
 PyYAML==6.0.2
