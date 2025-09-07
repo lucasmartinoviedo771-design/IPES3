@@ -350,15 +350,23 @@ def print_section_4(base_dir: Path) -> None:
 # ------------------------------------------------
 # [5/5] Funciones JS/TS duplicadas por nombre
 # ------------------------------------------------
+ID = r"([A-Za-z_$][A-Za-z0-9_$]*)"
+
+PAT_FUNC = re.compile(
+    rf"\b(?:const|let|var)\s+{ID}\s*=\s*(?:async\s+)?function\s*\(",
+    re.MULTILINE,
+)
+
+PAT_ARROW = re.compile(
+    rf"\b(?:const|let|var)\s+{ID}\s*=\s*(?:async\s*)?\([^)]*\)\s*=>",
+    re.MULTILINE,
+)
+
 JS_FUNC_PATTERNS = [
     re.compile(r"\bfunction\s+([A-Za-zA-Z0-9_]+)\s*\(", re.MULTILINE),
     re.compile(r"\bexport\s+function\s+([A-Za-zA-Z0-9_]+)\s*\(", re.MULTILINE),
-    re.compile(
-        r"\b(?:const|let|var)\s+([A-Za-zA-Z0-9_]+)\s*=\s*(?:async\s+)?function\s*\(", re.MULTILINE
-    ),
-    re.compile(
-        r"\b(?:const|let|var)\s+([A-Za-zA-Z0-9_]+)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>", re.MULTILINE
-    ),
+    PAT_FUNC,
+    PAT_ARROW,
     re.compile(r"\bexport\s+(?:const|let|var)\s+([A-Za-zA-Z0-9_]+)\s*=", re.MULTILINE),
 ]
 

@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -8,6 +9,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from academia_core.models import Carrera, PlanEstudios
+
+logger = logging.getLogger(__name__)
 
 
 # ======== PANTALLA ========
@@ -129,5 +132,6 @@ def plan_save_api(request):
             return JsonResponse({"ok": False, "error": "Resolución obligatoria"}, status=400)
         plan, _ = PlanEstudios.objects.get_or_create(resolucion=resol)
         return JsonResponse({"ok": True, "id": plan.id})
-    except Exception as e:
-        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+    except Exception:
+        logger.exception("plan_save_api failed")
+        return JsonResponse({"ok": False, "error": "Internal server error"}, status=500)

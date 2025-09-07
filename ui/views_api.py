@@ -70,9 +70,9 @@ def api_materias(request):
         data = [{"id": m.id, "nombre": m.nombre, "horas": m.horas} for m in qs]
         logger.info("api_materias OK plan=%s count=%s", plan_id, len(data))
         return JsonResponse({"results": data})
-    except Exception as e:
-        logger.error("api_materias error: %s", e, exc_info=True)
-        return JsonResponse({"results": [], "error": str(e)}, status=500)
+    except Exception:
+        logger.exception("api_materias error")
+        return JsonResponse({"results": [], "error": "Ocurrió un error interno."}, status=500)
 
 
 def _get(request, *names):
@@ -120,8 +120,8 @@ def api_turnos(request):
         turnos_qs = TurnoModel.objects.order_by("id").values("slug", "nombre")
         turnos = [{"value": t["slug"], "label": t["nombre"]} for t in turnos_qs]
         return JsonResponse({"turnos": turnos}, status=200)
-    except Exception as e:
-        logger.error("api_turnos error: %s", e, exc_info=True)
+    except Exception:
+        logger.exception("api_turnos error")
         return JsonResponse({"error": "Error al obtener los turnos."}, status=500)
 
 
@@ -412,10 +412,11 @@ def api_grilla_config(request):
             }
         )
 
-    except Exception as e:
-        logger.error(f"api_grilla_config error para turno={turno}: {e}", exc_info=True)
+    except Exception:
+        logger.exception(f"api_grilla_config error para turno={turno}")
         return JsonResponse(
-            {"error": "Error al obtener la configuración de la grilla."}, status=500
+            {"error": "Error al obtener la configuración de la grilla."},
+            status=500,
         )
 
 
@@ -512,5 +513,8 @@ def api_add_comision(request):
         return JsonResponse(
             {"ok": True, "id": nueva_comision.id, "seccion": nueva_comision.seccion}
         )
-    except Exception as e:
-        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+    except Exception:
+        logger.exception("Error al crear nueva comisión")
+        return JsonResponse(
+            {"ok": False, "error": "Ocurrió un error interno del servidor"}, status=500
+        )
