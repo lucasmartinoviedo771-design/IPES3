@@ -9,7 +9,7 @@ click==8.2.1
 colorama==0.4.6
 cryptography==45.0.6
 cssselect2==0.8.0
-Django==5.2.5
+Django==5.2.6
 djangorestframework==3.16.1
 html5lib==1.1
 idna==3.10
