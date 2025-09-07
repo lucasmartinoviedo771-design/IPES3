@@ -21,43 +21,42 @@ jobs:
       TIME_ZONE: "UTC"
       DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,testserver"
       DJANGO_CSRF_TRUSTED_ORIGINS: "http://localhost,http://127.0.0.1"
-      PYTHONUTF8: "1"  # salida más estable en CI
 
     steps:
-      - name: Checkout (Revisar código) 🛎️
+      - name: Checkout (Revisar código)
         uses: actions/checkout@v4
 
-      # uv en lugar de setup-python + pip
       - name: Install uv
         uses: astral-sh/setup-uv@v6
 
-      - name: Install Python ${{ matrix.python-version }} 🐍
+      - name: Install Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
 
-      # Instala prod + dev (pytest, ruff, etc.) desde pyproject/uv.lock
-      - name: Instalar dependencias con uv 📦
+      - name: Instalar dependencias con uv
         run: |
-          uv sync --all-groups --locked || uv sync --all-groups
+          uv sync --locked || uv sync
+          uv add --dev pytest pytest-django pytest-cov ruff tzdata
+          uv sync
 
-      - name: Lint con Ruff (no bloqueante) 🎨
+      - name: Lint con Ruff (no bloqueante)
         run: uv run ruff check . || true
 
-      - name: Detectar ruta de manage.py 🔍
+      - name: Detectar ruta de manage.py
         id: managepy
         run: |
           if [ -f manage.py ]; then
-            echo "path=manage.py" >> $GITHUB_OUTPUT
+            echo "path=manage.py" >> "$GITHUB_OUTPUT"
           elif [ -f academia_project/manage.py ]; then
-            echo "path=academia_project/manage.py" >> $GITHUB_OUTPUT
+            echo "path=academia_project/manage.py" >> "$GITHUB_OUTPUT"
           else
             echo "ERROR: No se encontró manage.py" >&2
             exit 1
           fi
 
-      - name: Django Check (configuración básica) ✅
-        run: uv run python ${{ steps.managepy.outputs.path }} check
+      - name: Django Check (configuración básica)
+        run: uv run python "${{ steps.managepy.outputs.path }}" check
 
-      - name: Django Check --deploy (bloqueante) 🔒
+      - name: Django Check --deploy (bloqueante)
         env:
           DJANGO_DEBUG: "0"
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
@@ -65,25 +64,36 @@ jobs:
           DJANGO_CSRF_TRUSTED_ORIGINS: "https://example.com"
           SECURE_SSL_REDIRECT: "1"
           USE_PROXY_SSL_HEADER: "1"
-        run: uv run python ${{ steps.managepy.outputs.path }} check --deploy --fail-level WARNING
+        run: uv run python "${{ steps.managepy.outputs.path }}" check --deploy --fail-level WARNING
 
-      - name: Verificar que no falten migraciones 📜
-        run: uv run python ${{ steps.managepy.outputs.path }} makemigrations --check --dry-run
+      - name: Verificar que no falten migraciones
+        run: uv run python "${{ steps.managepy.outputs.path }}" makemigrations --check --dry-run
 
-      - name: Aplicar migraciones en SQLite 🛠️
-        run: uv run python ${{ steps.managepy.outputs.path }} migrate --noinput
+      - name: Aplicar migraciones en SQLite
+        run: uv run python "${{ steps.managepy.outputs.path }}" migrate --noinput
 
-      - name: Ejecutar tests con Pytest 🧪
+      - name: Tests + coverage (XML/HTML)
         env:
           RUN_STRICT_HORARIOS_TESTS: "0"
-        run: uv run pytest -q
-        
-- name: Generar cobertura (XML + HTML)
-  run: uv run pytest --cov --cov-report=xml --cov-report=html -q
+        run: |
+          uv run pytest \
+            --cov=academia_core --cov=academia_horarios --cov=ui \
+            --cov-report=xml:coverage.xml \
+            --cov-report=html:htmlcov \
+            --cov-report=term-missing -q
 
-- name: Publicar htmlcov como artefacto
-  uses: actions/upload-artifact@v4
-  with:
-    name: coverage-html
-    path: htmlcov
-    if-no-files-found: error
+      - name: Publicar cobertura HTML como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: htmlcov
+          if-no-files-found: error
+
+      - name: Publicar cobertura XML como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          if-no-files-found: error
