@@ -1,12 +1,15 @@
-name: CI (Lint, Check & Tests)
+name: "Tests & Coverage"
 
 on:
-  push:
-    branches: [ main, dev ]
   pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main, dev, chore/** ]
+  workflow_dispatch:
 
 jobs:
-  test_and_lint:
+  tests:
+    name: tests
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
