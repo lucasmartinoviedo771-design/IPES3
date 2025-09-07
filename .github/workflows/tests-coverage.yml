@@ -1,59 +1,71 @@
-name: Tests & Coverage
+name: CI (Lint, Check & Tests)
 
 on:
-  pull_request:
   push:
-    branches: [ "main" ]
+    branches: [ main, dev ]
+  pull_request:
+  workflow_dispatch:
 
 jobs:
-  tests:
+  test_and_lint:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
 
-    permissions:
-      contents: read
-      actions: read
+    env:
+      DJANGO_SETTINGS_MODULE: academia_project.settings
+      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+      USE_SQLITE_FOR_TESTS: "1"
+      DJANGO_DEBUG: "1"
+      TIME_ZONE: "UTC"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,testserver"
+      DJANGO_CSRF_TRUSTED_ORIGINS: "http://localhost,http://127.0.0.1"
 
     steps:
-      - name: Checkout
+      - name: Checkout 🛎️
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
 
-      - name: Install uv
-        run: pipx install uv
+      - name: Install Python ${{ matrix.python-version }} 🐍
+        run: uv python install ${{ matrix.python-version }}
 
-      - name: Create venv and expose it on PATH
+      - name: Sync deps 📦
         run: |
-          uv venv
-          echo "VIRTUAL_ENV=$(pwd)/.venv" >> $GITHUB_ENV
-          echo "$(pwd)/.venv/bin" >> $GITHUB_PATH
+          uv sync --locked || uv sync
+          uv add --dev pytest pytest-django pytest-cov ruff tzdata
+          uv sync
 
-      - name: Install test deps
-        run: |
-          uv pip install pytest pytest-cov coverage pytest-django
-          # instala Django y otras deps de runtime si tu proyecto las necesita:
-          if [ -f requirements.txt ]; then uv pip install -r requirements.txt; fi
+      - name: Ruff (lint no-bloqueante) 🎨
+        run: uv run ruff check . || true
 
-      # Si necesitás variables de entorno para Django, podés exportarlas acá:
-      # - name: App env
-      #   run: |
-      #     echo "DJANGO_SETTINGS_MODULE=academia_project.settings" >> $GITHUB_ENV
+      - name: Django check ✅
+        run: uv run python manage.py check
 
-      - name: Run pytest (generate coverage.xml)
-        run: |
-          uv run --active pytest --cov=academia_core --cov-report=xml
+      - name: Django check --deploy 🔒
+        env:
+          DJANGO_DEBUG: "0"
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          DJANGO_ALLOWED_HOSTS: "example.com"
+          DJANGO_CSRF_TRUSTED_ORIGINS: "https://example.com"
+          SECURE_SSL_REDIRECT: "1"
+          USE_PROXY_SSL_HEADER: "1"
+        run: uv run python manage.py check --deploy --fail-level WARNING
 
-      # (Opcional) Enforce mínimo de cobertura. Sube el valor cuando estés listo.
-      # Para empezar sin bloquear, pon 0. Luego súbelo a 20, 30, etc.
-      - name: Enforce minimum coverage
-        run: |
-          uv run --active coverage report --fail-under=${{ vars.COVERAGE_MIN || 0 }}
+      - name: Verify no pending migrations 📜
+        run: uv run python manage.py makemigrations --check --dry-run
 
-      - name: Upload coverage artifact
+      - name: Migrate (SQLite) 🛠️
+        run: uv run python manage.py migrate --noinput
+
+      - name: Pytest + Coverage 🧪
+        run: uv run pytest --cov --cov-report=xml --cov-report=term-missing -q
+
+      - name: Upload coverage.xml 📈
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
+          name: coverage-${{ matrix.python-version }}
           path: coverage.xml
