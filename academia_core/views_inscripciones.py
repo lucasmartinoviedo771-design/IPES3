@@ -1,8 +1,9 @@
-from django.urls import reverse_lazy, reverse, NoReverseMatch
-from django.views.generic import CreateView
 from django.contrib import messages
+from django.urls import NoReverseMatch, reverse, reverse_lazy
+from django.views.generic import CreateView
 
 from .forms import InscripcionCarreraForm, InscripcionMateriaForm, InscripcionMesaForm
+
 
 class BaseCreateView(CreateView):
     template_name = "inscripciones/form_base.html"
@@ -36,22 +37,26 @@ class BaseCreateView(CreateView):
         messages.success(self.request, f"{self.page_title} registrada correctamente.")
         return resp
 
+
 class InscripcionCarreraCreate(BaseCreateView):
-    form_class   = InscripcionCarreraForm
+    form_class = InscripcionCarreraForm
     template_name = "inscripciones/carrera.html"
-    success_url   = reverse_lazy("ui:dashboard")   # o tu listado
+    success_url = reverse_lazy("ui:dashboard")  # o tu listado
 
     def get_context_data(self, **kw):
         ctx = super().get_context_data(**kw)
-        ctx.update({
-            "page_title":   "Inscripción a Carrera",
-            "submit_label": "Guardar Inscripción",
-            "nav_insc": "active",
-            "nav_insc_carrera": "active",
-            # para el helper opcional:
-            "success_url": str(self.success_url),
-        })
+        ctx.update(
+            {
+                "page_title": "Inscripción a Carrera",
+                "submit_label": "Guardar Inscripción",
+                "nav_insc": "active",
+                "nav_insc_carrera": "active",
+                # para el helper opcional:
+                "success_url": str(self.success_url),
+            }
+        )
         return ctx
+
 
 class InscripcionMateriaCreate(BaseCreateView):
     form_class = InscripcionMateriaForm
@@ -61,6 +66,7 @@ class InscripcionMateriaCreate(BaseCreateView):
         "nav_insc": "active",
         "nav_insc_materia": "active",
     }
+
 
 class InscripcionMesaCreate(BaseCreateView):
     form_class = InscripcionMesaForm

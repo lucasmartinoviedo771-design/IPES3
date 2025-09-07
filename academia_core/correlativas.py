@@ -3,15 +3,17 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable, List, Optional, Tuple, Dict, Any
+from typing import Any
 
-from django.apps import apps
 from django.db.models import Q
+
+from .utils import get_model
 
 # Estados "fuerza" para comparar mínimos
 # 3 = máximo (PROMOCION/APROBADO), 2 = REGULAR, 1 = desaprobados, 0 = libres
-RANK_ESTADO: Dict[str, int] = {
+RANK_ESTADO: dict[str, int] = {
     "PROMOCION": 3,
     "APROBADO": 3,
     "REGULAR": 2,
@@ -22,7 +24,7 @@ RANK_ESTADO: Dict[str, int] = {
 }
 
 
-def _rank(estado: Optional[str]) -> int:
+def _rank(estado: str | None) -> int:
     if not estado:
         return -1
     return RANK_ESTADO.get(estado.upper(), -1)
@@ -43,10 +45,7 @@ class Requisito:
     minimo: str = "REGULAR"
 
 
-from .utils import get_model
-
-
-def _requisitos_desde_modelo(espacio) -> List[Requisito]:
+def _requisitos_desde_modelo(espacio) -> list[Requisito]:
     """Intenta leer requisitos desde un modelo Correlatividad si existe.
     Supuesto de campos (flexible): espacio_objetivo, espacio_requerido, tipo, minimo
     """
@@ -58,7 +57,9 @@ def _requisitos_desde_modelo(espacio) -> List[Requisito]:
     target_fk = (
         "espacio_objetivo"
         if "espacio_objetivo" in fields
-        else "espacio" if "espacio" in fields else None
+        else "espacio"
+        if "espacio" in fields
+        else None
     )
     req_fk = "espacio_requerido" if "espacio_requerido" in fields else None
     tipo_f = "tipo" if "tipo" in fields else None
@@ -66,7 +67,7 @@ def _requisitos_desde_modelo(espacio) -> List[Requisito]:
     if not target_fk or not req_fk:
         return []
     qs = Model.objects.filter(**{target_fk: espacio})
-    out: List[Requisito] = []
+    out: list[Requisito] = []
     for row in qs.select_related(req_fk):
         req = getattr(row, req_fk, None)
         if not req:
@@ -87,19 +88,17 @@ def _requisitos_desde_modelo(espacio) -> List[Requisito]:
 # Fallback: mapa estático (editable).
 # Podés completar este dict si aún no tenés el modelo Correlatividad.
 # Formato: { espacio_objetivo_id: [ (espacio_requerido_id, "Etiqueta", "CURSAR", "REGULAR") ] }
-MAPA_REQUISITOS: Dict[int, List[Tuple[int, str, str, str]]] = {
+MAPA_REQUISITOS: dict[int, list[tuple[int, str, str, str]]] = {
     # ejemplo: 11: [(10, "Pedagogía", "CURSAR", "REGULAR")],
 }
 
 
-def _requisitos_desde_mapa(espacio) -> List[Requisito]:
+def _requisitos_desde_mapa(espacio) -> list[Requisito]:
     arr = MAPA_REQUISITOS.get(getattr(espacio, "id", None), [])
-    return [
-        Requisito(eid, etiqueta, tipo, minimo) for (eid, etiqueta, tipo, minimo) in arr
-    ]
+    return [Requisito(eid, etiqueta, tipo, minimo) for (eid, etiqueta, tipo, minimo) in arr]
 
 
-def obtener_requisitos_para(espacio) -> List[Requisito]:
+def obtener_requisitos_para(espacio) -> list[Requisito]:
     reqs = _requisitos_desde_modelo(espacio)
     if reqs:
         return reqs
@@ -117,7 +116,7 @@ def _buscar_cursadas_de(inscripcion, espacio_ids: Iterable[int]):
     )
 
 
-def evaluar_correlatividades(inscripcion, espacio) -> Tuple[bool, List[Dict[str, Any]]]:
+def evaluar_correlatividades(inscripcion, espacio) -> tuple[bool, list[dict[str, Any]]]:
     """Evalúa si inscripcion puede cursar 'espacio'.
     Devuelve (ok, detalles). 'detalles' es una lista de dicts con:
       - 'requisito': Requisito
@@ -131,11 +130,11 @@ def evaluar_correlatividades(inscripcion, espacio) -> Tuple[bool, List[Dict[str,
 
     target_ids = [r.espacio_id for r in reqs]
     cursadas = _buscar_cursadas_de(inscripcion, target_ids)
-    estado_por_espacio: Dict[int, Optional[str]] = {
+    estado_por_espacio: dict[int, str | None] = {
         row["espacio_id"]: row["estado"] for row in cursadas
     }
 
-    detalles: List[Dict[str, Any]] = []
+    detalles: list[dict[str, Any]] = []
     ok_global = True
 
     for r in reqs:

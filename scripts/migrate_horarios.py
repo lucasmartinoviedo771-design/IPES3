@@ -2,15 +2,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Tuple, Optional, Any, List
+from typing import Any
 
 from django.db import connections, transaction
 from django.db.models import Model
 from django.utils.timezone import now
 
-from academia_core.models import Carrera, PlanEstudios, Materia
+from academia_core.models import Carrera, Materia, PlanEstudios
 from academia_horarios.models import (
-    MateriaEnPlan, Comision, HorarioClase, TimeSlot, Periodo,
+    Comision,
+    HorarioClase,
+    MateriaEnPlan,
+    Periodo,
+    TimeSlot,
 )
 
 
@@ -28,10 +32,10 @@ def get_field(model: type[Model], name: str):
 
 
 # -------- helper SQL --------
-def fetch_all_dict(cur, sql: str, params: Tuple = ()) -> List[Dict[str, Any]]:
+def fetch_all_dict(cur, sql: str, params: tuple = ()) -> list[dict[str, Any]]:
     cur.execute(sql, params)
     cols = [d[0] for d in cur.description]
-    return [dict(zip(cols, r)) for r in cur.fetchall()]
+    return [dict(zip(cols, r, strict=False)) for r in cur.fetchall()]
 
 
 @dataclass
@@ -121,9 +125,9 @@ def main(commit: bool = True):
             leg_per = []
 
     # ---------------- MAPEO PLANES ----------------
-    plan_map: Dict[int, int] = {}
+    plan_map: dict[int, int] = {}
     carreras_by_name = {c.nombre.strip(): c for c in Carrera.objects.all()}
-    miss_plans: List[Dict[str, Any]] = []
+    miss_plans: list[dict[str, Any]] = []
 
     for p in legacy_plans:
         carrera = carreras_by_name.get((p.get("carrera_nombre") or "").strip())
@@ -145,14 +149,14 @@ def main(commit: bool = True):
     # ---------------- MAPEO MATERIAS ----------------
     # Tu modelo actual de Materia no tiene 'anio'; la clave es por nombre.
     mat_by_name = {m.nombre.strip().lower(): m for m in Materia.objects.all()}
-    mat_map: Dict[int, int] = {}
+    mat_map: dict[int, int] = {}
     for m in legacy_mats:
         nm = (m.get("nombre") or "").strip().lower()
         if nm in mat_by_name:
             mat_map[m["legacy_id"]] = mat_by_name[nm].id
 
     # ---------------- CREAR MateriaEnPlan ----------------
-    mep_map: Dict[int, int] = {}  # legacy_mep_id -> new_mep_id
+    mep_map: dict[int, int] = {}  # legacy_mep_id -> new_mep_id
     mep_has_turno = has_field(MateriaEnPlan, "turno")
     mep_has_anio = has_field(MateriaEnPlan, "anio")
     mep_has_cuatri = has_field(MateriaEnPlan, "cuatrimestre")
@@ -169,7 +173,7 @@ def main(commit: bool = True):
 
             # Lookup mínimo (evita duplicados reales y permite varios años si el modelo lo soporta)
             lookup = {"plan_id": lp, "materia_id": lm}
-            defaults: Dict[str, Any] = {}
+            defaults: dict[str, Any] = {}
 
             if mep_has_anio and r.get("anio") is not None:
                 # Si el modelo tiene 'anio', lo uso en el lookup para distinguir cohortes
@@ -182,16 +186,12 @@ def main(commit: bool = True):
                 f = get_field(MateriaEnPlan, "turno")
                 if getattr(f, "remote_field", None) and f.remote_field:
                     TurnoModel = f.remote_field.model
-                    turno_obj, _ = TurnoModel.objects.get_or_create(
-                        codigo=str(r["turno"]).strip()
-                    )
+                    turno_obj, _ = TurnoModel.objects.get_or_create(codigo=str(r["turno"]).strip())
                     defaults["turno"] = turno_obj
                 else:
                     defaults["turno"] = str(r["turno"]).strip()
 
-            obj, created = MateriaEnPlan.objects.get_or_create(
-                **lookup, defaults=defaults
-            )
+            obj, created = MateriaEnPlan.objects.get_or_create(**lookup, defaults=defaults)
             mep_map[r["legacy_id"]] = obj.id
             if created:
                 cnt.mep_created += 1
@@ -202,7 +202,7 @@ def main(commit: bool = True):
     print(f"MateriaEnPlan: creados={cnt.mep_created}, existentes={cnt.mep_existing}")
 
     # ---------------- PERIODOS ----------------
-    per_map: Dict[int, int] = {}
+    per_map: dict[int, int] = {}
     per_has_nombre = has_field(Periodo, "nombre")
     per_has_fini = has_field(Periodo, "fecha_inicio")
     per_has_ffin = has_field(Periodo, "fecha_fin")
@@ -213,9 +213,7 @@ def main(commit: bool = True):
         if not leg_per:
             # Si no hay periodos en legacy, garantizo al menos 1 para FKs no nulos
             if per_has_nombre:
-                p, created = Periodo.objects.get_or_create(
-                    nombre=f"LEGACY-{now().date()}"
-                )
+                p, created = Periodo.objects.get_or_create(nombre=f"LEGACY-{now().date()}")
             else:
                 # modelo sin 'nombre' -> uso id=1 por defecto
                 p, created = Periodo.objects.get_or_create(id=1)
@@ -230,7 +228,7 @@ def main(commit: bool = True):
             return
 
         for r in leg_per:
-            defaults: Dict[str, Any] = {}
+            defaults: dict[str, Any] = {}
             if per_has_nombre and r.get("nombre"):
                 defaults["nombre"] = r["nombre"]
             if per_has_fini and r.get("fecha_inicio"):
@@ -253,7 +251,7 @@ def main(commit: bool = True):
     print(f"Periodos: creados={cnt.per_created}, existentes={cnt.per_existing}")
 
     # ---------------- TIMESLOTS ----------------
-    ts_map: Dict[int, int] = {}
+    ts_map: dict[int, int] = {}
     ts_has_turno = has_field(TimeSlot, "turno")
 
     @transaction.atomic
@@ -273,9 +271,7 @@ def main(commit: bool = True):
                 if getattr(f, "remote_field", None) and f.remote_field:
                     # Es una FK (p.ej. TurnoModel)
                     TurnoModel = f.remote_field.model
-                    turno_obj, _ = TurnoModel.objects.get_or_create(
-                        codigo=str(r["turno"]).strip()
-                    )
+                    turno_obj, _ = TurnoModel.objects.get_or_create(codigo=str(r["turno"]).strip())
                     lookup["turno"] = turno_obj
                 else:
                     # Es CharField
@@ -298,7 +294,7 @@ def main(commit: bool = True):
     print(f"TimeSlots: creados={cnt.ts_created}, existentes={cnt.ts_existing}")
 
     # ---------------- COMISIONES ----------------
-    com_map: Dict[int, int] = {}
+    com_map: dict[int, int] = {}
     com_has_turno = has_field(Comision, "turno")
     com_has_seccion = has_field(Comision, "seccion")
     com_has_cupo = has_field(Comision, "cupo")
@@ -314,7 +310,7 @@ def main(commit: bool = True):
                 cnt.skipped += 1
                 continue
 
-            defaults: Dict[str, Any] = {}
+            defaults: dict[str, Any] = {}
 
             nombre_val = None
             if com_has_nombre and r.get("nombre"):
@@ -329,9 +325,7 @@ def main(commit: bool = True):
                 f = get_field(Comision, "turno")
                 if getattr(f, "remote_field", None) and f.remote_field:
                     TurnoModel = f.remote_field.model
-                    turno_obj, _ = TurnoModel.objects.get_or_create(
-                        codigo=str(r["turno"]).strip()
-                    )
+                    turno_obj, _ = TurnoModel.objects.get_or_create(codigo=str(r["turno"]).strip())
                     defaults["turno"] = turno_obj
                 else:
                     defaults["turno"] = str(r["turno"]).strip()
@@ -381,7 +375,7 @@ def main(commit: bool = True):
                 cnt.skipped += 1
                 continue
 
-            defaults: Dict[str, Any] = {}
+            defaults: dict[str, Any] = {}
             if hc_has_aula and r.get("aula"):
                 defaults["aula"] = r["aula"]
             if hc_has_observaciones and r.get("observaciones"):

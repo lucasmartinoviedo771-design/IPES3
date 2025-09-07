@@ -1,16 +1,18 @@
 from django.db import connections, transaction
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from academia_core.models import Carrera, PlanEstudios, Materia, EspacioCurricular
+
+from academia_core.models import Carrera, EspacioCurricular, Materia, PlanEstudios
 
 # Usamos esta tabla legacy porque trae "nombre", "anio" y referencia de plan_id
 LEGACY_JOIN_TABLE = "academia_core_espaciocurricular"
 LEGACY_PLAN_TABLE = "academia_core_planestudios"  # para mapear plan_id (legacy) -> resolucion
+
 
 def _to_int(v, default=0):
     try:
         return int(v)
     except Exception:
         return default
+
 
 created_mats = existing_mats = created_esp = existing_esp = skipped = 0
 
@@ -55,7 +57,7 @@ with connections["legacy"].cursor() as cur, transaction.atomic():
 
     # 2) Crear/obtener Materias (catálogo global por nombre)
     for r in rows:
-        d = dict(zip(cols, r))
+        d = dict(zip(cols, r, strict=False))
         nombre = (d.get("nombre") or "").strip()
         if not nombre:
             skipped += 1
@@ -74,7 +76,7 @@ with connections["legacy"].cursor() as cur, transaction.atomic():
 
     # 3) Crear/obtener EspaciosCurriculares (uno por plan + materia)
     for r in rows:
-        d = dict(zip(cols, r))
+        d = dict(zip(cols, r, strict=False))
         nombre = (d.get("nombre") or "").strip()
         if not nombre:
             skipped += 1
@@ -117,8 +119,14 @@ with connections["legacy"].cursor() as cur, transaction.atomic():
 print("=== Importación desde legacy ===")
 print(f"Materias:   creadas={created_mats}, existentes={existing_mats}")
 print(f"Espacios:   creados={created_esp}, existentes={existing_esp}, saltados={skipped}")
-print("Totales ahora:",
-      "Carreras", Carrera.objects.count(),
-      "| Planes", PlanEstudios.objects.count(),
-      "| Materias", Materia.objects.count(),
-      "| Espacios", EspacioCurricular.objects.count())
+print(
+    "Totales ahora:",
+    "Carreras",
+    Carrera.objects.count(),
+    "| Planes",
+    PlanEstudios.objects.count(),
+    "| Materias",
+    Materia.objects.count(),
+    "| Espacios",
+    EspacioCurricular.objects.count(),
+)

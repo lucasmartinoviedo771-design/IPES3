@@ -1,35 +1,26 @@
-from django.test import TestCase, Client
-from django.urls import reverse
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
-from django.test import SimpleTestCase
-import re
+from django.test import Client, TestCase
+from django.urls import reverse
 
 from academia_core.models import (
-    Estudiante,
     Carrera,
-    PlanEstudios,
-    EstudianteProfesorado,
-    EspacioCurricular,
-    Movimiento,
     Condicion,
+    EspacioCurricular,
+    Estudiante,
+    EstudianteProfesorado,
     Materia,
-    LegajoEstado,
-    CondicionAdmin,
-    UserProfile,
+    Movimiento,
+    PlanEstudios,
 )
 
 
 class EstudianteProfesoradoModelTest(TestCase):
     def setUp(self):
-        self.estudiante = Estudiante.objects.create(
-            dni="12345678", apellido="Perez", nombre="Juan"
-        )
+        self.estudiante = Estudiante.objects.create(dni="12345678", apellido="Perez", nombre="Juan")
         self.carrera1 = Carrera.objects.create(nombre="Profesorado de Historia")
-        self.carrera2 = Carrera.objects.create(
-            nombre="Profesorado de Matemática"
-        )
+        self.carrera2 = Carrera.objects.create(nombre="Profesorado de Matemática")
         self.plan1_prof1 = PlanEstudios.objects.create(
             carrera=self.carrera1, resolucion="Res. 001/2020"
         )
@@ -100,17 +91,13 @@ class EstudianteProfesoradoModelTest(TestCase):
                 cohorte=2023,
             )
         except IntegrityError:
-            self.fail(
-                "No debería haber fallado al crear inscripción con diferente plan."
-            )
+            self.fail("No debería haber fallado al crear inscripción con diferente plan.")
 
 
 class EspacioCurricularModelTest(TestCase):
     def setUp(self):
         self.carrera = Carrera.objects.create(nombre="Profesorado de Historia")
-        self.plan = PlanEstudios.objects.create(
-            carrera=self.carrera, resolucion="Res. 001/2020"
-        )
+        self.plan = PlanEstudios.objects.create(carrera=self.carrera, resolucion="Res. 001/2020")
 
     def test_unique_espacio_plan_nombre_constraint(self):
         materia = Materia.objects.create(nombre="Matemática I")
@@ -125,18 +112,12 @@ class EspacioCurricularModelTest(TestCase):
                 cuatrimestre="1",
             )
 
-    
-
 
 class MovimientoModelTest(TestCase):
     def setUp(self):
-        self.estudiante = Estudiante.objects.create(
-            dni="111", apellido="Doe", nombre="John"
-        )
+        self.estudiante = Estudiante.objects.create(dni="111", apellido="Doe", nombre="John")
         self.carrera = Carrera.objects.create(nombre="Profesorado de Prueba")
-        self.plan = PlanEstudios.objects.create(
-            carrera=self.carrera, resolucion="Res. Test"
-        )
+        self.plan = PlanEstudios.objects.create(carrera=self.carrera, resolucion="Res. Test")
         self.materia_test = Materia.objects.create(nombre="Materia Test")
         self.espacio = EspacioCurricular.objects.create(
             plan=self.plan, materia=self.materia_test, anio="1°", cuatrimestre="1"
@@ -215,7 +196,7 @@ class MovimientoModelTest(TestCase):
             doc_cert_medico=True,
             doc_fotos_carnet=True,
             doc_folios_oficio=True,
-            adeuda_materias=True, # Set to True to make it condicional
+            adeuda_materias=True,  # Set to True to make it condicional
         )
         # Corre la validación para que se derive legajo_completo/es_condicional
         inscripcion.full_clean()
@@ -267,9 +248,7 @@ class MovimientoModelTest(TestCase):
 
     def test_clean_method_espacio_profesorado_mismatch(self):
         otra_carrera = Carrera.objects.create(nombre="Otro Profesorado")
-        otro_plan = PlanEstudios.objects.create(
-            carrera=otra_carrera, resolucion="Res. Otro"
-        )
+        otro_plan = PlanEstudios.objects.create(carrera=otra_carrera, resolucion="Res. Otro")
         otra_materia = Materia.objects.create(nombre="Otra Materia")
         otro_espacio = EspacioCurricular.objects.create(
             plan=otro_plan, materia=otra_materia, anio="1°", cuatrimestre="1"
@@ -316,15 +295,15 @@ class PanelViewTest(TestCase):
 
         student_group, _ = Group.objects.get_or_create(name="Estudiante")
         self.user.groups.add(student_group)
-        
+
         # The view uses request.session['active_role']
         session = self.client.session
-        session['active_role'] = 'Estudiante'
+        session["active_role"] = "Estudiante"
         session.save()
 
         response = self.client.get(reverse("ui:dashboard"))
         self.assertRedirects(response, reverse("ui:carton_estudiante"))
-        
+
         response = self.client.get(reverse("ui:carton_estudiante"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "ui/estudiante/carton.html")
@@ -335,7 +314,7 @@ class PanelViewTest(TestCase):
 
         # The view uses request.session['active_role']
         session = self.client.session
-        session['active_role'] = 'Secretaría'
+        session["active_role"] = "Secretaría"
         session.save()
 
         response = self.client.get(reverse("ui:correlatividades"))

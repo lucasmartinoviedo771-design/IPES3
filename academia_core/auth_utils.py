@@ -1,4 +1,5 @@
 from typing import Any
+
 from django.contrib.auth.models import AnonymousUser
 
 # Intentamos reutilizar la implementación “oficial” existente si ya la tenés:
@@ -6,6 +7,7 @@ try:
     # En tu repo aparece resolverse desde ui.auth_views
     from ui.auth_views import resolve_role as _resolve_role  # type: ignore
 except Exception:  # fallback genérico si no existe
+
     def _resolve_role(user) -> str:  # type: ignore
         # Toma el primer grupo como “rol”, si no hay grupos: 'user'
         try:
@@ -13,6 +15,7 @@ except Exception:  # fallback genérico si no existe
             return name or "user"
         except Exception:
             return "anon"
+
 
 def role_of(obj: Any) -> str:
     """

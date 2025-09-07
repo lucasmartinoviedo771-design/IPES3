@@ -1,7 +1,8 @@
-from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group
+from django.core.management.base import BaseCommand
 
 ROLES = ["Admin", "Secretaría", "Docente", "Estudiante", "Bedel"]
+
 
 class Command(BaseCommand):
     help = "Crea los grupos de roles básicos"

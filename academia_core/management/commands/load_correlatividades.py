@@ -1,6 +1,8 @@
 import csv
+
 from django.core.management.base import BaseCommand, CommandError
-from academia_core.models import Correlatividad, PlanEstudios, EspacioCurricular
+
+from academia_core.models import Correlatividad, EspacioCurricular, PlanEstudios
 
 
 class Command(BaseCommand):
@@ -50,8 +52,8 @@ class Command(BaseCommand):
                         obj.observaciones = obs
                         obj.save(update_fields=["tipo", "requisito", "observaciones"])
                         updated += 1
-        except FileNotFoundError:
-            raise CommandError(f"No se encontró el archivo: {path}")
+        except FileNotFoundError as e:
+            raise CommandError(f"No se encontró el archivo: {path}") from e
 
         self.stdout.write(
             self.style.SUCCESS(

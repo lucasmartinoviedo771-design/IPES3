@@ -1,17 +1,15 @@
 from django.urls import path
-from .views import ComisionDetailView
+
 from . import views
 
+app_name = "academia_horarios"
+
 urlpatterns = [
-    # UI
+    # PÁGINA
     path("cargar/", views.cargar_horario, name="cargar_horario"),
-    path("comisiones/<int:pk>/", ComisionDetailView.as_view(), name="comision_detail"),
-
-    
-
-    # API (time-slots por turno)
-    path("api/timeslots/", views.api_timeslots_por_turno, name="api_timeslots"),
-
-    # Guardar grilla
-    path("api/guardar/",  views.horarios_guardar,        name="api_guardar"),
+    # APIs usadas por el JS:
+    path("api/planes/", views.api_planes, name="api_planes"),
+    path("api/materias/", views.api_materias, name="api_materias"),
+    path("api/timeslots/", views.api_timeslots, name="api_timeslots"),
+    path("api/guardar/", views.api_guardar, name="api_guardar"),
 ]

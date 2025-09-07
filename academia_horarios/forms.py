@@ -5,7 +5,7 @@ from django import forms
 from django.apps import apps
 from django.core.exceptions import ValidationError
 
-from .models import HorarioClase, TimeSlot, Comision, Turno, DocenteAsignacion, Catedra
+from .models import Comision, DocenteAsignacion, HorarioClase, TimeSlot
 
 # Tomamos Docente del app correcto
 Docente = apps.get_model("academia_core", "Docente")
@@ -16,18 +16,13 @@ class HorarioInlineForm(forms.Form):
 
     # Elegimos un bloque (TimeSlot) ya definido
     timeslot = forms.ModelChoiceField(
-        queryset=TimeSlot.objects.all().order_by("dia_semana", "inicio"),
-        label="Bloque"
+        queryset=TimeSlot.objects.all().order_by("dia_semana", "inicio"), label="Bloque"
     )
 
     aula = forms.CharField(max_length=64, required=False, label="Aula")
 
-    
-
     observaciones = forms.CharField(
-        widget=forms.Textarea(attrs={"rows": 2}),
-        required=False,
-        label="Observaciones"
+        widget=forms.Textarea(attrs={"rows": 2}), required=False, label="Observaciones"
     )
 
     def clean(self):
@@ -42,7 +37,7 @@ class HorarioInlineForm(forms.Form):
         """
         ts = self.cleaned_data["timeslot"]
         aula = (self.cleaned_data.get("aula") or "").strip()
-        
+
         obs = (self.cleaned_data.get("observaciones") or "").strip()
 
         # Evitar duplicar el mismo bloque para la misma comisión
@@ -57,15 +52,16 @@ class HorarioInlineForm(forms.Form):
             aula=aula,
             observaciones=obs,
         )
-        
+
         return obj
+
 
 class DocenteAsignacionForm(forms.ModelForm):
     class Meta:
         model = DocenteAsignacion
-        fields = ['catedra', 'docente', 'condicion', 'fecha_desde', 'fecha_hasta', 'activa']
+        fields = ["catedra", "docente", "condicion", "fecha_desde", "fecha_hasta", "activa"]
         widgets = {
-            'catedra': forms.HiddenInput(),
-            'fecha_desde': forms.DateInput(attrs={'type': 'date'}),
-            'fecha_hasta': forms.DateInput(attrs={'type': 'date'}),
+            "catedra": forms.HiddenInput(),
+            "fecha_desde": forms.DateInput(attrs={"type": "date"}),
+            "fecha_hasta": forms.DateInput(attrs={"type": "date"}),
         }

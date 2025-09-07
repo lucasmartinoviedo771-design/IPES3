@@ -1,0 +1,59 @@
+name: Tests & Coverage
+
+on:
+  pull_request:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        run: pipx install uv
+
+      - name: Create venv and expose it on PATH
+        run: |
+          uv venv
+          echo "VIRTUAL_ENV=$(pwd)/.venv" >> $GITHUB_ENV
+          echo "$(pwd)/.venv/bin" >> $GITHUB_PATH
+
+      - name: Install test deps
+        run: |
+          uv pip install pytest pytest-cov coverage pytest-django
+          # instala Django y otras deps de runtime si tu proyecto las necesita:
+          if [ -f requirements.txt ]; then uv pip install -r requirements.txt; fi
+
+      # Si necesitás variables de entorno para Django, podés exportarlas acá:
+      # - name: App env
+      #   run: |
+      #     echo "DJANGO_SETTINGS_MODULE=academia_project.settings" >> $GITHUB_ENV
+
+      - name: Run pytest (generate coverage.xml)
+        run: |
+          uv run --active pytest --cov=academia_core --cov-report=xml
+
+      # (Opcional) Enforce mínimo de cobertura. Sube el valor cuando estés listo.
+      # Para empezar sin bloquear, pon 0. Luego súbelo a 20, 30, etc.
+      - name: Enforce minimum coverage
+        run: |
+          uv run --active coverage report --fail-under=${{ vars.COVERAGE_MIN || 0 }}
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml

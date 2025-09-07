@@ -1,12 +1,15 @@
 from __future__ import annotations
-from typing import Optional, Tuple, Set, Any, List
+
+from typing import Any
+
 from django.apps import apps
-from django.db.models import Q, Model
+from django.db.models import Model, Q
+
 from academia_core.models import Correlatividad, EspacioCurricular
 
 
 # ---------- utilidades de introspección ----------
-def _first_model(candidates: List[str]) -> Optional[Model]:
+def _first_model(candidates: list[str]) -> Model | None:
     for name in candidates:
         try:
             return apps.get_model("academia_core", name)
@@ -15,7 +18,7 @@ def _first_model(candidates: List[str]) -> Optional[Model]:
     return None
 
 
-def _fk_name_to(model, related_model_cls) -> Optional[str]:
+def _fk_name_to(model, related_model_cls) -> str | None:
     for f in model._meta.get_fields():
         if (
             getattr(f, "is_relation", False)
@@ -26,7 +29,7 @@ def _fk_name_to(model, related_model_cls) -> Optional[str]:
     return None
 
 
-def _has_field(model, *names) -> Optional[str]:
+def _has_field(model, *names) -> str | None:
     fields = {f.name for f in model._meta.get_fields()}
     for n in names:
         if n in fields:
@@ -39,9 +42,7 @@ Estudiante = apps.get_model("academia_core", "Estudiante")
 PlanEstudios = apps.get_model("academia_core", "PlanEstudios")
 
 # ResultadoFinal / ActaFinal / Aprobacion
-ResultadoFinal = _first_model(
-    ["ResultadoFinal", "ActaFinal", "Aprobacion", "CalificacionFinal"]
-)
+ResultadoFinal = _first_model(["ResultadoFinal", "ActaFinal", "Aprobacion", "CalificacionFinal"])
 # Regularidad de cursada
 Regularidad = _first_model(["Regularidad", "Cursada", "CondicionCursada"])
 # Inscripción a cursada (estudiante + espacio [+ ciclo])
@@ -54,13 +55,13 @@ InscripcionFinal = _first_model(["InscripcionFinal", "MesaInscripcion"])
 
 # ---------- estado académico sets ----------
 def estado_sets_para_estudiante(
-    estudiante_id: int, plan_id: int, ciclo: Optional[int] = None
-) -> Tuple[Set[int], Set[int], Set[int], Set[int]]:
+    estudiante_id: int, plan_id: int, ciclo: int | None = None
+) -> tuple[set[int], set[int], set[int], set[int]]:
     """aprobadas_ids, regularizadas_ids (incluye aprobadas), inscriptas_cursada_ids, inscriptas_final_ids"""
-    aprobadas_ids: Set[int] = set()
-    regular_ids: Set[int] = set()
-    insc_cursada_ids: Set[int] = set()
-    insc_final_ids: Set[int] = set()
+    aprobadas_ids: set[int] = set()
+    regular_ids: set[int] = set()
+    insc_cursada_ids: set[int] = set()
+    insc_final_ids: set[int] = set()
 
     # Aprobadas (final/promoción)
     if ResultadoFinal:
@@ -73,16 +74,10 @@ def estado_sets_para_estudiante(
             qs = ResultadoFinal.objects.filter(**{f"{fk_est}_id": estudiante_id})
             if fk_plan:
                 qs = qs.filter(
-                    **{
-                        (
-                            f"{fk_plan}_id" if not fk_plan.endswith("_id") else fk_plan
-                        ): plan_id
-                    }
+                    **{(f"{fk_plan}_id" if not fk_plan.endswith("_id") else fk_plan): plan_id}
                 )
             # criterios de aprobado
-            f_estado = _has_field(
-                ResultadoFinal, "estado", "situacion", "condicion", "resultado"
-            )
+            f_estado = _has_field(ResultadoFinal, "estado", "situacion", "condicion", "resultado")
             f_aprob = _has_field(ResultadoFinal, "aprobado", "is_aprobado", "ok")
             f_nota = _has_field(ResultadoFinal, "nota", "calificacion", "puntaje")
             if f_aprob:
@@ -104,20 +99,14 @@ def estado_sets_para_estudiante(
             qs = Regularidad.objects.filter(**{f"{fk_est}_id": estudiante_id})
             if fk_plan:
                 qs = qs.filter(
-                    **{
-                        (
-                            f"{fk_plan}_id" if not fk_plan.endswith("_id") else fk_plan
-                        ): plan_id
-                    }
+                    **{(f"{fk_plan}_id" if not fk_plan.endswith("_id") else fk_plan): plan_id}
                 )
             f_estado = _has_field(Regularidad, "estado", "situacion", "condicion")
             f_reg = _has_field(Regularidad, "regular", "es_regular", "is_regular")
             if f_reg:
                 qs = qs.filter(**{f_reg: True})
             elif f_estado:
-                qs = qs.filter(
-                    **{f"{f_estado}__in": ["REGULAR", "PROMOCIONADO", "APROBADO"]}
-                )
+                qs = qs.filter(**{f"{f_estado}__in": ["REGULAR", "PROMOCIONADO", "APROBADO"]})
             regular_ids = set(qs.values_list(f"{fk_esp}_id", flat=True))
     regular_ids |= aprobadas_ids
 
@@ -133,11 +122,7 @@ def estado_sets_para_estudiante(
             qs = InscripcionEspacio.objects.filter(**{f"{fk_est}_id": estudiante_id})
             if fk_plan:
                 qs = qs.filter(
-                    **{
-                        (
-                            f"{fk_plan}_id" if not fk_plan.endswith("_id") else fk_plan
-                        ): plan_id
-                    }
+                    **{(f"{fk_plan}_id" if not fk_plan.endswith("_id") else fk_plan): plan_id}
                 )
             if ciclo and f_ciclo:
                 qs = qs.filter(**{f_ciclo: ciclo})
@@ -154,11 +139,7 @@ def estado_sets_para_estudiante(
             qs = InscripcionFinal.objects.filter(**{f"{fk_est}_id": estudiante_id})
             if fk_plan:
                 qs = qs.filter(
-                    **{
-                        (
-                            f"{fk_plan}_id" if not fk_plan.endswith("_id") else fk_plan
-                        ): plan_id
-                    }
+                    **{(f"{fk_plan}_id" if not fk_plan.endswith("_id") else fk_plan): plan_id}
                 )
             insc_final_ids = set(qs.values_list(f"{fk_esp}_id", flat=True))
 
@@ -175,7 +156,7 @@ def correlativas_para(espacio_id: int, plan_id: int, para: str):
 
 
 def _cumple_correlatividad(
-    c: Correlatividad, aprob: Set[int], regs: Set[int], plan_id: int
+    c: Correlatividad, aprob: set[int], regs: set[int], plan_id: int
 ) -> bool:
     reqtxt = (c.requisito or "").upper()
     objetivo = aprob if reqtxt.startswith("APROB") else regs
@@ -186,9 +167,9 @@ def _cumple_correlatividad(
     if c.requiere_todos_hasta_anio:
         hasta = int(c.requiere_todos_hasta_anio)
         ids_hasta = set(
-            EspacioCurricular.objects.filter(
-                plan_id=plan_id, anio__lte=hasta
-            ).values_list("id", flat=True)
+            EspacioCurricular.objects.filter(plan_id=plan_id, anio__lte=hasta).values_list(
+                "id", flat=True
+            )
         )
         return ids_hasta.issubset(objetivo)
 
@@ -200,11 +181,9 @@ def habilitado(
     plan_id: int,
     espacio: EspacioCurricular,
     para: str = "PARA_CURSAR",
-    ciclo: Optional[int] = None,
-) -> Tuple[bool, Any]:
-    aprob, regs, insc_curs, insc_final = estado_sets_para_estudiante(
-        estudiante_id, plan_id, ciclo
-    )
+    ciclo: int | None = None,
+) -> tuple[bool, Any]:
+    aprob, regs, insc_curs, insc_final = estado_sets_para_estudiante(estudiante_id, plan_id, ciclo)
 
     # Vetos generales
     if para == "PARA_CURSAR" and espacio.id in insc_curs:

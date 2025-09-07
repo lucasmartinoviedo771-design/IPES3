@@ -5,9 +5,9 @@ from django.contrib.auth.models import User
 
 from .label_utils import espacio_etiqueta
 from .models import (
+    EspacioCurricular,
     Estudiante,
     EstudianteProfesorado,
-    EspacioCurricular,
     InscripcionEspacio,
     InscripcionFinal,
 )
@@ -29,9 +29,7 @@ def _q_inscripciones_del_usuario(user: User):
     qs = EstudianteProfesorado.objects.none()
     try:
         if user.email:
-            qs = EstudianteProfesorado.objects.filter(
-                estudiante__email__iexact=user.email
-            )
+            qs = EstudianteProfesorado.objects.filter(estudiante__email__iexact=user.email)
         if not qs.exists() and user.username:
             qs = EstudianteProfesorado.objects.filter(estudiante__dni=user.username)
     except Exception:
@@ -67,21 +65,15 @@ class StudentInscripcionEspacioForm(forms.ModelForm):
             self.fields["espacio"].label_from_instance = espacio_etiqueta
 
         # 3) si ya hay inscripción elegida, filtramos los espacios
-        insc_id = self.data.get(self.add_prefix("inscripcion")) or self.initial.get(
-            "inscripcion"
-        )
+        insc_id = self.data.get(self.add_prefix("inscripcion")) or self.initial.get("inscripcion")
         if insc_id:
             try:
-                insc = EstudianteProfesorado.objects.select_related("profesorado").get(
-                    pk=insc_id
-                )
+                insc = EstudianteProfesorado.objects.select_related("profesorado").get(pk=insc_id)
             except EstudianteProfesorado.DoesNotExist:
                 insc = None
         else:
             insc = (
-                self.fields["inscripcion"].initial
-                if self.fields["inscripcion"].initial
-                else None
+                self.fields["inscripcion"].initial if self.fields["inscripcion"].initial else None
             )
 
         if insc:
@@ -94,9 +86,7 @@ class StudentInscripcionEspacioForm(forms.ModelForm):
             )
             if ya_ids:
                 qs = qs.exclude(pk__in=ya_ids)
-            self.fields["espacio"].queryset = qs.order_by(
-                "anio", "cuatrimestre", "nombre"
-            )
+            self.fields["espacio"].queryset = qs.order_by("anio", "cuatrimestre", "nombre")
         else:
             self.fields["espacio"].queryset = EspacioCurricular.objects.none()
             self.fields["espacio"].help_text = "Elegí primero una inscripción (legajo)."
@@ -119,10 +109,7 @@ class StudentInscripcionFinalForm(forms.ModelForm):
         # Encontrar el FK a InscripcionEspacio
         fk = None
         for f in InscripcionFinal._meta.get_fields():
-            if (
-                getattr(getattr(f, "related_model", None), "__name__", "")
-                == "InscripcionEspacio"
-            ):
+            if getattr(getattr(f, "related_model", None), "__name__", "") == "InscripcionEspacio":
                 fk = f.name
                 break
         self._fk = fk

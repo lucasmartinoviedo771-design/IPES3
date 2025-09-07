@@ -8,8 +8,9 @@ Configurado para:
 - Plantillas con context processors y templatetags de 'ui'
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
+
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.utils import get_random_secret_key
 
@@ -62,6 +63,7 @@ except Exception:
 # Helpers para variables de entorno
 # =============================================================================
 
+
 def getenv_bool(name: str, default: bool = False) -> bool:
     v = os.getenv(name)
     if v is None:
@@ -79,8 +81,8 @@ def getenv_list(name: str, default: list[str] | None = None) -> list[str]:
 def get_env_variable(var_name: str) -> str:
     try:
         return os.environ[var_name]
-    except KeyError:
-        raise ImproperlyConfigured(f"Set the {var_name} environment variable")
+    except KeyError as e:
+        raise ImproperlyConfigured(f"Set the {var_name} environment variable") from e
 
 
 # =============================================================================
@@ -129,18 +131,14 @@ CSRF_COOKIE_SAMESITE = "Lax"
 
 # HTTPS / HSTS (ajustable por env)
 SECURE_SSL_REDIRECT = getenv_bool("SECURE_SSL_REDIRECT", default=not DEBUG)
-SECURE_HSTS_SECONDS = int(
-    os.getenv("DJANGO_SECURE_HSTS_SECONDS", 31536000 if not DEBUG else 0)
-)
+SECURE_HSTS_SECONDS = int(os.getenv("DJANGO_SECURE_HSTS_SECONDS", 31536000 if not DEBUG else 0))
 SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG and SECURE_HSTS_SECONDS > 0
 SECURE_HSTS_PRELOAD = not DEBUG and SECURE_HSTS_SECONDS >= 31536000
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 # Detrás de proxy que setea X-Forwarded-Proto (e.g., Nginx/Heroku)
 USE_PROXY_SSL_HEADER = getenv_bool("USE_PROXY_SSL_HEADER", default=False)
-SECURE_PROXY_SSL_HEADER = (
-    ("HTTP_X_FORWARDED_PROTO", "https") if USE_PROXY_SSL_HEADER else None
-)
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https") if USE_PROXY_SSL_HEADER else None
 
 
 # =============================================================================

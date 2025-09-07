@@ -1,10 +1,12 @@
 import csv
+import difflib
 import re
 import unicodedata
-import difflib
 from collections import defaultdict
+
 from _utils import split_reqs
-from academia_core.models import Profesorado, PlanEstudios, EspacioCurricular
+
+from academia_core.models import EspacioCurricular, PlanEstudios, Profesorado
 
 PROF_SLUG = "profesorado-de-educacion-primaria"
 PLAN_RES = "1935/14"
@@ -17,9 +19,6 @@ def norm(s):
     s = s.encode("ascii", "ignore").decode("ascii")
     s = re.sub(r"[^a-z0-9]+", " ", s.lower())
     return " ".join(s.split())
-
-
-
 
 
 p = Profesorado.objects.get(slug=PROF_SLUG)

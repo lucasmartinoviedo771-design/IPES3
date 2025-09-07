@@ -1,7 +1,8 @@
 # academia_core/forms_admin.py
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Profesorado, PlanEstudios, EspacioCurricular, Estudiante
+
+from .models import EspacioCurricular, Estudiante, PlanEstudios, Profesorado
 
 # === Helpers ===============================
 # Ajustá este orden según tus modelos. Se usa para "renombrar"
@@ -58,9 +59,7 @@ class RenamePlanForm(forms.Form):
         queryset=Profesorado.objects.all().order_by("nombre"), label="Profesorado"
     )
     plan = forms.ModelChoiceField(queryset=PlanEstudios.objects.none(), label="Plan")
-    nuevo_nombre = forms.CharField(
-        label="Nuevo nombre (p.ej. alias/resolución)", max_length=255
-    )
+    nuevo_nombre = forms.CharField(label="Nuevo nombre (p.ej. alias/resolución)", max_length=255)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -74,9 +73,9 @@ class RenamePlanForm(forms.Form):
                 prof = None
 
         if prof:
-            self.fields["plan"].queryset = PlanEstudios.objects.filter(
-                profesorado=prof
-            ).order_by("-vigente", "resolucion")
+            self.fields["plan"].queryset = PlanEstudios.objects.filter(profesorado=prof).order_by(
+                "-vigente", "resolucion"
+            )
         else:
             self.fields["plan"].queryset = PlanEstudios.objects.all().order_by(
                 "-vigente", "resolucion"
@@ -93,9 +92,7 @@ class RenameEspacioForm(forms.Form):
         queryset=Profesorado.objects.all().order_by("nombre"), label="Profesorado"
     )
     plan = forms.ModelChoiceField(queryset=PlanEstudios.objects.none(), label="Plan")
-    espacio = forms.ModelChoiceField(
-        queryset=EspacioCurricular.objects.none(), label="Espacio"
-    )
+    espacio = forms.ModelChoiceField(queryset=EspacioCurricular.objects.none(), label="Espacio")
     nuevo_nombre = forms.CharField(label="Nuevo nombre", max_length=255)
 
     def __init__(self, *args, **kwargs):
@@ -110,9 +107,9 @@ class RenameEspacioForm(forms.Form):
                 prof = None
 
         if prof:
-            self.fields["plan"].queryset = PlanEstudios.objects.filter(
-                profesorado=prof
-            ).order_by("-vigente", "resolucion")
+            self.fields["plan"].queryset = PlanEstudios.objects.filter(profesorado=prof).order_by(
+                "-vigente", "resolucion"
+            )
         else:
             self.fields["plan"].queryset = PlanEstudios.objects.all().order_by(
                 "-vigente", "resolucion"

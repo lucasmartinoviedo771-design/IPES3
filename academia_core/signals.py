@@ -1,10 +1,10 @@
 # academia_core/signals.py
 
 from django.apps import apps
-from django.dispatch import receiver
 
 # ¡Importante! Faltaba importar las señales de autenticación
 from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.dispatch import receiver
 
 # No obtengas los modelos aquí arriba
 

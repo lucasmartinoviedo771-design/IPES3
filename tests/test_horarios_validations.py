@@ -1,6 +1,10 @@
 # tests/test_horarios_validations.py
 import os
+
 import pytest
+from django.apps import apps
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 
 # Ejecuta estos tests SOLO si RUN_STRICT_HORARIOS_TESTS=1
 RUN_STRICT = os.getenv("RUN_STRICT_HORARIOS_TESTS") == "1"
@@ -10,9 +14,6 @@ pytestmark = [
 ]
 
 # --- desde acá podés dejar el contenido estricto, pero no se ejecutará si RUN_STRICT es falso ---
-from django.apps import apps
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 
 APP = "academia_horarios"
 M_HORARIO = "Horario"
@@ -24,15 +25,18 @@ TURNO_FIELD = "turno"
 BLOQUE_FIELD = "bloque"
 TOPE = int(os.getenv("TOPE_HORAS_TEST", "4"))
 
+
 def _gm(app_label, model_name):
     try:
         return apps.get_model(app_label, model_name)
     except LookupError:
         return None
 
+
 H = _gm(APP, M_HORARIO)
 D = _gm(APP, M_DOCENTE)
 C = _gm(APP, M_COMISION)
+
 
 @pytest.mark.skipif(H is None or D is None or C is None, reason="Modelos no encontrados")
 class TestHorariosValidations:

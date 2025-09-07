@@ -1,15 +1,16 @@
-from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
+from django.core.management.base import BaseCommand
+
 from academia_core.models import (
-    Profesorado,
-    PlanEstudios,
-    Estudiante,
-    EstudianteProfesorado,
-    EspacioCurricular,
-    Movimiento,
     Docente,
     DocenteEspacio,
+    EspacioCurricular,
+    Estudiante,
+    EstudianteProfesorado,
+    Movimiento,
+    PlanEstudios,
+    Profesorado,
     UserProfile,
 )
 

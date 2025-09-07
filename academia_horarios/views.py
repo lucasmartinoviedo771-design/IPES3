@@ -1,13 +1,23 @@
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseBadRequest, JsonResponse
+from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_GET, require_POST
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.generic import DetailView
-from academia_core.models import Carrera, PlanEstudios, EspacioCurricular
-from academia_horarios.models import Periodo, Comision, HorarioClase, Catedra, DocenteAsignacion
-from academia_horarios.forms import HorarioInlineForm, DocenteAsignacionForm
 
-# ========== UI ========== 
+from academia_core.models import Carrera
+from academia_horarios.forms import DocenteAsignacionForm, HorarioInlineForm
+from academia_horarios.models import (
+    Catedra,
+    Comision,
+    DocenteAsignacion,
+    HorarioClase,
+    Periodo,
+    TurnoModel,
+)
+from ui.api import api_materias_por_plan, api_planes_por_carrera
+
+
+# ========== UI ==========
 @login_required
 def cargar_horario(request):
     """Render del template con el layout del panel."""
@@ -16,20 +26,17 @@ def cargar_horario(request):
         "periodos": Periodo.objects.all().order_by("-ciclo_lectivo", "-cuatrimestre"),
         "turnos": [
             {"id": "maniana", "label": "Mañana"},
-            {"id": "tarde",   "label": "Tarde"},
-            {"id": "noche",   "label": "Noche"},
+            {"id": "tarde", "label": "Tarde"},
+            {"id": "noche", "label": "Noche"},
         ],
     }
     return render(request, "academia_horarios/cargar_horario.html", ctx)
 
 
-
-
-
-# ========== API de grilla (time-slots por turno) ========== 
+# ========== API de grilla (time-slots por turno) ==========
 @login_required
 @require_GET
-def api_timeslots_por_turno(request):
+def api_timeslots(request):
     """
     GET /panel/horarios/api/timeslots?turno=maniana|tarde|noche
     -> 200 JSON:
@@ -46,10 +53,10 @@ def api_timeslots_por_turno(request):
             lv=[
                 (1, "07:45", "08:25", False),
                 (2, "08:25", "09:05", False),
-                (3, "09:05", "09:15", True),   # recreo
+                (3, "09:05", "09:15", True),  # recreo
                 (4, "09:15", "09:55", False),
                 (5, "09:55", "10:35", False),
-                (6, "10:35", "10:45", True),   # recreo
+                (6, "10:35", "10:45", True),  # recreo
                 (7, "10:45", "11:25", False),
                 (8, "11:25", "12:05", False),
                 (9, "12:05", "12:45", False),
@@ -97,14 +104,17 @@ def api_timeslots_por_turno(request):
     }
 
     cfg = MAPA.get(turno) or MAPA["maniana"]
-    def mk(items): return [{"orden":o,"ini":a,"fin":b,"recreo":r} for (o,a,b,r) in items]
+
+    def mk(items):
+        return [{"orden": o, "ini": a, "fin": b, "recreo": r} for (o, a, b, r) in items]
+
     return JsonResponse({"lv": mk(cfg["lv"]), "sab": mk(cfg["sab"])}, safe=False)
 
 
-# ========== Guardar grilla ========== 
+# ========== Guardar grilla ==========
 @login_required
 @require_POST
-def horarios_guardar(request):
+def api_guardar(request):
     """
     POST /panel/horarios/api/guardar/
     Content-Type: application/json
@@ -129,18 +139,19 @@ def horarios_guardar(request):
       400 {"ok": false, "error": "..."}
     """
     import json
+
     try:
         payload = json.loads(request.body.decode("utf-8"))
     except Exception:
-        return HttpResponseBadRequest('JSON inválido')
+        return HttpResponseBadRequest("JSON inválido")
 
-    plan_id    = payload.get("plan_id")
+    plan_id = payload.get("plan_id")
     espacio_id = payload.get("espacio_id")
-    turno      = (payload.get("turno") or "").lower()
-    seleccion  = payload.get("seleccion") or {}
+    turno = (payload.get("turno") or "").lower()
+    payload.get("seleccion") or {}
 
     if not plan_id or not espacio_id or not turno:
-        return HttpResponseBadRequest('Faltan campos requeridos')
+        return HttpResponseBadRequest("Faltan campos requeridos")
 
     # >>> Acá va tu lógica real de guardado <<<
     # - Validar que espacio_id pertenece a plan_id (EspacioCurricular.plan_id == plan_id)
@@ -150,6 +161,7 @@ def horarios_guardar(request):
     # Ejemplo de "no-op" (sólo para mostrar que el contrato funciona):
     return JsonResponse({"ok": True})
 
+
 class ComisionDetailView(DetailView):
     model = Comision
     template_name = "academia_horarios/comision_detail.html"
@@ -158,18 +170,31 @@ class ComisionDetailView(DetailView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         comision = self.get_object()
-        ctx["horarios"] = HorarioClase.objects.filter(comision=comision).select_related("timeslot").order_by("timeslot__dia_semana", "timeslot__inicio")
-        
+        ctx["horarios"] = (
+            HorarioClase.objects.filter(comision=comision)
+            .select_related("timeslot")
+            .order_by("timeslot__dia_semana", "timeslot__inicio")
+        )
+
         # Get or create Catedra for this Comision
         turno_model_instance = get_object_or_404(TurnoModel, slug=comision.turno)
         catedra, created = Catedra.objects.get_or_create(
             comision=comision,
             materia_en_plan=comision.materia_en_plan,
             turno=turno_model_instance,
-            defaults={'horas_semanales': 0, 'permite_solape_interno': False}
+            defaults={"horas_semanales": 0, "permite_solape_interno": False},
         )
-        ctx["asignaciones_docentes"] = DocenteAsignacion.objects.filter(catedra=catedra).select_related("docente").order_by("docente__apellido", "docente__nombre")
-        
-        ctx["form_horario"] = HorarioInlineForm(initial={'comision': comision.pk})
-        ctx["form_asignacion"] = DocenteAsignacionForm(initial={'catedra': catedra.pk})
+        ctx["asignaciones_docentes"] = (
+            DocenteAsignacion.objects.filter(catedra=catedra)
+            .select_related("docente")
+            .order_by("docente__apellido", "docente__nombre")
+        )
+
+        ctx["form_horario"] = HorarioInlineForm(initial={"comision": comision.pk})
+        ctx["form_asignacion"] = DocenteAsignacionForm(initial={"catedra": catedra.pk})
         return ctx
+
+
+# --- Compatibilidad para el JS v15 ---
+api_planes = api_planes_por_carrera
+api_materias = api_materias_por_plan

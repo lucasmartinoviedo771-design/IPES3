@@ -1,6 +1,8 @@
 import json
 import os
+
 from django.db import transaction
+
 from academia_horarios.models import Docente
 
 # Usar una ruta relativa desde la raíz del proyecto
@@ -14,7 +16,7 @@ visto = set()
 print(f"Importando desde {file_path}...")
 
 try:
-    with open(file_path, encoding='utf-8') as f:
+    with open(file_path, encoding="utf-8") as f:
         data = json.load(f)
 except FileNotFoundError:
     print(f"Error: El archivo no se encontró en {file_path}")
@@ -38,8 +40,7 @@ with transaction.atomic():
                 continue
             visto.add(dni)
             doc, created = Docente.objects.update_or_create(
-                dni=dni,
-                defaults={"apellido_nombre": nombre}
+                dni=dni, defaults={"apellido_nombre": nombre}
             )
             if created:
                 creados += 1

@@ -1,10 +1,11 @@
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_GET, require_POST, require_http_methods
-from django.http import JsonResponse
-from django.shortcuts import render, get_object_or_404
-from django.db import transaction
-from django.views.decorators.csrf import csrf_exempt
 import json
+
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from academia_core.models import Carrera, PlanEstudios
 
@@ -25,12 +26,14 @@ def carrera_list_api(request):
     items = []
     for c in Carrera.objects.order_by("id"):
         plan_vig = PlanEstudios.objects.filter(carrera=c, vigente=True).first()
-        items.append({
-            "id": c.id,
-            "nombre": str(c),
-            "plan_id": plan_vig.id if plan_vig else None,
-            "plan_txt": str(plan_vig) if plan_vig else "",
-        })
+        items.append(
+            {
+                "id": c.id,
+                "nombre": str(c),
+                "plan_id": plan_vig.id if plan_vig else None,
+                "plan_txt": str(plan_vig) if plan_vig else "",
+            }
+        )
     # Devolvemos lista directamente (lo espera el JS del panel)
     return JsonResponse(items, safe=False)
 
@@ -41,11 +44,13 @@ def carrera_get_api(request, pk):
     """Detalle de una carrera + su plan vigente."""
     c = get_object_or_404(Carrera, pk=pk)
     plan_vig = PlanEstudios.objects.filter(carrera=c, vigente=True).first()
-    return JsonResponse({
-        "id": c.id,
-        "nombre": str(c),
-        "plan_id": plan_vig.id if plan_vig else None,
-    })
+    return JsonResponse(
+        {
+            "id": c.id,
+            "nombre": str(c),
+            "plan_id": plan_vig.id if plan_vig else None,
+        }
+    )
 
 
 @login_required
@@ -57,8 +62,8 @@ def carrera_save_api(request):
     ese plan como vigente para esa carrera (desmarcando los demás).
     """
     data = json.loads(request.body.decode("utf-8"))
-    cid     = data.get("id")
-    nombre  = (data.get("nombre") or "").strip()
+    cid = data.get("id")
+    nombre = (data.get("nombre") or "").strip()
     plan_id = data.get("plan_id")
 
     if not nombre:

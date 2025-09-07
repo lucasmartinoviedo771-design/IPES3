@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 check_colision.py
 ------------------
@@ -19,20 +18,29 @@ Si omitís PATH_BASE, usa el directorio actual.
 """
 
 from __future__ import annotations
+
 import ast
 import os
 import re
 import sys
 from collections import defaultdict
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Dict, List, Tuple, Iterable
 
 # -------------------- Config --------------------
 IGNORE_DIRS = {
-    ".git", ".hg", ".svn",
-    ".venv", "venv", "env", ".env",
-    "node_modules", "__pycache__",
-    "dist", "build", "migrations",
+    ".git",
+    ".hg",
+    ".svn",
+    ".venv",
+    "venv",
+    "env",
+    ".env",
+    "node_modules",
+    "__pycache__",
+    "dist",
+    "build",
+    "migrations",
     "staticfiles",
 }
 
@@ -41,18 +49,29 @@ JS_EXTS = {".js", ".ts"}
 TEMPLATE_DIR_NAME = "templates"
 STATIC_DIR_NAME = "static"
 
+
 # Para [3/5]
-DUNDER = lambda name: name.startswith("__") and name.endswith("__")
+def DUNDER(name):
+    return name.startswith("__") and name.endswith("__")
+
+
 PY_IGNORE_FUNCS = {
     "main",
-    "__init__", "__str__",
-    "dispatch", "get_context_data", "get_queryset",
-    "get_success_url", "post", "form_valid", "clean",
+    "__init__",
+    "__str__",
+    "dispatch",
+    "get_context_data",
+    "get_queryset",
+    "get_success_url",
+    "post",
+    "form_valid",
+    "clean",
 }  # main suele repetirse (manage.py, scripts, etc.)
 
 # ------------------------------------------------
 # Utilidades
 # ------------------------------------------------
+
 
 def should_skip_dir(p: Path) -> bool:
     return any(part in IGNORE_DIRS for part in p.parts)
@@ -72,9 +91,12 @@ def read_text_safe(p: Path) -> str:
 # [1/5] Plantillas y estáticos con misma ruta relativa
 # ------------------------------------------------
 
-def collect_relative_under_marker(base_dir: Path, marker: str, file_exts: Iterable[str]) -> Dict[str, List[str]]:
+
+def collect_relative_under_marker(
+    base_dir: Path, marker: str, file_exts: Iterable[str]
+) -> dict[str, list[str]]:
     """Devuelve mapping: ruta_relativa_desde_marker -> [archivos_absolutos]"""
-    hits: Dict[str, List[str]] = defaultdict(list)
+    hits: dict[str, list[str]] = defaultdict(list)
     for root, dirs, files in os.walk(base_dir):
         # filtrar dirs ignorados
         dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
@@ -84,7 +106,7 @@ def collect_relative_under_marker(base_dir: Path, marker: str, file_exts: Iterab
                 if marker in p.parts:
                     parts = list(p.parts)
                     idx = parts.index(marker)
-                    rel = Path(*parts[idx + 1:])  # ruta relativa DESPUÉS del marker
+                    rel = Path(*parts[idx + 1 :])  # ruta relativa DESPUÉS del marker
                     # normalizamos a string con separador del SO
                     key = str(rel)
                     hits[key].append(str(p))
@@ -94,7 +116,11 @@ def collect_relative_under_marker(base_dir: Path, marker: str, file_exts: Iterab
 def print_section_1(base_dir: Path) -> None:
     print("[1/5] Plantillas y estáticos con misma ruta relativa...")
     tmpl = collect_relative_under_marker(base_dir, TEMPLATE_DIR_NAME, {".html", ".txt"})
-    stat = collect_relative_under_marker(base_dir, STATIC_DIR_NAME, {".css", ".js", ".png", ".jpg", ".jpeg", ".svg", ".gif", ".ico", ".webp"})
+    stat = collect_relative_under_marker(
+        base_dir,
+        STATIC_DIR_NAME,
+        {".css", ".js", ".png", ".jpg", ".jpeg", ".svg", ".gif", ".ico", ".webp"},
+    )
 
     reported = False
     for key, paths in sorted(tmpl.items()):
@@ -119,8 +145,9 @@ def print_section_1(base_dir: Path) -> None:
 # [2/5] Nombres de URL de Django repetidos
 # ------------------------------------------------
 
-def extract_url_names_from_ast(tree: ast.AST) -> List[str]:
-    names: List[str] = []
+
+def extract_url_names_from_ast(tree: ast.AST) -> list[str]:
+    names: list[str] = []
 
     class V(ast.NodeVisitor):
         def visit_Call(self, node: ast.Call):
@@ -137,9 +164,9 @@ def extract_url_names_from_ast(tree: ast.AST) -> List[str]:
     return names
 
 
-def collect_django_url_names(base_dir: Path) -> Dict[str, List[str]]:
+def collect_django_url_names(base_dir: Path) -> dict[str, list[str]]:
     """Busca en archivos *urls.py* names de rutas Django."""
-    acc: Dict[str, List[str]] = defaultdict(list)
+    acc: dict[str, list[str]] = defaultdict(list)
     for root, dirs, files in os.walk(base_dir):
         dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
         for fname in files:
@@ -178,7 +205,8 @@ def print_section_2(base_dir: Path) -> None:
 #       (sin métodos de clase, omite dunders y algunos helpers comunes)
 # ------------------------------------------------
 
-def iter_top_level_functions(py_file: Path) -> List[str]:
+
+def iter_top_level_functions(py_file: Path) -> list[str]:
     src = read_text_safe(py_file)
     if not src:
         return []
@@ -187,9 +215,9 @@ def iter_top_level_functions(py_file: Path) -> List[str]:
     except SyntaxError:
         return []
 
-    funcs: List[str] = []
+    funcs: list[str] = []
     for node in tree.body:
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
             name = node.name
             if DUNDER(name) or name in PY_IGNORE_FUNCS:
                 continue
@@ -197,8 +225,8 @@ def iter_top_level_functions(py_file: Path) -> List[str]:
     return funcs
 
 
-def check_py_function_collisions(base_dir: Path) -> Dict[str, List[str]]:
-    by_name: Dict[str, List[str]] = defaultdict(list)  # nombre -> [archivos...]
+def check_py_function_collisions(base_dir: Path) -> dict[str, list[str]]:
+    by_name: dict[str, list[str]] = defaultdict(list)  # nombre -> [archivos...]
     for root, dirs, files in os.walk(base_dir):
         dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
         for fname in files:
@@ -226,11 +254,12 @@ def print_section_3(base_dir: Path) -> None:
 # [4/5] Importaciones riesgosas (ruido reducido)
 # ------------------------------------------------
 
-def analyze_imports_in_file(py_file: Path) -> Tuple[Dict[str, set], bool, List[int]]:
+
+def analyze_imports_in_file(py_file: Path) -> tuple[dict[str, set], bool, list[int]]:
     """Devuelve:
-       - alias_conflicts: {alias: {módulos}} si el MISMO alias se usa para distintos módulos en el MISMO archivo
-       - star_imports: True/False si aparece import *
-       - short_models_imports: líneas con 'from models import ...' (no absoluto, nivel 0)
+    - alias_conflicts: {alias: {módulos}} si el MISMO alias se usa para distintos módulos en el MISMO archivo
+    - star_imports: True/False si aparece import *
+    - short_models_imports: líneas con 'from models import ...' (no absoluto, nivel 0)
     """
     src = read_text_safe(py_file)
     if not src:
@@ -240,9 +269,9 @@ def analyze_imports_in_file(py_file: Path) -> Tuple[Dict[str, set], bool, List[i
     except SyntaxError:
         return {}, False, []
 
-    alias_to_mods: Dict[str, set] = defaultdict(set)
+    alias_to_mods: dict[str, set] = defaultdict(set)
     star_imports = False
-    short_models_lines: List[int] = []
+    short_models_lines: list[int] = []
 
     class V(ast.NodeVisitor):
         def visit_Import(self, node: ast.Import):
@@ -271,9 +300,9 @@ def analyze_imports_in_file(py_file: Path) -> Tuple[Dict[str, set], bool, List[i
 
 
 def check_risky_imports(base_dir: Path):
-    per_file_conflicts: Dict[str, Dict[str, set]] = {}
-    star_files: List[str] = []
-    short_models: List[Tuple[str, int]] = []
+    per_file_conflicts: dict[str, dict[str, set]] = {}
+    star_files: list[str] = []
+    short_models: list[tuple[str, int]] = []
 
     for root, dirs, files in os.walk(base_dir):
         dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
@@ -310,7 +339,9 @@ def print_section_4(base_dir: Path) -> None:
 
     for f, ln in short_models:
         something = True
-        print(f"  WARN import relativo ambiguo en {f}:{ln}  ← usa import absoluto (p.ej. from tu_app.models import ...)")
+        print(
+            f"  WARN import relativo ambiguo en {f}:{ln}  ← usa import absoluto (p.ej. from tu_app.models import ...)"
+        )
 
     if not something:
         print("  OK Sin importaciones riesgosas detectadas")
@@ -322,14 +353,18 @@ def print_section_4(base_dir: Path) -> None:
 JS_FUNC_PATTERNS = [
     re.compile(r"\bfunction\s+([A-Za-zA-Z0-9_]+)\s*\(", re.MULTILINE),
     re.compile(r"\bexport\s+function\s+([A-Za-zA-Z0-9_]+)\s*\(", re.MULTILINE),
-    re.compile(r"\b(?:const|let|var)\s+([A-Za-zA-Z0-9_]+)\s*=\s*(?:async\s+)?function\s*\(", re.MULTILINE),
-    re.compile(r"\b(?:const|let|var)\s+([A-Za-zA-Z0-9_]+)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>", re.MULTILINE),
+    re.compile(
+        r"\b(?:const|let|var)\s+([A-Za-zA-Z0-9_]+)\s*=\s*(?:async\s+)?function\s*\(", re.MULTILINE
+    ),
+    re.compile(
+        r"\b(?:const|let|var)\s+([A-Za-zA-Z0-9_]+)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>", re.MULTILINE
+    ),
     re.compile(r"\bexport\s+(?:const|let|var)\s+([A-Za-zA-Z0-9_]+)\s*=", re.MULTILINE),
 ]
 
 
-def collect_js_functions(base_dir: Path) -> Dict[str, List[str]]:
-    by_name: Dict[str, List[str]] = defaultdict(list)
+def collect_js_functions(base_dir: Path) -> dict[str, list[str]]:
+    by_name: dict[str, list[str]] = defaultdict(list)
     for root, dirs, files in os.walk(base_dir):
         dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
         for fname in files:
@@ -363,6 +398,7 @@ def print_section_5(base_dir: Path) -> None:
 # Main
 # ------------------------------------------------
 
+
 def main() -> None:
     if len(sys.argv) > 1:
         base = Path(sys.argv[1]).resolve()
@@ -393,6 +429,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
-

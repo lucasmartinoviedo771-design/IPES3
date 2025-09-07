@@ -1,18 +1,16 @@
 import csv
+
 from django.core.management.base import BaseCommand, CommandError
-from academia_core.models import Profesorado, PlanEstudios, EspacioCurricular
+
+from academia_core.models import EspacioCurricular, PlanEstudios, Profesorado
 
 
 class Command(BaseCommand):
     help = "Importa espacios curriculares a un Plan de Estudios desde un CSV."
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "--profesorado", required=True, help="Nombre exacto del profesorado"
-        )
-        parser.add_argument(
-            "--resolucion", required=True, help="Resolución del plan (ej. 1935/14)"
-        )
+        parser.add_argument("--profesorado", required=True, help="Nombre exacto del profesorado")
+        parser.add_argument("--resolucion", required=True, help="Resolución del plan (ej. 1935/14)")
         parser.add_argument(
             "--csv",
             required=True,
@@ -26,8 +24,8 @@ class Command(BaseCommand):
 
         try:
             p = Profesorado.objects.get(nombre=prof_name)
-        except Profesorado.DoesNotExist:
-            raise CommandError(f"Profesorado no encontrado: {prof_name}")
+        except Profesorado.DoesNotExist as e:
+            raise CommandError(f"Profesorado no encontrado: {prof_name}") from e
 
         plan, _ = PlanEstudios.objects.get_or_create(
             profesorado=p, resolucion=resol, defaults={"vigente": True}
@@ -48,9 +46,7 @@ class Command(BaseCommand):
         }
 
         creados = 0
-        with open(
-            csv_path, newline="", encoding="utf-8-sig"
-        ) as f:  # acepta UTF-8 y UTF-8 con BOM
+        with open(csv_path, newline="", encoding="utf-8-sig") as f:  # acepta UTF-8 y UTF-8 con BOM
             rdr = csv.DictReader(f)
             if set(rdr.fieldnames or []) != requeridos:
                 raise CommandError(
@@ -62,16 +58,14 @@ class Command(BaseCommand):
                 token = row["cuatrimestre"].strip().upper()
                 cuatri = mapa_cuatri.get(token)
                 if cuatri not in {"A", "1", "2"}:
-                    raise CommandError(
-                        f"Fila {i}: cuatrimestre inválido '{token}'. Use A, 1 o 2."
-                    )
+                    raise CommandError(f"Fila {i}: cuatrimestre inválido '{token}'. Use A, 1 o 2.")
 
                 nombre = row["nombre"].strip()
                 formato = row["formato"].strip()
                 try:
                     horas = int(row["horas"])
-                except ValueError:
-                    raise CommandError(f"Fila {i}: 'horas' debe ser entero")
+                except ValueError as e:
+                    raise CommandError(f"Fila {i}: 'horas' debe ser entero") from e
 
                 _, created = EspacioCurricular.objects.get_or_create(
                     profesorado=p,

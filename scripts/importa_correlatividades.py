@@ -1,12 +1,12 @@
 import csv
-import re
+
 from _utils import split_reqs
 
 from academia_core.models import (
-    Profesorado,
-    PlanEstudios,
-    EspacioCurricular,
     Correlatividad,
+    EspacioCurricular,
+    PlanEstudios,
+    Profesorado,
 )
 
 # === CONFIGURACIÓN ===
@@ -14,9 +14,6 @@ PROF_SLUG = "profesorado-de-educacion-primaria"
 PLAN_RES = "1935/14"
 CSV_PATH = r"C:\proyectos\academia\correlatividades_primaria_1935-14.csv"
 SEP = ";"  # cambia a "," si tu CSV usa coma
-
-
-
 
 
 def importar_correlatividades(prof_slug, plan_res, csv_path, sep=";"):
@@ -64,9 +61,7 @@ def importar_correlatividades(prof_slug, plan_res, csv_path, sep=";"):
             if not nombre:
                 continue
             try:
-                esp = EspacioCurricular.objects.get(
-                    profesorado=p, plan=plan, nombre__iexact=nombre
-                )
+                esp = EspacioCurricular.objects.get(profesorado=p, plan=plan, nombre__iexact=nombre)
             except EspacioCurricular.DoesNotExist:
                 print(f"Fila {i}: NO existe espacio '{nombre}' en el plan {plan_res}")
                 errors += 1

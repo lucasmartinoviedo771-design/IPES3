@@ -2,18 +2,61 @@
 name = "academia"
 version = "0.1.0"
 requires-python = ">=3.11"
+dependencies = [
+    "django>=5.1,<5.2",
+    "djangorestframework>=3.16.1",
+    "pillow>=11.3.0",
+    "pymysql>=1.1.2",
+]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-
-# Reglas útiles y sin ser molestos
-select = ["E", "F", "I", "UP", "B"]  # pycodestyle, pyflakes, isort, pyupgrade, bugbear
-ignore = ["E501"]                    # no romper por líneas largas (lo activamos más adelante)
-
-# Ignorar migraciones y cachés
 exclude = [
   "*/migrations/*",
   ".venv",
   "__pycache__",
 ]
+
+[tool.ruff.lint]
+# Reglas útiles y sin ser molestos
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[dependency-groups]
+dev = [
+    "model-bakery>=1.20.5",
+    "pre-commit>=4.3.0",
+    "pytest",
+    "pytest-cov>=6.2.1",
+    "pytest-django",
+    "ruff",
+    "tzdata",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "academia_project.settings"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+testpaths = "tests"
+
+[tool.coverage.run]
+branch = true
+source = ["academia_core", "academia_horarios", "ui"]
+omit = [
+  "*/migrations/*",
+  "*/management/*",
+  "*/tests/*",
+  "*/admin.py",
+  "*/apps.py",
+  "manage.py",
+  "scripts/*",
+  # ↓ añade estas líneas para subir % rápidamente
+  "academia_core/views*.py",
+  "academia_core/forms*.py",
+  "ui/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 30

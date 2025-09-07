@@ -50,9 +50,7 @@ class RoleAwareRememberLoginView(LoginView):
 
         if form.cleaned_data.get("remember_me"):
             # 2 horas de INACTIVIDAD (sliding window con SESSION_SAVE_EVERY_REQUEST=True)
-            self.request.session.set_expiry(
-                getattr(settings, "SESSION_COOKIE_AGE", 7200)
-            )
+            self.request.session.set_expiry(getattr(settings, "SESSION_COOKIE_AGE", 7200))
         else:
             # Expira al cerrar el navegador
             self.request.session.set_expiry(0)

@@ -1,5 +1,7 @@
 import os
+
 from django.conf import settings
+
 
 def fmt_fecha(d):
     return d.strftime("%d/%m/%Y") if d else ""
