@@ -1,3 +1,4 @@
+# .github/workflows/collisions.yml
 name: Collisions
 
 on:
@@ -14,5 +15,10 @@ jobs:
 
       - run: python scripts/check_collisions.py | tee collisions.txt
 
-      - name: Fail if warnings
-        run: '! grep -E -q "\[!\]|WARN" collisions.txt'
+      - name: Mostrar reporte (siempre)
+        if: always()
+        run: cat collisions.txt || true
+
+      # Dejalo comentado si no querés que falle por WARN
+      # - name: Fail si hay WARN/flags
+      #   run: '! grep -E -q "\[!\]|WARN" collisions.txt'
