@@ -1,0 +1,47 @@
+name: CI (Lint, Check & Tests)
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test_and_lint:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Sync deps
+        run: |
+          uv venv
+          uv sync --locked || uv sync
+          uv add --dev pytest pytest-cov pytest-django ruff tzdata
+
+      - name: Django check
+        run: uv run python manage.py check
+
+      - name: Run tests + coverage
+        run: uv run pytest --cov --cov-report=xml
+
+      - name: Upload coverage.xml
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: coverage.xml

@@ -1,5 +1,5 @@
-import re
 import json
+import re
 
 correlativity_text = """
 Certificación Docente para la Educación Secundaria (Plan 3151/21)

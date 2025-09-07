@@ -1,27 +1,25 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from academia_core.auth_mixins import StaffOrGroupsRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
 from django.db.models.deletion import ProtectedError
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
-from .models import (
-    Estudiante,
-    Docente,
-    Profesorado,
-    Actividad,
-    EspacioCurricular,  # ← Materias
-    # === para Calificaciones (Movimiento) y alcances ===
-    )
-from .forms_espacios import EspacioForm  # ← Form para Materias/Espacios
+from academia_core.auth_mixins import StaffOrGroupsRequiredMixin
 from academia_core.auth_utils import role_of as _rol
 
+from .forms_espacios import EspacioForm  # ← Form para Materias/Espacios
+from .models import (
+    Actividad,
+    Docente,
+    EspacioCurricular,  # ← Materias
+    # === para Calificaciones (Movimiento) y alcances ===
+    Estudiante,
+    Profesorado,
+)
+
 # ---------------- helpers de contexto para usar panel.html ----------------
-
-
-
 
 
 def _can_admin(user):
@@ -93,9 +91,7 @@ class SearchQueryMixin:
 # ============================== ESTUDIANTES ===============================
 
 
-class EstudianteListView(
-    LoginRequiredMixin, PanelContextMixin, SearchQueryMixin, ListView
-):
+class EstudianteListView(LoginRequiredMixin, PanelContextMixin, SearchQueryMixin, ListView):
     model = Estudiante
     template_name = "panel.html"
     context_object_name = "alumnos"
@@ -164,7 +160,7 @@ class EstudianteDeleteView(StaffOrGroupsRequiredMixin, DeleteView):
     def get_context_data(self, **kw):
         ctx = super().get_context_data(**kw)
         obj = ctx.get("object") or self.get_object()
-        rotulo = f"{getattr(obj,'apellido','')}, {getattr(obj,'nombre','')}"
+        rotulo = f"{getattr(obj, 'apellido', '')}, {getattr(obj, 'nombre', '')}"
         if getattr(obj, "dni", None):
             rotulo += f" (DNI {obj.dni})"
         ctx.update(
@@ -186,22 +182,16 @@ class EstudianteDeleteView(StaffOrGroupsRequiredMixin, DeleteView):
             if hasattr(self.object, "activo"):
                 self.object.activo = False
                 self.object.save(update_fields=["activo"])
-                messages.success(
-                    request, f"«{nombre}» tenía datos vinculados: se marcó inactivo."
-                )
+                messages.success(request, f"«{nombre}» tenía datos vinculados: se marcó inactivo.")
                 return super().get(request, *a, **kw)
-            messages.error(
-                request, f"No se pudo eliminar «{nombre}» por registros relacionados."
-            )
+            messages.error(request, f"No se pudo eliminar «{nombre}» por registros relacionados.")
             return super().get(request, *a, **kw)
 
 
 # ================================ DOCENTES ================================
 
 
-class DocenteListView(
-    LoginRequiredMixin, PanelContextMixin, SearchQueryMixin, ListView
-):
+class DocenteListView(LoginRequiredMixin, PanelContextMixin, SearchQueryMixin, ListView):
     """Reemplaza listado_docentes."""
 
     model = Docente
@@ -254,7 +244,7 @@ class DocenteDeleteView(StaffOrGroupsRequiredMixin, DeleteView):
     def get_context_data(self, **kw):
         ctx = super().get_context_data(**kw)
         obj = ctx.get("object") or self.get_object()
-        rotulo = f"{getattr(obj,'apellido','')}, {getattr(obj,'nombre','')}".strip(", ")
+        rotulo = f"{getattr(obj, 'apellido', '')}, {getattr(obj, 'nombre', '')}".strip(", ")
         ctx.update(
             {
                 "titulo": "Eliminar docente",
@@ -266,8 +256,10 @@ class DocenteDeleteView(StaffOrGroupsRequiredMixin, DeleteView):
 
     def delete(self, request, *a, **kw):
         self.object = self.get_object()
-        nombre = f"{getattr(self.object,'apellido','')}, {getattr(self.object,'nombre','')}".strip(
-            ", "
+        nombre = (
+            f"{getattr(self.object, 'apellido', '')}, {getattr(self.object, 'nombre', '')}".strip(
+                ", "
+            )
         )
         try:
             messages.success(request, f"Docente «{nombre}» eliminado.")
@@ -276,22 +268,16 @@ class DocenteDeleteView(StaffOrGroupsRequiredMixin, DeleteView):
             if hasattr(self.object, "activo"):
                 self.object.activo = False
                 self.object.save(update_fields=["activo"])
-                messages.success(
-                    request, f"«{nombre}» tenía datos vinculados: se marcó inactivo."
-                )
+                messages.success(request, f"«{nombre}» tenía datos vinculados: se marcó inactivo.")
                 return super().get(request, *a, **kw)
-            messages.error(
-                request, f"No se pudo eliminar «{nombre}» por registros relacionados."
-            )
+            messages.error(request, f"No se pudo eliminar «{nombre}» por registros relacionados.")
             return super().get(request, *a, **kw)
 
 
 # ================================ MATERIAS ================================
 
 
-class MateriaListView(
-    LoginRequiredMixin, PanelContextMixin, SearchQueryMixin, ListView
-):
+class MateriaListView(LoginRequiredMixin, PanelContextMixin, SearchQueryMixin, ListView):
     """Listado de Materias (Espacios curriculares)."""
 
     model = EspacioCurricular
@@ -353,7 +339,7 @@ class MateriaDeleteView(StaffOrGroupsRequiredMixin, DeleteView):
     def get_context_data(self, **kw):
         ctx = super().get_context_data(**kw)
         obj = ctx.get("object") or self.get_object()
-        rot = f"{getattr(obj,'nombre','')} · {getattr(obj,'profesorado','')} – {getattr(obj,'plan','')}"
+        rot = f"{getattr(obj, 'nombre', '')} · {getattr(obj, 'profesorado', '')} – {getattr(obj, 'plan', '')}"
         ctx.update(
             {
                 "titulo": "Eliminar materia",
@@ -378,7 +364,5 @@ class MateriaDeleteView(StaffOrGroupsRequiredMixin, DeleteView):
                     f"«{nombre}» tiene datos vinculados: se marcó como inactiva.",
                 )
                 return super().get(request, *a, **kw)
-            messages.error(
-                request, f"No se pudo eliminar «{nombre}» por registros relacionados."
-            )
+            messages.error(request, f"No se pudo eliminar «{nombre}» por registros relacionados.")
             return super().get(request, *a, **kw)

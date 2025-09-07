@@ -1,7 +1,5 @@
 import pytest
-from django.apps import apps
 from django.conf import settings as dj_settings
-
 
 from academia_core.utils import get_model
 
@@ -10,6 +8,7 @@ def test_apps_installed():
     assert "academia_core.apps.AcademiaCoreConfig" in dj_settings.INSTALLED_APPS
     assert "academia_horarios" in dj_settings.INSTALLED_APPS
     assert "ui" in dj_settings.INSTALLED_APPS
+
 
 @pytest.mark.parametrize(
     "app_label, model_name",

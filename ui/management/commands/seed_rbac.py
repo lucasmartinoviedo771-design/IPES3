@@ -1,57 +1,77 @@
 # ui/management/commands/seed_rbac.py
-from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group, Permission
+from django.core.management.base import BaseCommand
 
 # Mapa de grupos -> codenames REALES en tu app (según tu lista)
 GROUPS = {
     "Admin": ["*"],
-
     # Secretaría: gestiona personas, espacios/planes/horarios, correlativas, inscripciones (materia/final/carrera),
     # auditoría básica y permisos custom de operación.
     "Secretaría": [
         # Personas
-        "view_estudiante", "add_estudiante", "change_estudiante",
-        "view_docente", "add_docente", "change_docente",
-
+        "view_estudiante",
+        "add_estudiante",
+        "change_estudiante",
+        "view_docente",
+        "add_docente",
+        "change_docente",
         # Planificación / Académico
-        "view_espaciocurricular", "add_espaciocurricular", "change_espaciocurricular",
-        "view_docenteespacio", "add_docenteespacio", "change_docenteespacio",
-        "view_horario", "add_horario", "change_horario",
-        "view_planestudios", "add_planestudios", "change_planestudios",
-        "view_correlatividad", "add_correlatividad", "change_correlatividad",
-
+        "view_espaciocurricular",
+        "add_espaciocurricular",
+        "change_espaciocurricular",
+        "view_docenteespacio",
+        "add_docenteespacio",
+        "change_docenteespacio",
+        "view_horario",
+        "add_horario",
+        "change_horario",
+        "view_planestudios",
+        "add_planestudios",
+        "change_planestudios",
+        "view_correlatividad",
+        "add_correlatividad",
+        "change_correlatividad",
         # Inscripciones (materia/espacio – mesa final – carrera)
-        "view_inscripcionespacio", "add_inscripcionespacio", "change_inscripcionespacio",
-        "view_inscripcionfinal", "add_inscripcionfinal", "change_inscripcionfinal",
-        "view_inscripcioncarrera", "add_inscripcioncarrera", "change_inscripcioncarrera",
-
+        "view_inscripcionespacio",
+        "add_inscripcionespacio",
+        "change_inscripcionespacio",
+        "view_inscripcionfinal",
+        "add_inscripcionfinal",
+        "change_inscripcionfinal",
+        "view_inscripcioncarrera",
+        "add_inscripcioncarrera",
+        "change_inscripcioncarrera",
         # Auditoría / estado
-        "view_inscripcionespacioestadolog", "view_movimiento",
-
+        "view_inscripcionespacioestadolog",
+        "view_movimiento",
         # CUSTOM (creados con CorePerms.managed=False)
-        "open_close_windows",        # abrir/cerrar ventanas (si aplica en tu flujo)
-        "manage_correlatives",       # gestionar reglas de correlativas (UI/servicio)
-        "publish_grades",            # publicar calificaciones (siempre vía Secretaría/Admin)
-        "enroll_others",             # inscribir a terceros
-        "view_any_student_record",   # ver Cartón/Histórico de cualquier estudiante
-        "edit_student_record",       # editar ficha/cartón
+        "open_close_windows",  # abrir/cerrar ventanas (si aplica en tu flujo)
+        "manage_correlatives",  # gestionar reglas de correlativas (UI/servicio)
+        "publish_grades",  # publicar calificaciones (siempre vía Secretaría/Admin)
+        "enroll_others",  # inscribir a terceros
+        "view_any_student_record",  # ver Cartón/Histórico de cualquier estudiante
+        "edit_student_record",  # editar ficha/cartón
     ],
-
     # Bedel: ABM mínimo de estudiantes + inscribir a terceros (materias/mesas/carrera) + ver docente + ver cartón
     "Bedel": [
-        "view_estudiante", "add_estudiante", "change_estudiante",
+        "view_estudiante",
+        "add_estudiante",
+        "change_estudiante",
         "view_docente",
-
         # Inscribir a terceros
-        "view_inscripcionespacio", "add_inscripcionespacio", "change_inscripcionespacio",
-        "view_inscripcionfinal", "add_inscripcionfinal", "change_inscripcionfinal",
-        "view_inscripcioncarrera", "add_inscripcioncarrera", "change_inscripcioncarrera",
-
+        "view_inscripcionespacio",
+        "add_inscripcionespacio",
+        "change_inscripcionespacio",
+        "view_inscripcionfinal",
+        "add_inscripcionfinal",
+        "change_inscripcionfinal",
+        "view_inscripcioncarrera",
+        "add_inscripcioncarrera",
+        "change_inscripcioncarrera",
         # Custom
         "enroll_others",
         "view_any_student_record",
     ],
-
     # Docente: puede ver estudiantes vinculados y sus cursadas/finales + su estructura académica
     "Docente": [
         "view_estudiante",
@@ -61,7 +81,6 @@ GROUPS = {
         "view_docenteespacio",
         "view_horario",
     ],
-
     # Estudiante: solo autoinscripción (el resto se controla por lógica de UI/servicio)
     "Estudiante": [
         "enroll_self",

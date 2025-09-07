@@ -1,15 +1,20 @@
 # ui/api.py
+import json
 import logging
+
 from django.apps import apps
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_GET
-from django.http import JsonResponse, HttpResponseBadRequest
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.utils import timezone
+from django.views.decorators.http import require_GET, require_POST
+
+from .forms import InscripcionProfesoradoForm
 
 logger = logging.getLogger(__name__)
 
-# ============ Helpers robustos ============ 
+
+# ============ Helpers robustos ============
 def _best_label(obj):
     """
     Construye una etiqueta legible sin importar cómo se llame el campo.
@@ -21,6 +26,7 @@ def _best_label(obj):
             if val:
                 return str(val)
     return str(obj)
+
 
 def _find_plan_model():
     """
@@ -36,7 +42,9 @@ def _find_plan_model():
             for fk in fks:
                 fkname = fk.name.lower()
                 target = fk.related_model.__name__.lower()
-                if any(k in fkname for k in ("carr", "prof")) or any(k in target for k in ("carr", "prof")):
+                if any(k in fkname for k in ("carr", "prof")) or any(
+                    k in target for k in ("carr", "prof")
+                ):
                     candidates.append(m)
                     break
     # si hay muchos, priorizo los que incluyan 'estudio' en el nombre
@@ -44,6 +52,7 @@ def _find_plan_model():
         if "estudio" in m.__name__.lower():
             return m
     return candidates[0] if candidates else None
+
 
 def _find_espacio_model():
     """
@@ -64,6 +73,7 @@ def _find_espacio_model():
         if any(k in n for k in ("espacio", "materia", "asignatura")):
             return m
     return None
+
 
 def _first_matching_fk_name(model, *candidates):
     """
@@ -89,7 +99,9 @@ def _first_matching_fk_name(model, *candidates):
             return fk.name
     return fks[0].name if fks else None
 
-# ============ Endpoints ============ 
+
+# ============ Endpoints ============
+
 
 @login_required
 @require_GET
@@ -98,7 +110,13 @@ def api_planes_por_carrera(request):
     GET /ui/api/planes?profesorado=<id> o ?prof=<id>
     Devuelve: {"planes":[{"id":..., "nombre":"..."}]}
     """
-    carrera_id = request.GET.get('profesorado') or request.GET.get('prof') or request.GET.get('carrera') or request.GET.get('carrera_id') or ''
+    carrera_id = (
+        request.GET.get("profesorado")
+        or request.GET.get("prof")
+        or request.GET.get("carrera")
+        or request.GET.get("carrera_id")
+        or ""
+    )
     if not carrera_id:
         return HttpResponseBadRequest("Falta carrera o prof")
 
@@ -131,6 +149,7 @@ def api_planes_por_carrera(request):
 
     return JsonResponse({"planes": planes_data})
 
+
 @login_required
 @require_GET
 def api_materias_por_plan(request):
@@ -143,7 +162,7 @@ def api_materias_por_plan(request):
         return HttpResponseBadRequest("Falta plan_id")
 
     EspacioModel = _find_espacio_model()
-    PlanModel   = _find_plan_model()
+    PlanModel = _find_plan_model()
     if not EspacioModel or not PlanModel:
         logger.error("No se pudieron inferir modelos de Espacio/Materia o Plan.")
         return HttpResponseBadRequest("No se pudieron inferir modelos (Materias/Plan).")
@@ -179,7 +198,7 @@ def api_cohortes_por_plan(request):
 
     try:
         start = int(request.GET.get("start", start_default))
-        end   = int(request.GET.get("end", end_default))
+        end = int(request.GET.get("end", end_default))
     except ValueError:
         return HttpResponseBadRequest("Parámetros start/end inválidos")
 
@@ -235,7 +254,7 @@ def api_correlatividades_por_espacio(request):
 
         # Asumiendo que el modelo Correlatividad tiene un FK 'requisito' a Espacio/Materia
         # y un campo de texto 'tipo'
-        qs = Cor.objects.filter(espacio_id=esp_id_int).select_related('requisito')
+        qs = Cor.objects.filter(espacio_id=esp_id_int).select_related("requisito")
 
         qs_reg = qs.filter(tipo__in=reg_vals)
         qs_apr = qs.filter(tipo__in=apr_vals)
@@ -243,16 +262,15 @@ def api_correlatividades_por_espacio(request):
         reg = [{"id": c.requisito.pk, "label": _best_label(c.requisito)} for c in qs_reg]
         apr = [{"id": c.requisito.pk, "label": _best_label(c.requisito)} for c in qs_apr]
 
-        logger.info("api_correlatividades_por_espacio: espacio=%s reg=%s apr=%s", esp_id, len(reg), len(apr))
+        logger.info(
+            "api_correlatividades_por_espacio: espacio=%s reg=%s apr=%s", esp_id, len(reg), len(apr)
+        )
         return JsonResponse({"regular": reg, "aprobada": apr})
 
     except Exception as e:
         logger.exception(f"api_correlatividades_por_espacio: error para espacio_id={esp_id}")
         return HttpResponseBadRequest(f"Error en servidor: {e}")
 
-import json
-from django.views.decorators.http import require_POST
-from .forms import InscripcionProfesoradoForm
 
 @login_required
 @require_POST
@@ -271,7 +289,9 @@ def api_calcular_estado_administrativo(request):
     form = InscripcionProfesoradoForm()
     estado, is_cert_docente = form._calculate_estado_from_data(data)
 
-    return JsonResponse({
-        "estado": estado,
-        "is_cert_docente": is_cert_docente,
-    })
+    return JsonResponse(
+        {
+            "estado": estado,
+            "is_cert_docente": is_cert_docente,
+        }
+    )

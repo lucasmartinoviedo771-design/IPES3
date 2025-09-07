@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
-from academia_core.models import PlanEstudios, EspacioCurricular, Correlatividad
+
+from academia_core.models import Correlatividad, EspacioCurricular, PlanEstudios
 
 
 class Command(BaseCommand):
@@ -20,9 +21,7 @@ class Command(BaseCommand):
         # Limpio reglas previas para evitar duplicados
         Correlatividad.objects.filter(plan=plan).delete()
 
-        esp = EspacioCurricular.objects.filter(plan=plan).order_by(
-            "anio", "cuatrimestre", "nombre"
-        )
+        esp = EspacioCurricular.objects.filter(plan=plan).order_by("anio", "cuatrimestre", "nombre")
 
         # Helper por año
         esp_por_anio = {}
@@ -60,7 +59,5 @@ class Command(BaseCommand):
             )
 
         self.stdout.write(
-            self.style.SUCCESS(
-                "Correlatividades base cargadas. Ajustá y re-ejecutá si hace falta."
-            )
+            self.style.SUCCESS("Correlatividades base cargadas. Ajustá y re-ejecutá si hace falta.")
         )

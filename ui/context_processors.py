@@ -1,20 +1,28 @@
 # ui/context_processors.py
 import unicodedata
-from django.urls import reverse, NoReverseMatch
+
 from django.conf import settings
+from django.urls import NoReverseMatch, reverse
+
 from .menu import for_role
 
 # --- helpers de rol ---
 ROLE_MAP = {
-    "admin": "Admin", "administrador": "Admin",
+    "admin": "Admin",
+    "administrador": "Admin",
     "bedel": "Bedel",
-    "secretaria": "Secretaria", "secretaría": "Secretaria",
+    "secretaria": "Secretaria",
+    "secretaría": "Secretaria",
     "docente": "Docente",
-    "estudiante": "Estudiante", "alumno": "Estudiante",
+    "estudiante": "Estudiante",
+    "alumno": "Estudiante",
 }
+
+
 def _norm(s):  # quita acentos y lower
     s = unicodedata.normalize("NFKD", s or "")
     return "".join(ch for ch in s if not unicodedata.combining(ch)).lower().strip()
+
 
 def _infer_role_from_user(user):
     if not user or not user.is_authenticated:
@@ -26,6 +34,7 @@ def _infer_role_from_user(user):
         if hit:
             return hit
     return ""
+
 
 # --- resolver paths de menú ---
 def _resolve_menu_paths(items):
@@ -40,6 +49,7 @@ def _resolve_menu_paths(items):
             it["url"] = it["path"]
         if isinstance(it.get("children"), list):
             _resolve_menu_paths(it["children"])
+
 
 def menu(request):
     # leer rol desde sesión (ambas claves) o inferir del user
@@ -66,6 +76,7 @@ def menu(request):
     # ⚠️ devolvemos AMBOS nombres por compatibilidad con templates
     return {"menu": resolved, "menu_sections": resolved}
 
+
 def role_from_request(request):
     # unificar claves de sesión y exponer 'user_role'
     role = request.session.get("active_role") or request.session.get("rol_actual")
@@ -75,6 +86,7 @@ def role_from_request(request):
         request.session["active_role"] = role
         request.session["rol_actual"] = role
     return {"user_role": role, "role": role, "active_role": role}
+
 
 def ui_globals(request):
     return {"APP_NAME": "IPES", "APP_BRAND": "IPES", "DEBUG": settings.DEBUG}

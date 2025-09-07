@@ -3,21 +3,23 @@ from django.contrib import admin
 
 from .models import (
     Carrera,
-    PlanEstudios,
-    Materia,
-    EspacioCurricular,
     Correlatividad,
+    EspacioCurricular,
+    Estudiante,
     EstudianteProfesorado,
     InscripcionEspacio,
+    Materia,
+    PlanEstudios,
     UserProfile,
-    Estudiante,
 )
+
 
 @admin.register(Estudiante)
 class EstudianteAdmin(admin.ModelAdmin):
     list_display = ("id", "apellido", "nombre", "dni")
     search_fields = ("apellido", "nombre", "dni")
     ordering = ("apellido", "nombre")
+
 
 # ---------------------------------------------------------------------
 # Carrera
@@ -29,6 +31,7 @@ class CarreraAdmin(admin.ModelAdmin):
     search_fields = ("nombre",)
     ordering = ("nombre",)
 
+
 # ---------------------------------------------------------------------
 # Plan de estudios
 # ---------------------------------------------------------------------
@@ -39,6 +42,7 @@ class PlanEstudiosAdmin(admin.ModelAdmin):
     search_fields = ("resolucion", "carrera__nombre")
     ordering = ("carrera__nombre", "resolucion")
 
+
 # ---------------------------------------------------------------------
 # Materia
 # ---------------------------------------------------------------------
@@ -47,6 +51,7 @@ class MateriaAdmin(admin.ModelAdmin):
     list_display = ("id", "nombre")
     search_fields = ("nombre",)
     ordering = ("nombre",)
+
 
 # ---------------------------------------------------------------------
 # Espacio Curricular
@@ -61,6 +66,7 @@ class EspacioCurricularAdmin(admin.ModelAdmin):
     autocomplete_fields = ("plan", "materia")
     ordering = ("plan__carrera__nombre", "anio", "cuatrimestre", "materia__nombre")
 
+
 # ---------------------------------------------------------------------
 # Correlatividad
 # ---------------------------------------------------------------------
@@ -69,7 +75,13 @@ class CorrelatividadAdmin(admin.ModelAdmin):
     list_display = ("id", "espacio", "requisito", "tipo")
     search_fields = ("espacio__materia__nombre", "requiere_espacio__materia__nombre")
     autocomplete_fields = ("espacio", "requiere_espacio")
-    ordering = ("espacio__plan__carrera__nombre", "espacio__anio", "espacio__cuatrimestre", "espacio__materia__nombre")
+    ordering = (
+        "espacio__plan__carrera__nombre",
+        "espacio__anio",
+        "espacio__cuatrimestre",
+        "espacio__materia__nombre",
+    )
+
 
 # ---------------------------------------------------------------------
 # Inscripciones y estudiantes (si existen en tu app)
@@ -77,16 +89,32 @@ class CorrelatividadAdmin(admin.ModelAdmin):
 @admin.register(InscripcionEspacio)
 class InscripcionEspacioAdmin(admin.ModelAdmin):
     list_display = ("id", "inscripcion", "espacio", "estado")
-    search_fields = ("inscripcion__estudiante__apellido", "inscripcion__estudiante__nombre", "espacio__materia__nombre")
+    search_fields = (
+        "inscripcion__estudiante__apellido",
+        "inscripcion__estudiante__nombre",
+        "espacio__materia__nombre",
+    )
     autocomplete_fields = ("inscripcion", "espacio")
-    ordering = ("espacio__plan__carrera__nombre", "espacio__anio", "espacio__cuatrimestre", "espacio__materia__nombre")
+    ordering = (
+        "espacio__plan__carrera__nombre",
+        "espacio__anio",
+        "espacio__cuatrimestre",
+        "espacio__materia__nombre",
+    )
+
 
 @admin.register(EstudianteProfesorado)
 class EstudianteProfesoradoAdmin(admin.ModelAdmin):
     list_display = ("id", "estudiante", "carrera")
-    search_fields = ("estudiante__apellido", "estudiante__nombre", "estudiante__dni", "carrera__nombre")
+    search_fields = (
+        "estudiante__apellido",
+        "estudiante__nombre",
+        "estudiante__dni",
+        "carrera__nombre",
+    )
     autocomplete_fields = ("carrera", "estudiante")
     ordering = ("estudiante__apellido", "estudiante__nombre")
+
 
 # ---------------------------------------------------------------------
 # Perfil de usuario (si corresponde)

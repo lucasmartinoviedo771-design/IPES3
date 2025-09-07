@@ -1,8 +1,8 @@
 from django import forms
-from django.db import IntegrityError, transaction
-from django.shortcuts import render, redirect
-from django.views.decorators.http import require_http_methods
 from django.contrib import messages
+from django.db import IntegrityError, transaction
+from django.shortcuts import redirect, render
+from django.views.decorators.http import require_http_methods
 
 from academia_core.models import Docente
 
@@ -13,10 +13,12 @@ class DocenteForm(forms.ModelForm):
         fields = ["apellido", "nombre", "dni", "email", "activo"]
         widgets = {
             "apellido": forms.TextInput(attrs={"class": "input", "placeholder": "Apellido"}),
-            "nombre":   forms.TextInput(attrs={"class": "input", "placeholder": "Nombre"}),
-            "dni":      forms.TextInput(attrs={"class": "input", "placeholder": "DNI"}),
-            "email":    forms.EmailInput(attrs={"class": "input", "placeholder": "correo @ejemplo.com"}),
-            "activo":   forms.CheckboxInput(attrs={}),
+            "nombre": forms.TextInput(attrs={"class": "input", "placeholder": "Nombre"}),
+            "dni": forms.TextInput(attrs={"class": "input", "placeholder": "DNI"}),
+            "email": forms.EmailInput(
+                attrs={"class": "input", "placeholder": "correo @ejemplo.com"}
+            ),
+            "activo": forms.CheckboxInput(attrs={}),
         }
 
     def clean_dni(self):
@@ -24,6 +26,7 @@ class DocenteForm(forms.ModelForm):
         if not dni.isdigit():
             raise forms.ValidationError("El DNI debe contener solo números.")
         return dni
+
 
 @require_http_methods(["GET", "POST"])
 def docente_nuevo(request):

@@ -1,0 +1,21 @@
+version: 2
+updates:
+  # Dependencias de Python (pip/uv)
+  - package-ecosystem: "pip"
+    directory: "/" # raíz del proyecto
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+
+  # Dependencias de GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "ci"

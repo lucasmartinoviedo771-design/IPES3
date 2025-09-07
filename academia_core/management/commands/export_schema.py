@@ -1,6 +1,7 @@
-from django.core.management.base import BaseCommand
-from django.apps import apps
 from pathlib import Path
+
+from django.apps import apps
+from django.core.management.base import BaseCommand
 
 
 def field_type(f):
@@ -24,12 +25,8 @@ class Command(BaseCommand):
             default="academia_core",
             help="Etiqueta del app (default: academia_core)",
         )
-        parser.add_argument(
-            "--md", default="schema_models.md", help="Archivo Markdown de salida"
-        )
-        parser.add_argument(
-            "--mmd", default="schema_erd.mmd", help="Archivo Mermaid ERD de salida"
-        )
+        parser.add_argument("--md", default="schema_models.md", help="Archivo Markdown de salida")
+        parser.add_argument("--mmd", default="schema_erd.mmd", help="Archivo Mermaid ERD de salida")
 
     def handle(self, *args, **opts):
         app_label = opts["app"]
@@ -52,7 +49,11 @@ class Command(BaseCommand):
                     kind = (
                         "M2M"
                         if f.many_to_many
-                        else "O2O" if f.one_to_one else "FK" if f.many_to_one else "REL"
+                        else "O2O"
+                        if f.one_to_one
+                        else "FK"
+                        if f.many_to_one
+                        else "REL"
                     )
                     rel = f"{kind}→{getattr(f.related_model, '__name__', f.related_model)}"
                 null_ok = getattr(f, "null", False)

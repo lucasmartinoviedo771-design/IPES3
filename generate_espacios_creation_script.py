@@ -1,52 +1,54 @@
 import json
 import re
 
-with open(r'C:\proyectos\academia\parsed_correlatividades.json', 'r', encoding='utf-8') as f:
+with open(r"C:\proyectos\academia\parsed_correlatividades.json", encoding="utf-8") as f:
     data = json.load(f)
 
-profesorado_name = data['profesorado']
-plan_resolucion = data['plan_resolucion']
+profesorado_name = data["profesorado"]
+plan_resolucion = data["plan_resolucion"]
 
 missing_espacios = []
 
-for year_data in data['years']:
-    year_name = year_data['year_name']
-    anio_num_match = re.match(r'(.+) Año', year_name)
+for year_data in data["years"]:
+    year_name = year_data["year_name"]
+    anio_num_match = re.match(r"(.+) Año", year_name)
     if anio_num_match:
         anio_str = anio_num_match.group(1).lower()
-        if anio_str == 'primer':
-            anio = '1°'
-        elif anio_str == 'segundo':
-            anio = '2°'
+        if anio_str == "primer":
+            anio = "1°"
+        elif anio_str == "segundo":
+            anio = "2°"
         else:
-            anio = None # Handle other years if necessary
+            anio = None  # Handle other years if necessary
     else:
         anio = None
 
     if anio:
-        for espacio_data in year_data['espacios']:
-            espacio_name = espacio_data['name'].strip()
+        for espacio_data in year_data["espacios"]:
+            espacio_name = espacio_data["name"].strip()
             # Corrected regex: escape parentheses
-            espacio_name_for_query = re.sub(r'\s*\([A-Z]\)\'', '', espacio_name).strip()
-            espacio_format = espacio_data['format']
+            espacio_name_for_query = re.sub(r"\s*\([A-Z]\)\'", "", espacio_name).strip()
+            espacio_format = espacio_data["format"]
 
             # Assuming cuatrimestre is not directly in the input, or needs to be inferred
             # For now, let's assume a default or leave it for manual input if not provided
             # This part needs careful consideration based on actual data and requirements
-            cuatrimestre = "A" # Default to Anual, needs to be confirmed with user or data
+            cuatrimestre = "A"  # Default to Anual, needs to be confirmed with user or data
 
-            missing_espacios.append({
-                'name': espacio_name_for_query,
-                'anio': anio,
-                'cuatrimestre': cuatrimestre, # This needs to be accurate
-                'format': espacio_format # Store format for reference
-            })
+            missing_espacios.append(
+                {
+                    "name": espacio_name_for_query,
+                    "anio": anio,
+                    "cuatrimestre": cuatrimestre,  # This needs to be accurate
+                    "format": espacio_format,  # Store format for reference
+                }
+            )
 
 # Remove duplicates
 unique_espacios = []
 seen = set()
 for esp in missing_espacios:
-    esp_tuple = (esp['name'], esp['anio'], esp['cuatrimestre'])
+    esp_tuple = (esp["name"], esp["anio"], esp["cuatrimestre"])
     if esp_tuple not in seen:
         unique_espacios.append(esp)
         seen.add(esp_tuple)
