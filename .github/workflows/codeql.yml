@@ -3,47 +3,38 @@ name: CodeQL
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
   schedule:
-    - cron: '0 2 * * 1'   # lunes 02:00 UTC
+    - cron: '0 2 * * 1'   # todos los lunes 02:00 UTC
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
 
 jobs:
   analyze:
-    name: Analyze
+    name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'actions', 'javascript-typescript', 'python' ]
+        language: [ python, javascript-typescript, actions ]
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
-
-      # Opcional: solo para python si querés asegurar intérprete
-      - name: Setup Python
-        if: matrix.language == 'python'
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
-          # queries: security-extended  # (opcional)
 
-      # Para estos lenguajes no se necesita autobuild,
-      # pero dejar el paso no rompe nada. Si preferís, podés eliminarlo.
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+      # Para Python/JS no hace falta autobuild; si lo prefieres, puedes dejarlo:
+      # - name: Autobuild
+      #   uses: github/codeql-action/autobuild@v3
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

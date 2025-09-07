@@ -2,7 +2,7 @@
 name: Collisions
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
 
 jobs:
   collisions:
@@ -12,13 +12,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       - run: python scripts/check_collisions.py | tee collisions.txt
-
-      - name: Mostrar reporte (siempre)
-        if: always()
-        run: cat collisions.txt || true
-
-      # Dejalo comentado si no querés que falle por WARN
-      # - name: Fail si hay WARN/flags
-      #   run: '! grep -E -q "\[!\]|WARN" collisions.txt'
+      - name: Fail if warnings
+        run: '! grep -E -q "\[!\]|WARN" collisions.txt'
