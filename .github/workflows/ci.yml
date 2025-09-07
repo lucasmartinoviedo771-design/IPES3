@@ -52,18 +52,14 @@ jobs:
         run: uv run pytest --cov --cov-report=xml --cov-report=html -q
 
       # 👇 Publicar artefactos aunque los tests hayan fallado (útil para inspección)
-      - name: Upload coverage.xml
+      - name: Upload coverage (xml + html)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-xml
-          path: coverage.xml
-          if-no-files-found: warn
-
-      - name: Upload htmlcov
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-html
-          path: htmlcov
-          if-no-files-found: warn
+          name: coverage
+          path: |
+            coverage.xml
+            htmlcov/
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7
