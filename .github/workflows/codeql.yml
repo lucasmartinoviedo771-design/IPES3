@@ -6,33 +6,36 @@ on:
   pull_request:
     branches: [ main, dev ]
   schedule:
-    - cron: '0 5 * * 1'   # lunes 05:00 UTC
-  workflow_dispatch:
+    - cron: '0 3 * * 1'  # lunes 03:00 UTC
 
 permissions:
   contents: read
   security-events: write
+  actions: read
 
 jobs:
   analyze:
-    name: Analyze (CodeQL)
+    name: CodeQL / Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      matrix:
+        language: [ actions, javascript-typescript, python ]
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: python
-          queries: security-and-quality
+          languages: ${{ matrix.language }}
 
-      # Python no requiere build; dejamos autobuild por compatibilidad
+      # Para python/js la acción intenta compilar sola; si no hace falta, igual no rompe.
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'
