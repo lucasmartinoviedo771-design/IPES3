@@ -1,30 +1,29 @@
-# .github/workflows/codeql.yml
 name: CodeQL
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, dev ]
   schedule:
-    - cron: '0 2 * * 1'   # todos los lunes 02:00 UTC
-
-permissions:
-  contents: read
-  actions: read
-  security-events: write
+    - cron: '0 2 * * 1'     # lunes 02:00 UTC
+  workflow_dispatch:
 
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     strategy:
       fail-fast: false
       matrix:
-        language: [ python, javascript-typescript, actions ]
+        language: [ 'actions', 'javascript-typescript', 'python' ]
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Initialize CodeQL
@@ -32,9 +31,8 @@ jobs:
         with:
           languages: ${{ matrix.language }}
 
-      # Para Python/JS no hace falta autobuild; si lo prefieres, puedes dejarlo:
-      # - name: Autobuild
-      #   uses: github/codeql-action/autobuild@v3
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
 
-      - name: Perform CodeQL Analysis
+      - name: Analyze
         uses: github/codeql-action/analyze@v3
